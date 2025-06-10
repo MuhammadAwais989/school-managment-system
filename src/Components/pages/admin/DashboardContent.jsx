@@ -31,7 +31,7 @@ const DashboardContent = () => {
 
           <div className="text-center">
             <h3 className="font-sans font-semibold text-gray-600">{items.type}</h3>
-            <h1 className="font-bold font-sans text-xl">{items.count}</h1>
+            <h1 className="font-bold font-sans text-xl">{items.count}</h1> 
           </div> 
         </div>
           ))}
