@@ -4,7 +4,6 @@ import SidebarHeader from './SidebarHeader';
 import SidebarNavItem from "./SidebarNavItem";
 import SidebarLogout from "./SidebarLogout";
 import { navItem } from "./NavData";
-import { RiMenuUnfoldFill } from "react-icons/ri";
 import avatar from "../../../assets/images/avatar.jfif";
 import MobileHeader from "./MobileHeader";
 

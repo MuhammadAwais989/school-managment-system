@@ -1,6 +1,6 @@
 import React from "react";
 import SideBar from "../sidebar/SideBar";
-import DashboardContent from "./DashboardContent";
+import DashboardContent from "./StudentCard";
 
 const AdminDashboard = () => {
   return (

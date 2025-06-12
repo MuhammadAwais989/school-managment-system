@@ -1,7 +1,6 @@
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
 import AdminDashboard from '../pages/admin/AdminDashboard'
-import SideBar from '../pages/sidebar/SideBar'
-import { use, useState } from 'react'
+// import Lgin from '../pages/Login'
 
 const AppRoutes = () => {
   return (
