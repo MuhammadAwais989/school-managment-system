@@ -1,6 +1,8 @@
 import React from 'react'
-import  present  from '../../../assets/images/present-student-icon.png'
-import  absent  from '../../../assets/images/absent-student-icon.webp'
+import  totalTeacehrs  from '../../../assets/images/totalTeachers.png'
+import  presentTeacher  from '../../../assets/images/presentTeacher.png'
+import  absentTeacher  from '../../../assets/images/AbsentTeacher.png'
+import  leaveTeacher  from '../../../assets/images/leaveTeacher.png'
 
 
 const TeacherCard = () => {
@@ -10,26 +12,28 @@ const TeacherCard = () => {
           count: 2153,
           iconColor: "text-blue-600",
           bgColor: "bg-blue-100",
+          img: totalTeacehrs,
         },
         {
           type: "Present Teachers",
           count: 2102,
           iconColor: "text-green-600",
           bgColor: "bg-green-100",
-          img: present,
+          img: presentTeacher,
         },
         {
           type: "Absent Teachers",
           count: 42,
           iconColor: "text-red-600",
           bgColor: "bg-red-100",
-          img: absent,
+          img: absentTeacher,
         },
         {
           type: "Leave Teachers",
           count: 30,
           iconColor: "text-yellow-600",
-          bgColor: "bg-yellow-100"
+          bgColor: "bg-yellow-100",
+          img: leaveTeacher,
         },
       ]
   return (

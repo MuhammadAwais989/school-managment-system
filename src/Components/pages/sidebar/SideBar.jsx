@@ -10,7 +10,7 @@ import MobileHeader from "./MobileHeader";
 const Sidebar = () => {
   const [sideBar, setSideBar] = useState(true);
   const [expandedItems, setExpandedItems] = useState({});
-  const [activeItemId, setActiveItemId] = useState(1); // ✅ new state
+  const [activeItemId, setActiveItemId] = useState(1); 
 
   const toggleSidebar = () => setSideBar(!sideBar);
 
@@ -28,7 +28,7 @@ const Sidebar = () => {
   return (
     <>
       <div
-        className={`h-screen transition-all duration-300 z-50 ${
+        className={`h-screen transition-all duration-300 z-50 fixed left-0${
           sideBar ? "w-72" : "w-20"
         } backdrop-blur-md bg-white/30 shadow-xl rounded-xl max-lg:fixed max-sm:fixed top-2 lg:left-3 ${
           sideBar ? "block " : "max-sm:-translate-x-full"
@@ -54,7 +54,7 @@ const Sidebar = () => {
       {!sideBar && (
         <div
           onClick={toggleSidebar}
-          className="text-xl z-50 shadow-md absolute lg:left-16 max-lg:left-16 top-12 text-white p-1 cursor-pointer bg-rose-700/80 rounded-full max-sm:hidden"
+          className="text-xl z-50 shadow-md fixed lg:left-16 max-lg:left-16 top-12 text-white p-1 cursor-pointer bg-rose-700/80 rounded-full max-sm:hidden"
         >
           <IoIosArrowForward />
         </div>

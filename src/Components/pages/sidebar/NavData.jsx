@@ -2,6 +2,8 @@ import { RxDashboard } from "react-icons/rx";
 import { MdAccountBalance } from "react-icons/md";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { PiStudentFill } from "react-icons/pi";
+import { MdGroupAdd } from "react-icons/md";
+
 
 export const navItem = [
   {
@@ -39,5 +41,11 @@ export const navItem = [
       { id: 4.2, label: "Expenses", path: "/accounts/expenses" },
       { id: 4.3, label: "Balance Sheet", path: "/accounts/balancesheet" },
     ],
+  },
+  {
+    id: 5,
+    label: "Add Account",
+    path: "/user/addaccount",
+    icon: <MdGroupAdd />,
   },
 ];
