@@ -7,12 +7,7 @@ import PopupModel from "./PopupModel";
 const AddAccount = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const InputData = [
-      {
-        type: 'input',
-        placeholder: 'Name',
-      },
-    ]
+    
   return (
     <>
       <Sidebar />
