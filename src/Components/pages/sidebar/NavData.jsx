@@ -45,7 +45,7 @@ export const navItem = [
   {
     id: 5,
     label: "Add Account",
-    path: "/user/addaccount",
+    path: "/addaccount",
     icon: <MdGroupAdd />,
   },
 ];

@@ -1,8 +1,25 @@
-import React from 'react'
+import React, { useState } from 'react'
+import axios from 'axios'
+import {BaseURL} from '../../helper/helper'
 
 const PopupModel = ({isModalOpen, onclose}) => {
 
+  const [FormData, setFormData] = useState({})
 
+  const handleChnage = (e) =>{
+    const {name, value} = e.target;
+    setFormData(pre => ({...pre, [name]: value}))
+  };
+
+  const handleSubmit = async () =>{
+    try {
+          const rssponse = await axios.post(`${BaseURL}/adaccount`, FormData)
+
+    } catch (error) {
+      console.log(`Post API Error ${error}`);
+      
+    }
+  }
   const InputData = [
     { name: "name", type: "text", placeholder: "Name" },
     { name: "fathr name", type: "text", placeholder: "Father Name" },
@@ -10,17 +27,17 @@ const PopupModel = ({isModalOpen, onclose}) => {
     { name: "date of joining", type: "date", placeholder: "Date of Joining" },
     { name: "class", type: "text", placeholder: "Class" },
     { name: "section", type: "text", placeholder: "Section" },
-    { name: "date of birth", type: "date", placeholder: "Date of Birth" },
-    { name: "address", type: "text", placeholder: "Address" },
-    { name: "phone", type: "tel", placeholder: "Phone Number" },
+    { name: "address", type: "text", placeholder: "Home Address" },
+    { name: "phone", type: "text", placeholder: "Phone Number", length: 11},
     { name: "email", type: "email", placeholder: "Email" },
+    { name: "password", type: "password", placeholder: "Password" },
     ]
   return (
     <>
     {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-80 lg:w-[50%] ">
-            <h2 className="text-xl font-semibold mb-4">Add Account</h2>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 ">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-80 md:w-[65%] max-md:h-[85%] md:h-[90%] lg:h-fit  overflow-auto">
+            <h2 className="text-xl font-semibold mb-4 ">Add Account</h2>
             
             {/* Form or content here */}
             <div className='flex flex-wrap w-full'>
@@ -31,8 +48,10 @@ const PopupModel = ({isModalOpen, onclose}) => {
               type={field.type}
               name={field.name}
               placeholder={field.placeholder}
+              maxLength={field.length}
               required
-              className="w-full lg:w-72 mx-2 border focus:border-rose-300 outline-none rounded px-3 py-2 mb-4"
+              onChange={handleChnage}
+              className="w-full md:w-full lg:w-[47%] mx-2 border focus:border-rose-300 focus:bg-rose-50 outline-none rounded px-3 py-2 mb-4"
               />
             ))}
             </div>
@@ -45,6 +64,7 @@ const PopupModel = ({isModalOpen, onclose}) => {
                 Cancel
               </button>
               <button
+                onClick={handleSubmit}
                 className="px-8 py-2 bg-rose-600 text-white rounded hover:bg-rose-700"
               >
                 Save
