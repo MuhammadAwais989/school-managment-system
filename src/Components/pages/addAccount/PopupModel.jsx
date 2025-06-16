@@ -13,7 +13,8 @@ const PopupModel = ({isModalOpen, onclose}) => {
 
   const handleSubmit = async () =>{
     try {
-          const rssponse = await axios.post(`${BaseURL}/adaccount`, FormData)
+          const response = await axios.post(`${BaseURL}/adaccount`, FormData)
+          console.log('Data sent successfully:', response);
 
     } catch (error) {
       console.log(`Post API Error ${error}`);
