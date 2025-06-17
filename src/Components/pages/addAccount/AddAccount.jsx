@@ -11,10 +11,10 @@ const AddAccount = () => {
   return (
     <>
       <Sidebar />
-      <div className="lg:pl-24 pt-28 max-md:pr-4 pr-9 pb-4 max-sm:pt-1 max-sm:pl-4 max-sm:pr-5 max-lg:pt-24  max-lg:pl-24 bg-gray-50 w-full h-screen">
-        <div className="bg-white w-full h-full shadow-md rounded-md pt-6 pl-8 pr-8">
+      <div className="lg:pl-24 pt-28 max-md:pr-4 pr-9 pb-4 max-sm:pt-1 max-sm:pl-4 max-sm:pr-5 max-lg:pt-24  max-lg:pl-24 bg-gray-50 w-full h-screen ">
+        <div className="bg-white w-full h-full shadow-md rounded-md pt-6 pl-8 pr-8 ">
           <h1 className="text-xl font-sans font-bold inline">Add Account</h1>
-          <div className="flex items-center justify-between py-4 rounded max-[436px]:flex-col">
+          <div className="flex items-center justify-between  py-4 rounded max-[436px]:flex-col">
             {/* Search Bar */}
             <div className="flex items-center  bg-[#F8F8F8] rounded px-3 py-2 w-60 max-w-md max-[436px]:w-full">
               <FaSearch className="text-gray-500 mr-2" />
