@@ -2,7 +2,7 @@ export const InputData = [
     { name: 'name', type: 'text', placeholder: 'Name' },
     { name: 'fatherName', type: 'text', placeholder: 'Father Name' },
     { name: 'dateOfJoining', type: 'text', placeholder: 'Date of Joining' },
-    { name: 'class', type: 'text', placeholder: 'Class' },
+    { name: 'Class', type: 'text', placeholder: 'Class' },
     { name: 'section', type: 'text', placeholder: 'Section' },
     {
       name: 'gender',

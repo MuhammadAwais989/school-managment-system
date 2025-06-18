@@ -1,60 +1,80 @@
-import React, { useState } from 'react'
-import axios from 'axios'
-import {InputData} from './PopupModelData'
-import {BaseURL} from '../../helper/helper'
-import { showError, showSuccess } from '../../utils/Toast.js'
+import React, { useState } from 'react';
+import axios from 'axios';
+import { InputData } from './PopupModelData';
+import { BaseURL } from '../../helper/helper';
+import { showError, showSuccess } from '../../utils/Toast.js';
 
+const PopupModel = ({ isModalOpen, onclose }) => {
+  const [formValues, setFormValues] = useState({});
+  const [selectedFile, setSelectedFile] = useState(null);
 
-
-const PopupModel = ({isModalOpen, onclose}) => {
-
-  const [FormData, setFormData] = useState({})
-
-  const handleChange = (e) =>{
-    const {name, value} = e.target;
-    setFormData(pre => ({...pre, [name]: value}))
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async () =>{
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
+  const handleSubmit = async () => {
     try {
-        const response = await axios.post(`${BaseURL}/addaccount`, FormData)
-        console.log('Data sent successfully:', response);
-        setFormData({})
-        showSuccess("User Added Successfully")
-        onclose()
+      const formData = new FormData();
+
+      Object.entries(formValues).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      if (selectedFile) {
+        formData.append('profilePic', selectedFile);
+      }
+
+      const response = await axios.post(`${BaseURL}/addaccount`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      showSuccess('User Added Successfully');
+      console.log('Response:', response.data);
+
+      setFormValues({});
+      setSelectedFile(null);
+      onclose();
     } catch (error) {
-      console.log(`Post API Error ${error}`);
-      showError("Please Fill All Field")
+      console.error('Post API Error:', error);
+      showError('Please fill all fields or try again');
     }
-  }
- 
+  };
+
   return (
-     <>
+    <>
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 ">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="relative bg-white p-6 rounded-lg shadow-lg w-80 md:w-[65%] max-md:h-[85%] md:h-[90%] lg:h-fit overflow-auto scrollbar-hide">
-            <div onClick={onclose} className='absolute right-0 top-0 cursor-pointer flex justify-center items-center bg-rose-100 size-8  rounded-full mr-3 mt-3'>
-              <button
-                  className="text-rose-800 hover:text-red-500 text-2xl  -mt-1 font-bold focus:outline-none "
-              >
-                  &times;
+            <div
+              onClick={onclose}
+              className="absolute right-0 top-0 cursor-pointer flex justify-center items-center bg-rose-100 size-8 rounded-full mr-3 mt-3"
+            >
+              <button className="text-rose-800 hover:text-red-500 text-2xl -mt-1 font-bold focus:outline-none">
+                &times;
               </button>
             </div>
-            <h2 className="text-xl font-semibold mb-4 ">Add Account</h2>
+            <h2 className="text-xl font-semibold mb-4">Add Account</h2>
 
             <div className="flex flex-wrap w-full">
               {InputData.map((field, index) => (
-                <div key={index} className="w-full md:w-full lg:w-[47%] mx-2 mb-4 "> 
+                <div key={index} className="w-full md:w-full lg:w-[47%] mx-2 mb-4">
                   {field.type === 'select' ? (
                     <select
                       name={field.name}
-                      value={FormData[field.name] || ''} // Set value from formData
+                      value={formValues[field.name] || ''}
                       onChange={handleChange}
                       required
                       className="w-full border focus:border-rose-300 focus:bg-rose-50 outline-none rounded px-3 py-2"
                     >
                       <option value="" disabled>
-                        {field.placeholder} {/* Display placeholder as the first option */}
+                        {field.placeholder}
                       </option>
                       {field.options.map((option) => (
                         <option key={option} value={option}>
@@ -68,14 +88,24 @@ const PopupModel = ({isModalOpen, onclose}) => {
                       name={field.name}
                       placeholder={field.placeholder}
                       maxLength={field.length}
-                      value={FormData[field.name] || ''} // Ensure input values are controlled
-                      required
+                      value={formValues[field.name] || ''}
                       onChange={handleChange}
+                      required
                       className="w-full border focus:border-rose-300 focus:bg-rose-50 outline-none rounded px-3 py-2"
                     />
                   )}
                 </div>
               ))}
+
+              {/* File upload field */}
+              <div className="w-full md:w-full lg:w-[47%] mx-2 mb-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full border focus:border-rose-300 focus:bg-rose-50 outline-none rounded px-3 py-2"
+                />
+              </div>
             </div>
 
             <div className="flex justify-center mt-5">
@@ -96,7 +126,7 @@ const PopupModel = ({isModalOpen, onclose}) => {
         </div>
       )}
     </>
-  )
-}
+  );
+};
 
-export default PopupModel
+export default PopupModel;
