@@ -2,15 +2,39 @@ import React, { useState } from "react";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { RxAvatar } from "react-icons/rx";
 import bg from "../../assets/images/loginBG.jpg";
+import axios from "axios";
+import { BaseURL } from "../helper/helper";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log("Login:", { email, password });
+
+    try {
+      const res = await axios.post(`${BaseURL}/login`, { email, password });
+      const { token, role } = res.data;
+
+      localStorage.setItem("token", token);
+
+      if (role === "Admin" || role === "Principle") {
+        navigate("/admin-dashboard");
+      } else if (role === "Teacher") {
+        navigate("/teacher-dashboard");
+      } else {
+        toast.error("Unauthorized role");
+      }
+
+      toast.success("Login successful");
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Login failed");
+    }
   };
 
   return (

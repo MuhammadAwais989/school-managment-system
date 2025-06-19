@@ -1,8 +1,9 @@
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
 import AdminDashboard from '../pages/admin/AdminDashboard'
+import TeacherDashoard from '../pages/teacher/TeacherDashboard'
 import AddAccount from '../pages/addAccount/AddAccount'
 import TeacherDetails from '../pages/teacher/TeacherDetails'
-// import Lgin from '../pages/Login'
+import Login from '../pages/Login'
 
 const AppRoutes = () => {
   return (
@@ -10,9 +11,11 @@ const AppRoutes = () => {
     <BrowserRouter>
     {/* <SideBar /> */}
     <Routes>
-        <Route path='/' element={<AdminDashboard />}/>
-        <Route path='/addaccount' element={<AddAccount />}/>
+        <Route path='/' element={<Login />}/>
+        <Route path='/admin-dashboard' element={<AdminDashboard />}/>
+        <Route path='/teacher-dashboard' element={<TeacherDashoard />}/>
         <Route path='/teacher/details' element={<TeacherDetails />}/>
+        <Route path='/addaccount' element={<AddAccount />}/>
     </Routes>
     </BrowserRouter>
     </>

@@ -14,7 +14,7 @@ export const InputData = [
       name: 'designation',
       type: 'select', 
       placeholder: 'Select Designation', 
-      options: ['Principle', 'Admin', 'Teacher', 'Student'], 
+      options: ['Principle', 'Admin', 'Teacher'], 
     },
     { name: 'dateOfBirth', type: 'text', placeholder: 'Date of Birth' }, 
     { name: 'address', type: 'text', placeholder: 'Home Address' },

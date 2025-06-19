@@ -2,6 +2,8 @@ import { FaSearch, FaPlus } from "react-icons/fa";
 import Sidebar from "../sidebar/SideBar";
 import React, { useState } from "react";
 import PopupModel from "./PopupModel";
+import TableComponent from '../TableComponent.jsx';
+
 
 
 const AddAccount = () => {
@@ -35,6 +37,7 @@ const AddAccount = () => {
            {/* Popup Modal */}
             <PopupModel isModalOpen={isModalOpen} onclose={() => setIsModalOpen(false)}/>
           </div>
+              <TableComponent />
         </div>
       </div>
     </>
