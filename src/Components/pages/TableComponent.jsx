@@ -2,8 +2,8 @@ import React from 'react';
 
 const TableComponent = ({ data }) => {
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full table-auto bg-white border border-gray-300">
+    <div className="overflow-x-auto ">
+      <table className="min-w-full table-auto bg-white border border-gray-300 ">
         <thead className="bg-gray-200 text-gray-700">
           <tr className="text-sm font-semibold text-left">
             <th className="border px-3 py-2 whitespace-nowrap">#</th>
@@ -22,9 +22,9 @@ const TableComponent = ({ data }) => {
             <th className="border px-3 py-2 whitespace-nowrap">Address</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody >
           {data?.map((item, index) => (
-            <tr key={index} className="text-center text-sm hover:bg-gray-50 transition">
+            <tr key={index} className="text-center text-sm hover:bg-gray-50 transition ">
               <td className="border px-3 py-2">{index + 1}</td>
               <td className="border px-3 py-2">
                 <img

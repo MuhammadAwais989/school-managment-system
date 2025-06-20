@@ -2,6 +2,7 @@ import React from "react";
 import { IoIosLogOut } from "react-icons/io";
 
 const SidebarLogout = ({ sideBar, handleLogout }) => (
+  
   <div className="fixed bottom-4 left-0 right-0 px-3 bg-white/30 ">
     <button
       onClick={handleLogout}

@@ -1,14 +1,28 @@
 import { FaSearch, FaPlus } from "react-icons/fa";
+import axios from "axios";
 import Sidebar from "../sidebar/SideBar";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PopupModel from "./PopupModel";
 import TableComponent from '../TableComponent.jsx';
+import { BaseURL } from "../../helper/helper.js";
+
 
 
 
 const AddAccount = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [userList,setUserList] = useState(null)
 
+    useEffect(() => {
+      axios.get(`${BaseURL}/addaccount`)
+    .then(res =>{
+        setUserList(res.data)
+    })
+    .catch(err =>{
+      console.log("Fronted User Fetch Data Error", err);
+    })
+    
+    }, [])
     
   return (
     <>
@@ -37,7 +51,7 @@ const AddAccount = () => {
            {/* Popup Modal */}
             <PopupModel isModalOpen={isModalOpen} onclose={() => setIsModalOpen(false)}/>
           </div>
-              <TableComponent />
+              <TableComponent data={userList}/>
         </div>
       </div>
     </>

@@ -6,6 +6,9 @@ import SidebarLogout from "./SidebarLogout";
 import { navItem } from "./NavData";
 import avatar from "../../../assets/images/avatar.jfif";
 import MobileHeader from "./MobileHeader";
+import { useNavigate } from "react-router-dom";
+import { showSuccess } from '../../utils/Toast.js';
+
 
 const Sidebar = () => {
   const [sideBar, setSideBar] = useState(true);
@@ -21,8 +24,14 @@ const Sidebar = () => {
     }));
   };
 
+  const navigate = useNavigate()
   const handleLogout = () => {
-    console.log("User logged out");
+
+    localStorage.removeItem("token")
+    localStorage.removeItem("role")
+    showSuccess("Logged out successfully");
+
+    navigate("/login");
   };
 
   return (

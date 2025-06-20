@@ -21,6 +21,7 @@ const LoginPage = () => {
       const { token, role } = res.data;
 
       localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
 
       if (role === "Admin" || role === "Principle") {
         navigate("/admin-dashboard");
