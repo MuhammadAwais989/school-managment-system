@@ -9,7 +9,7 @@ export const navItem = [
   {
     id: 1,
     label: "Dashboard",
-    path: "/",
+    path: "/admin-dashboard",
     icon: <RxDashboard />,
   },
   {

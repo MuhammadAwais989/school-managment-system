@@ -31,7 +31,7 @@ const Sidebar = () => {
     localStorage.removeItem("role")
     showSuccess("Logged out successfully");
 
-    navigate("/login");
+    navigate("/");
   };
 
   return (

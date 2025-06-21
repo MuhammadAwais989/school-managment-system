@@ -7,6 +7,9 @@ import { showError, showSuccess } from '../../utils/Toast.js';
 const PopupModel = ({ isModalOpen, onclose }) => {
   const [formValues, setFormValues] = useState({});
   const [selectedFile, setSelectedFile] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null); 
+
+    
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -14,21 +17,39 @@ const PopupModel = ({ isModalOpen, onclose }) => {
   };
 
   const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
-  };
+    const file = e.target.files[0];
+
+    // --- ADD THE FOLLOWING LINES ---
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
+    if (file && file.size > MAX_FILE_SIZE) {
+        showError('Image size exceeds 5MB. Please choose a smaller image.');
+        setSelectedFile(null); 
+        setPreviewImage(null); 
+        e.target.value = ''; 
+        return;
+    }
+
+    setSelectedFile(file);
+    if (file) {
+      setPreviewImage(URL.createObjectURL(file)); // Create a URL for preview
+    } else {
+      setPreviewImage(null);
+    }
+};
 
   const handleSubmit = async () => {
+    const formData = new FormData();
+
+    Object.entries(formValues).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
+    if (selectedFile) {
+      formData.append('profilePic', selectedFile);
+    }
+
     try {
-      const formData = new FormData();
-
-      Object.entries(formValues).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-
-      if (selectedFile) {
-        formData.append('profilePic', selectedFile);
-      }
-
       const response = await axios.post(`${BaseURL}/addaccount`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -40,10 +61,11 @@ const PopupModel = ({ isModalOpen, onclose }) => {
 
       setFormValues({});
       setSelectedFile(null);
+      setPreviewImage(null); // Clear preview
       onclose();
     } catch (error) {
-      console.error('Post API Error:', error);
-      showError('Please fill all fields or try again');
+      console.error('Post API Error:', error.response ? error.response.data : error.message);
+      showError(error.response?.data?.message || 'Please fill all fields or try again');
     }
   };
 
@@ -97,14 +119,25 @@ const PopupModel = ({ isModalOpen, onclose }) => {
                 </div>
               ))}
 
-              {/* File upload field */}
-              <div className="w-full md:w-full lg:w-[47%] mx-2 mb-4">
+              <div className="w-full md:w-full lg:w-[47%] mx-2 mb-4 ">
+                <label htmlFor="profilePic" className="block text-gray-500 text-sm ">
+                  Select Pictures
+                </label>
+                <div className='flex'>
+
                 <input
                   type="file"
+                  id="profilePic"
                   accept="image/*"
                   onChange={handleFileChange}
                   className="w-full border focus:border-rose-300 focus:bg-rose-50 outline-none rounded px-3 py-2"
                 />
+                {previewImage && (
+                  <div className="mt-2 ml-3">
+                    <img src={previewImage} alt="Profile Preview" className="h-10 w-10 object-cover rounded-full" />
+                  </div>
+                )}
+                </div>
               </div>
             </div>
 

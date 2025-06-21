@@ -13,7 +13,7 @@ const AppRoutes = () => {
     <BrowserRouter>
     {/* <SideBar /> */}
     <Routes>
-        <Route exact path='/login' element={<Login />}/>
+        <Route exact path='/' element={<Login />}/>
         <Route path='/admin-dashboard' element={<AdminRoute> <AdminDashboard /> </AdminRoute>}/>
         <Route path='/teacher-dashboard' element={<TeacherDashoard />}/>
         <Route path='/teacher/details' element={<TeacherDetails />}/>
