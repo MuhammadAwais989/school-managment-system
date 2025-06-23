@@ -11,7 +11,7 @@ import { showSuccess } from '../../utils/Toast.js';
 
 
 const Sidebar = () => {
-  const [sideBar, setSideBar] = useState(true);
+  const [sideBar, setSideBar] = useState(false);
   const [expandedItems, setExpandedItems] = useState({});
   const [activeItemId, setActiveItemId] = useState(1); 
 

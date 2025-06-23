@@ -1,15 +1,42 @@
 import React from 'react'
+import { useEffect, useState } from "react";
+import axios from 'axios'
+import {BaseURL} from '../../helper/helper'
 import  totalTeacehrs  from '../../../assets/images/totalTeachers.png'
 import  presentTeacher  from '../../../assets/images/presentTeacher.png'
 import  absentTeacher  from '../../../assets/images/AbsentTeacher.png'
 import  leaveTeacher  from '../../../assets/images/leaveTeacher.png'
-
+import loading from '../Loading'
 
 const TeacherCard = () => {
+
+     const [teacherList, setteacherList] = useState(0);
+     const [loading, Setloading] = useState(true);
+
+  useEffect(() => {
+        const fetchTeacherCount = async () => {
+            try {
+                const response = await axios.get(`${BaseURL}/addaccount`);
+                const users = response.data;
+                
+                const count = users.filter(user => user.designation === 'Teacher').length;
+                setteacherList(count);
+            } catch (err) {
+                console.error("Failed to fetch user list:", err);
+                
+            }
+          }
+          fetchTeacherCount()
+      }, []);
+
+                console.log(teacherList);
+
+  
+
       const TeachersData = [
     {
           type: "Total Teachers",
-          count: 2153,
+          count: teacherList,
           iconColor: "text-blue-600",
           bgColor: "bg-blue-100",
           img: totalTeacehrs,

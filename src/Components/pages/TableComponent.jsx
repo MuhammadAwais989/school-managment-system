@@ -2,8 +2,8 @@ import React from 'react';
 
 const TableComponent = ({ data }) => {
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full table-auto bg-white border border-gray-300">
+    <div className="overflow-x-auto max-h-[calc(100vh-255px)] scrollbar-hide">
+      <table className="min-w-full table-auto bg-white border border-gray-300 ">
         <thead className="bg-gray-100 text-gray-700">
           <tr className="text-sm font-semibold text-center w-fit">
             <th className="border px-3 py-3 whitespace-nowrap"></th>
@@ -22,7 +22,7 @@ const TableComponent = ({ data }) => {
             <th className="border px-3 py-3 whitespace-nowrap">Address</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className='overflow-auto'>
           {data?.map((item, index) => (
             <tr 
               key={index} 

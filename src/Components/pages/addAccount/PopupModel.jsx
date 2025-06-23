@@ -3,11 +3,13 @@ import axios from 'axios';
 import { InputData } from './PopupModelData';
 import { BaseURL } from '../../helper/helper';
 import { showError, showSuccess } from '../../utils/Toast.js';
+import Loading from '../Loading.jsx';
 
 const PopupModel = ({ isModalOpen, onclose }) => {
   const [formValues, setFormValues] = useState({});
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null); 
+  const [loading, setloading] = useState(); 
 
     
 
@@ -39,6 +41,7 @@ const PopupModel = ({ isModalOpen, onclose }) => {
 };
 
   const handleSubmit = async () => {
+    setloading(true)
     const formData = new FormData();
 
     Object.entries(formValues).forEach(([key, value]) => {
@@ -66,8 +69,13 @@ const PopupModel = ({ isModalOpen, onclose }) => {
     } catch (error) {
       console.error('Post API Error:', error.response ? error.response.data : error.message);
       showError(error.response?.data?.message || 'Please fill all fields or try again');
+    }finally{
+      setloading(false)
     }
   };
+   if (loading) {
+    return <Loading text='Data Sending' />;
+  }
 
   return (
     <>
