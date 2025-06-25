@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 // Generic Protected Route (checks if token exists)
 export const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/" />;
+  return token ? children : <Navigate to="/login" />;
 };
 
 // Admin or Principal only Route
@@ -14,7 +14,7 @@ export const AdminRoute = ({ children }) => {
 
   return token && (role === "Admin" || role === "Principle")
     ? children
-    : <Navigate to="/" />;
+    : <Navigate to="/login" />;
 };
 
 // Teacher only Route
@@ -24,5 +24,5 @@ export const TeacherRoute = ({ children }) => {
 
   return token && role === "Teacher"
     ? children
-    : <Navigate to="/" />;
+    : <Navigate to="/login" />;
 };

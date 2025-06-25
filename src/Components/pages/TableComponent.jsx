@@ -14,11 +14,11 @@ const TableComponent = ({ data }) => {
             <th className="border px-3 py-3 whitespace-nowrap">Date of Joining</th>
             <th className="border px-3 py-3 whitespace-nowrap">Class</th>
             <th className="border px-3 py-3 whitespace-nowrap">Section</th>
+            <th className="border px-3 py-3 whitespace-nowrap">Salary</th>
             <th className="border px-3 py-3 whitespace-nowrap">Gender</th>
             <th className="border px-3 py-3 whitespace-nowrap">Date of Birth</th>
             <th className="border px-3 py-3 whitespace-nowrap">Phone</th>
             <th className="border px-3 py-3 whitespace-nowrap">Email</th>
-            <th className="border px-3 py-3 whitespace-nowrap">Password</th>
             <th className="border px-3 py-3 whitespace-nowrap">Address</th>
           </tr>
         </thead>
@@ -44,11 +44,11 @@ const TableComponent = ({ data }) => {
               <td className="border px-3 py-1 truncate w-fit text-gray-500">{item.dateOfJoining}</td>
               <td className="border px-3 py-1 truncate w-fit text-gray-500">{item.Class}</td>
               <td className="border px-3 py-1 truncate w-fit text-gray-500">{item.section}</td>
+              <td className="border px-3 py-1 truncate w-fit text-gray-500">{item.salary}</td>
               <td className="border px-3 py-1 truncate w-fit text-gray-500">{item.gender}</td>
               <td className="border px-3 py-1 truncate w-fit text-gray-500">{item.dateOfBirth}</td>
               <td className="border px-3 py-1 truncate w-fit text-gray-500">{item.phone}</td>
               <td className="border px-3 py-1 truncate w-fit text-gray-500">{item.email}</td>
-              <td className="border px-3 py-1 truncate w-fit text-gray-500">{item.password}</td>
               <td className="border px-3 py-1 truncate w-fit text-gray-500">{item.address}</td>
             </tr>
           ))}

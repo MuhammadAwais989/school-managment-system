@@ -1,4 +1,4 @@
-import {BrowserRouter, Routes, Route} from 'react-router-dom'
+import {BrowserRouter, Routes, Route, Navigate} from 'react-router-dom'
 import AdminDashboard from '../pages/admin/AdminDashboard'
 import TeacherDashoard from '../pages/teacher/TeacherDashboard'
 import AddAccount from '../pages/addAccount/AddAccount'
@@ -11,9 +11,9 @@ const AppRoutes = () => {
   return (
     <>
     <BrowserRouter>
-    {/* <SideBar /> */}
     <Routes>
-        <Route exact path='/' element={<AdminDashboard />}/>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path='/login' element={<Login />}/>
         <Route path='/admin-dashboard' element={<AdminRoute> <AdminDashboard /> </AdminRoute>}/>
         <Route path='/teacher-dashboard' element={<TeacherDashoard />}/>
         <Route path='/teacher/details' element={<TeacherDetails />}/>

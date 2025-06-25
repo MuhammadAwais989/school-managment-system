@@ -16,6 +16,7 @@ export const InputData = [
       placeholder: 'Select Designation', 
       options: ['Principle', 'Admin', 'Teacher'], 
     },
+    { name: 'salary', type: 'number', placeholder: 'Salary' }, 
     { name: 'dateOfBirth', type: 'text', placeholder: 'Date of Birth' }, 
     { name: 'address', type: 'text', placeholder: 'Home Address' },
     { name: 'phone', type: 'text', placeholder: 'Phone Number', length: 11 },

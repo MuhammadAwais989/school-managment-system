@@ -11,8 +11,6 @@ const PopupModel = ({ isModalOpen, onclose }) => {
   const [previewImage, setPreviewImage] = useState(null); 
   const [loading, setloading] = useState(); 
 
-    
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormValues((prev) => ({ ...prev, [name]: value }));
@@ -20,8 +18,6 @@ const PopupModel = ({ isModalOpen, onclose }) => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-
-    // --- ADD THE FOLLOWING LINES ---
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
     if (file && file.size > MAX_FILE_SIZE) {
@@ -34,11 +30,11 @@ const PopupModel = ({ isModalOpen, onclose }) => {
 
     setSelectedFile(file);
     if (file) {
-      setPreviewImage(URL.createObjectURL(file)); // Create a URL for preview
+      setPreviewImage(URL.createObjectURL(file));
     } else {
       setPreviewImage(null);
     }
-};
+  };
 
   const handleSubmit = async () => {
     setloading(true)
@@ -64,16 +60,17 @@ const PopupModel = ({ isModalOpen, onclose }) => {
 
       setFormValues({});
       setSelectedFile(null);
-      setPreviewImage(null); // Clear preview
-      onclose();
+      setPreviewImage(null);
     } catch (error) {
       console.error('Post API Error:', error.response ? error.response.data : error.message);
       showError(error.response?.data?.message || 'Please fill all fields or try again');
-    }finally{
+    } finally {
       setloading(false)
+      onclose();
     }
   };
-   if (loading) {
+
+  if (loading) {
     return <Loading text='Data Sending' />;
   }
 
@@ -127,24 +124,23 @@ const PopupModel = ({ isModalOpen, onclose }) => {
                 </div>
               ))}
 
-              <div className="w-full md:w-full lg:w-[47%] mx-2 mb-4 ">
-                <label htmlFor="profilePic" className="block text-gray-500 text-sm ">
-                  Select Pictures
-                </label>
+              <div className="w-full md:w-full lg:w-[47%] mx-2 mb-4 relative">
                 <div className='flex'>
-
-                <input
-                  type="file"
-                  id="profilePic"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="w-full border focus:border-rose-300 focus:bg-rose-50 outline-none rounded px-3 py-2"
-                />
-                {previewImage && (
-                  <div className="mt-2 ml-3">
-                    <img src={previewImage} alt="Profile Preview" className="h-10 w-10 object-cover rounded-full" />
-                  </div>
-                )}
+                  <label htmlFor="profilePic" className="block text-gray-500 text-sm absolute right-14 top-3 max-sm:hidden">
+                    Select Pictures
+                  </label>
+                  <input
+                    type="file"
+                    id="profilePic"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="w-full border focus:border-rose-300 focus:bg-rose-50 outline-none rounded px-3 py-1"
+                  />
+                  {previewImage && (
+                    <div className="mt-2 ml-3">
+                      <img src={previewImage} alt="Profile Preview" className="h-8 w-8 object-cover rounded-full" />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
