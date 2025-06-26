@@ -1,15 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { InputData } from './PopupModelData';
 import { BaseURL } from '../../helper/helper';
 import { showError, showSuccess } from '../../utils/Toast.js';
 import Loading from '../Loading.jsx';
 
-const PopupModel = ({ isModalOpen, onclose }) => {
+const PopupModel = ({ isModalOpen, onclose, editMode = false, existingData = null }) => {
   const [formValues, setFormValues] = useState({});
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewImage, setPreviewImage] = useState(null); 
-  const [loading, setloading] = useState(); 
+  const [previewImage, setPreviewImage] = useState(null);
+  const [loading, setloading] = useState(false);
+
+  useEffect(() => {
+    if (editMode && existingData) {
+      setFormValues(existingData);
+      setPreviewImage(existingData.profilePic || null);
+    } else {
+      setFormValues({});
+      setPreviewImage(null);
+    }
+  }, [editMode, existingData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,11 +31,11 @@ const PopupModel = ({ isModalOpen, onclose }) => {
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
     if (file && file.size > MAX_FILE_SIZE) {
-        showError('Image size exceeds 5MB. Please choose a smaller image.');
-        setSelectedFile(null); 
-        setPreviewImage(null); 
-        e.target.value = ''; 
-        return;
+      showError('Image size exceeds 5MB. Please choose a smaller image.');
+      setSelectedFile(null);
+      setPreviewImage(null);
+      e.target.value = '';
+      return;
     }
 
     setSelectedFile(file);
@@ -37,7 +47,7 @@ const PopupModel = ({ isModalOpen, onclose }) => {
   };
 
   const handleSubmit = async () => {
-    setloading(true)
+    setloading(true);
     const formData = new FormData();
 
     Object.entries(formValues).forEach(([key, value]) => {
@@ -49,30 +59,31 @@ const PopupModel = ({ isModalOpen, onclose }) => {
     }
 
     try {
-      const response = await axios.post(`${BaseURL}/addaccount`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      showSuccess('User Added Successfully');
-      console.log('Response:', response.data);
+      if (editMode) {
+        const response = await axios.put(`${BaseURL}/addaccount/${existingData._id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        showSuccess('User updated successfully');
+      } else {
+        const response = await axios.post(`${BaseURL}/addaccount`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        showSuccess('User added successfully');
+      }
 
       setFormValues({});
       setSelectedFile(null);
       setPreviewImage(null);
     } catch (error) {
-      console.error('Post API Error:', error.response ? error.response.data : error.message);
-      showError(error.response?.data?.message || 'Please fill all fields or try again');
+      console.error('Submit Error:', error);
+      showError(error.response?.data?.message || 'Something went wrong');
     } finally {
-      setloading(false)
+      setloading(false);
       onclose();
     }
   };
 
-  if (loading) {
-    return <Loading text='Data Sending' />;
-  }
+  if (loading) return <Loading text={editMode ? "Updating Data..." : "Sending Data..."} />;
 
   return (
     <>
@@ -87,7 +98,9 @@ const PopupModel = ({ isModalOpen, onclose }) => {
                 &times;
               </button>
             </div>
-            <h2 className="text-xl font-semibold mb-4">Add Account</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              {editMode ? "Edit Account" : "Add Account"}
+            </h2>
 
             <div className="flex flex-wrap w-full">
               {InputData.map((field, index) => (
@@ -125,9 +138,9 @@ const PopupModel = ({ isModalOpen, onclose }) => {
               ))}
 
               <div className="w-full md:w-full lg:w-[47%] mx-2 mb-4 relative">
-                <div className='flex'>
+                <div className="flex">
                   <label htmlFor="profilePic" className="block text-gray-500 text-sm absolute right-14 top-3 max-sm:hidden">
-                    Select Pictures
+                    Select Picture
                   </label>
                   <input
                     type="file"
@@ -138,7 +151,7 @@ const PopupModel = ({ isModalOpen, onclose }) => {
                   />
                   {previewImage && (
                     <div className="mt-2 ml-3">
-                      <img src={previewImage} alt="Profile Preview" className="h-8 w-8 object-cover rounded-full" />
+                      <img src={previewImage} alt="Preview" className="h-8 w-8 object-cover rounded-full" />
                     </div>
                   )}
                 </div>
@@ -156,7 +169,7 @@ const PopupModel = ({ isModalOpen, onclose }) => {
                 onClick={handleSubmit}
                 className="px-8 py-2 bg-rose-600 text-white rounded hover:bg-rose-700"
               >
-                Save
+                {editMode ? "Update" : "Save"}
               </button>
             </div>
           </div>
