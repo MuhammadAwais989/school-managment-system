@@ -1,8 +1,6 @@
-// src/components/ConfirmDeletePopup.jsx
-import React from 'react';
 import { FaExclamationTriangle } from 'react-icons/fa';
 
-const ConfirmDeletePopup = ({ isOpen, onConfirm, onCancel }) => {
+const ConfirmDeletePopup = ({ isOpen, onConfirm, onCancel, message = "Are you sure you want to delete this user?" }) => {
   if (!isOpen) return null;
 
   return (
@@ -11,9 +9,7 @@ const ConfirmDeletePopup = ({ isOpen, onConfirm, onCancel }) => {
         <div className="flex justify-center mb-4">
           <FaExclamationTriangle className="text-red-500 text-4xl" />
         </div>
-        <h2 className="text-lg font-semibold mb-3 text-gray-700">
-          Are you sure you want to delete this user?
-        </h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-700">{message}</h2>
         <div className="flex justify-center gap-4 mt-6">
           <button
             className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
@@ -32,5 +28,4 @@ const ConfirmDeletePopup = ({ isOpen, onConfirm, onCancel }) => {
     </div>
   );
 };
-
 export default ConfirmDeletePopup;

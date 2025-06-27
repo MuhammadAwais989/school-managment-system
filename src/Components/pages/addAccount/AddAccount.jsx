@@ -71,7 +71,7 @@ const AddAccount = () => {
   return (
     <>
       <Sidebar />
-      <div className="lg:pl-24 pt-28 max-md:pr-4 pr-9 pb-4 max-sm:pt-1 max-sm:pl-4 max-sm:pr-5 max-lg:pt-24 max-lg:pl-24 bg-gray-50 w-full h-screen">
+      <div className="lg:pl-24 pt-24 max-md:pr-4 pr-9 pb-4 max-sm:pt-1 max-sm:pl-4 max-sm:pr-5 max-lg:pt-24 max-lg:pl-24 bg-gray-50 w-full h-screen">
         <div className="bg-white w-full h-full shadow-md rounded-md pt-6 px-8 max-sm:px-4">
           <h1 className="text-xl font-bold">Add Account</h1>
 
@@ -127,7 +127,7 @@ const AddAccount = () => {
                     <td className="border px-3 py-1 text-gray-500">{user.phone}</td>
                     <td className="border px-3 py-1 text-gray-500">{user.email}</td>
                     <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.address}</td>
-                    <td className="px-3 py-1 flex justify-center items-center gap-4 text-lg">
+                    <td className="px-3 py-1 flex justify-center items-center gap-4 text-lg h-12">
                       <button title="View" className="text-blue-500 hover:text-blue-700" onClick={() => handleView(user)}><FaEye /></button>
                       <button title="Edit" className="text-green-500 hover:text-green-700" onClick={() => handleEdit(user)}><FaEdit /></button>
                       <button title="Delete" className="text-red-500 hover:text-red-700" onClick={() => confirmDelete(user)}><FaTrash /></button>
@@ -156,19 +156,38 @@ const AddAccount = () => {
 
       {isViewModalOpen && selectedUser && (
         <ViewPopup
-          user={selectedUser}
-          onClose={() => {
-            setIsViewModalOpen(false);
-            setSelectedUser(null);
-          }}
-        />
+  data={selectedUser}
+  onClose={() => {
+    setIsViewModalOpen(false);
+    setSelectedUser(null);
+  }}
+  title="User Details"
+  imageKey="profilePic"
+  fields={[
+    { label: "Name", key: "name" },
+    { label: "Father Name", key: "fatherName" },
+    { label: "Email", key: "email" },
+    { label: "Phone", key: "phone" },
+    { label: "Designation", key: "designation" },
+    { label: "Class", key: "Class" },
+    { label: "Section", key: "section" },
+    { label: "Salary", key: "salary" },
+    { label: "Gender", key: "gender" },
+    { label: "Date of Birth", key: "dateOfBirth" },
+    { label: "Joining Date", key: "dateOfJoining" },
+    { label: "Address", key: "address", fullWidth: true }
+  ]}
+/>
+
       )}
 
       <ConfirmDeletePopup
-        isOpen={isDeleteModalOpen}
-        onCancel={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleConfirmDelete}
-      />
+  isOpen={isDeleteModalOpen}
+  onConfirm={handleConfirmDelete}
+  onCancel={() => setIsDeleteModalOpen(false)}
+  message="Are you sure you want to delete this student?"
+/>
+
     </>
   );
 };
