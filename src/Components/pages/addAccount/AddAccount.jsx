@@ -115,17 +115,17 @@ const AddAccount = () => {
                     <td className="border px-3 py-1">
                       <img src={user.profilePic} alt="Profile" className="h-10 w-10 object-cover rounded-full mx-auto" />
                     </td>
-                    <td className="border px-3 py-1 text-gray-500">{user.name}</td>
-                    <td className="border px-3 py-1 text-gray-500">{user.fatherName}</td>
-                    <td className="border px-3 py-1 text-gray-500">{user.designation}</td>
-                    <td className="border px-3 py-1 text-gray-500">{user.dateOfJoining}</td>
-                    <td className="border px-3 py-1 text-gray-500">{user.Class}</td>
-                    <td className="border px-3 py-1 text-gray-500">{user.section}</td>
-                    <td className="border px-3 py-1 text-gray-500">{user.salary}</td>
-                    <td className="border px-3 py-1 text-gray-500">{user.gender}</td>
-                    <td className="border px-3 py-1 text-gray-500">{user.dateOfBirth}</td>
-                    <td className="border px-3 py-1 text-gray-500">{user.phone}</td>
-                    <td className="border px-3 py-1 text-gray-500">{user.email}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.name}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.fatherName}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.designation}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.dateOfJoining}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.Class}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.section}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.salary}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.gender}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.dateOfBirth}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.phone}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.email}</td>
                     <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.address}</td>
                     <td className="px-3 py-1 flex justify-center items-center gap-4 text-lg h-12">
                       <button title="View" className="text-blue-500 hover:text-blue-700" onClick={() => handleView(user)}><FaEye /></button>
@@ -156,37 +156,37 @@ const AddAccount = () => {
 
       {isViewModalOpen && selectedUser && (
         <ViewPopup
-  data={selectedUser}
-  onClose={() => {
-    setIsViewModalOpen(false);
-    setSelectedUser(null);
-  }}
-  title="User Details"
-  imageKey="profilePic"
-  fields={[
-    { label: "Name", key: "name" },
-    { label: "Father Name", key: "fatherName" },
-    { label: "Email", key: "email" },
-    { label: "Phone", key: "phone" },
-    { label: "Designation", key: "designation" },
-    { label: "Class", key: "Class" },
-    { label: "Section", key: "section" },
-    { label: "Salary", key: "salary" },
-    { label: "Gender", key: "gender" },
-    { label: "Date of Birth", key: "dateOfBirth" },
-    { label: "Joining Date", key: "dateOfJoining" },
-    { label: "Address", key: "address", fullWidth: true }
-  ]}
+          data={selectedUser}
+          onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedUser(null);
+          }}
+        title="User Details"
+        imageKey="profilePic"
+        fields={[
+        { label: "Name", key: "name" },
+        { label: "Father Name", key: "fatherName" },
+        { label: "Email", key: "email" },
+        { label: "Phone", key: "phone" },
+        { label: "Designation", key: "designation" },
+        { label: "Class", key: "Class" },
+        { label: "Section", key: "section" },
+        { label: "Salary", key: "salary" },
+        { label: "Gender", key: "gender" },
+        { label: "Date of Birth", key: "dateOfBirth" },
+        { label: "Joining Date", key: "dateOfJoining" },
+        { label: "Address", key: "address", fullWidth: true }
+      ]}
 />
 
       )}
 
       <ConfirmDeletePopup
-  isOpen={isDeleteModalOpen}
-  onConfirm={handleConfirmDelete}
-  onCancel={() => setIsDeleteModalOpen(false)}
-  message="Are you sure you want to delete this student?"
-/>
+        isOpen={isDeleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        message="Are you sure you want to delete this student?"
+      />
 
     </>
   );

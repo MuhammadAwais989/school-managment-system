@@ -17,7 +17,7 @@ const AppRoutes = () => {
         {/* <Sidebar /> */}
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path='/login' element={<AdminDashboard />} />
+          <Route path='/login' element={<Login />} />
           <Route path='/admin-dashboard' element={<AdminRoute> <AdminDashboard /> </AdminRoute>} />
           <Route path='/teacher-dashboard' element={<TeacherDashoard />} />
           <Route path='/teacher/details' element={<TeacherDetails />} />

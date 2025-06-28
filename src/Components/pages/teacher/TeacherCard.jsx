@@ -11,7 +11,6 @@ import loading from '../Loading'
 const TeacherCard = () => {
 
      const [teacherList, setteacherList] = useState(0);
-     const [loading, Setloading] = useState(true);
 
   useEffect(() => {
         const fetchTeacherCount = async () => {
@@ -29,7 +28,6 @@ const TeacherCard = () => {
           fetchTeacherCount()
       }, []);
 
-                console.log(teacherList);
 
   
 

@@ -83,7 +83,7 @@ const PopupModel = ({ isModalOpen, onclose, editMode = false, existingData = nul
     }
   };
 
-  if (loading) return <Loading text={editMode ? "Updating Data..." : "Sending Data..."} />;
+  if (loading) return <Loading text={editMode ? "Updating Data..." : "Adding User.."} />;
 
   return (
     <>

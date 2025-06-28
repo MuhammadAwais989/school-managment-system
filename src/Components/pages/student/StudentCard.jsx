@@ -4,13 +4,34 @@ import  absent  from '../../../assets/images/absent-student-icon.png'
 import  leave  from '../../../assets/images/leave.png'
 import TeacherCard from '../teacher/TeacherCard';
 import AccountsMain from '../accounts/AccountsMain'
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { BaseURL } from '../../helper/helper';
 
 
 const StudentCard = () => {
+       const [studentList, setStudentList] = useState(0);
+       useEffect(() => {
+               const fetchTeacherCount = async () => {
+                   try {
+                       const response = await axios.get(`${BaseURL}/students/details`);
+                       const users = response.data;
+                       
+                       const count = users.filter(user => user).length;
+                       setStudentList(count);
+                   } catch (err) {
+                       console.error("Failed to fetch user list:", err);
+                       
+                   }
+                 }
+                 fetchTeacherCount()
+             }, []);
+       
+  
     const StudentsData = [
 {
       type: "Total Students",
-      count: 2153,
+      count: studentList,
       iconColor: "text-blue-600",
       bgColor: "bg-blue-100",
       img: totalStudent,
