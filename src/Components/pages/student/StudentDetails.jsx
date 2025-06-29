@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaSearch, FaPlus, FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { FaSearch, FaPlus, FaEye, FaEdit, FaTrash, FaFilter } from "react-icons/fa";
 
 import Sidebar from "../sidebar/SideBar";
 import StudentAdPopup from "./StudentAdPopup";
@@ -18,6 +18,18 @@ const StudentDetails = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
+  const [filters, setFilters] = useState({ 
+    Class: "", 
+    section: "", 
+    gender: "", 
+    religion: "" 
+  });
+  const [showFilters, setShowFilters] = useState(false);
+
+  const classOrder = [
+    "Nursery", "KG-I", "KG-II", "One", "Two", "Three", "Four", "Five",
+    "Six", "Seven", "Eight", "Nine", "Matric"
+  ];
 
   useEffect(() => {
     fetchStudents();
@@ -33,30 +45,49 @@ const StudentDetails = () => {
     }
   };
 
-  const getFilteredData = () => {
-    const filtered = studentList.filter(student =>
-      student.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    return [...filtered].sort((a, b) => {
-      const exactA = a.name.toLowerCase() === searchTerm.toLowerCase();
-      const exactB = b.name.toLowerCase() === searchTerm.toLowerCase();
-      return exactA ? -1 : exactB ? 1 : 0;
-    });
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleView = student => {
+  const getFilteredData = () => {
+    return studentList
+      .filter((student) =>
+        student.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter((student) =>
+        (!filters.Class || student.Class === filters.Class) &&
+        (!filters.section || student.section === filters.section) &&
+        (!filters.gender || student.gender === filters.gender) &&
+        (!filters.religion || student.religion === filters.religion)
+      );
+  };
+
+  const groupedData = () => {
+    const sorted = [...getFilteredData()].sort((a, b) => {
+      const classA = classOrder.indexOf(a.Class);
+      const classB = classOrder.indexOf(b.Class);
+      if (classA === classB) {
+        return a.section.localeCompare(b.section);
+      }
+      return classA - classB;
+    });
+    return sorted;
+  };
+
+  const handleView = (student) => {
     setSelectedStudent(student);
     setIsEditMode(false);
     setIsViewModalOpen(true);
   };
 
-  const handleEdit = student => {
+  const handleEdit = (student) => {
     setSelectedStudent(student);
     setIsEditMode(true);
     setIsModalOpen(true);
   };
 
-  const confirmDelete = student => {
+  const confirmDelete = (student) => {
     setStudentToDelete(student);
     setIsDeleteModalOpen(true);
   };
@@ -64,7 +95,7 @@ const StudentDetails = () => {
   const handleConfirmDelete = async () => {
     try {
       await axios.delete(`${BaseURL}/students/details/${studentToDelete._id}`);
-      setStudentList(prev => prev.filter(s => s._id !== studentToDelete._id));
+      setStudentList((prev) => prev.filter((s) => s._id !== studentToDelete._id));
       showSuccess("Student deleted successfully");
       fetchStudents();
     } catch (error) {
@@ -79,11 +110,12 @@ const StudentDetails = () => {
   return (
     <>
       <Sidebar />
-      <div className="lg:pl-24 pt-24 pr-9 pb-4 bg-gray-50 w-full h-screen">
-        <div className="bg-white w-full h-full shadow-md rounded-md pt-6 px-8">
+      <div className="lg:pl-24 pt-24 max-md:pr-4 pr-9 pb-4 max-sm:pt-1 max-sm:pl-4 max-sm:pr-5 max-lg:pt-24 max-lg:pl-24 bg-gray-50 w-full h-screen">
+        <div className="bg-white w-full h-full shadow-md rounded-md pt-6 px-8 max-sm:px-4">
           <h1 className="text-xl font-bold">Student Details</h1>
 
           <div className="flex items-center justify-between py-4 gap-3 flex-wrap">
+            {/* Search Bar */}
             <div className="flex items-center bg-[#F8F8F8] rounded px-3 py-2 w-80 max-w-md flex-grow">
               <FaSearch className="text-gray-500 mr-2" />
               <input
@@ -94,6 +126,19 @@ const StudentDetails = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
+            {/* Filter Toggle Button (Center) */}
+            <div className="flex items-center">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-md transition-colors"
+              >
+                <FaFilter className="mr-2" />
+                Filters
+              </button>
+            </div>
+
+            {/* Add Student Button */}
             <button
               onClick={() => setIsModalOpen(true)}
               className="flex items-center bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700"
@@ -102,8 +147,62 @@ const StudentDetails = () => {
             </button>
           </div>
 
+          {/* Filter Dropdown */}
+          {showFilters && (
+            <div className="flex flex-wrap gap-3 items-center px-4 py-3 mb-4 bg-gray-50 rounded-lg">
+              <select
+                name="Class"
+                value={filters.Class}
+                onChange={handleFilterChange}
+                className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">All Classes</option>
+                {classOrder.map((cls) => (
+                  <option key={cls} value={cls}>{cls}</option>
+                ))}
+              </select>
+
+              <select
+                name="section"
+                value={filters.section}
+                onChange={handleFilterChange}
+                className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">All Sections</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+              </select>
+
+              <select
+                name="gender"
+                value={filters.gender}
+                onChange={handleFilterChange}
+                className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">All Genders</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+
+              <select
+                name="religion"
+                value={filters.religion}
+                onChange={handleFilterChange}
+                className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">All Religions</option>
+                <option value="Islam">Islam</option>
+                <option value="Christianity">Christianity</option>
+                <option value="Hinduism">Hinduism</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          )}
+
+          {/* TABLE */}
           <div className="overflow-x-auto max-h-[calc(100vh-255px)] scrollbar-hide">
-            <table className="min-w-full table-auto bg-white border border-gray-300">
+            <table className="min-w-full table-auto bg-white border border-gray-300 ">
               <thead className="bg-gray-100 text-gray-700 text-sm font-semibold text-center">
                 <tr>
                   {['', 'Photo', 'Name', 'Father Name', 'Mother Name', 'Father Occupation', 'Gender', 'Joining Date', 'Class', 'Section', 'Fees', 'DOB', 'Age', 'Religion', 'Phone', 'CNIC/B-Form', 'Present Address', 'Permanent Address', 'Actions'].map((title, idx) => (
@@ -112,7 +211,7 @@ const StudentDetails = () => {
                 </tr>
               </thead>
               <tbody>
-                {getFilteredData().map((student, index) => (
+                {groupedData().map((student, index) => (
                   <tr
                     key={student._id}
                     className={`text-center text-sm transition ${index % 2 ? 'bg-green-50' : 'bg-white'} hover:bg-gray-50`}
@@ -165,43 +264,41 @@ const StudentDetails = () => {
       )}
 
       {isViewModalOpen && selectedStudent && (
-      <ViewPopup
-  data={selectedStudent}
-  onClose={() => {
-    setIsViewModalOpen(false);
-    setSelectedStudent(null);
-  }}
-  title="Student Details"
-  imageKey="studentPic"
-  fields={[
-    { label: "Name", key: "name" },
-    { label: "Father Name", key: "fatherName" },
-    { label: "Mother Name", key: "motherName" },
-    { label: "Father Occupation", key: "fatherOccupation" },
-    { label: "Gender", key: "gender" },
-    { label: "Date of Birth", key: "dateOfBirth" },
-    { label: "Age", key: "age" },
-    { label: "Religion", key: "religion" },
-    { label: "Joining Date", key: "dateOfJoining" },
-    { label: "Class", key: "Class" },
-    { label: "Section", key: "section" },
-    { label: "Fees", key: "Fees" },
-    { label: "Phone", key: "phone" },
-    { label: "CNIC/B-Form", key: "CNIC_No" },
-    { label: "Present Address", key: "presentAddress", fullWidth: true },
-    { label: "Permanent Address", key: "permanentAddress", fullWidth: true }
-  ]}
-/>
-
-)}
-
+        <ViewPopup
+          data={selectedStudent}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setSelectedStudent(null);
+          }}
+          title="Student Details"
+          imageKey="studentPic"
+          fields={[
+            { label: "Name", key: "name" },
+            { label: "Father Name", key: "fatherName" },
+            { label: "Mother Name", key: "motherName" },
+            { label: "Father Occupation", key: "fatherOccupation" },
+            { label: "Gender", key: "gender" },
+            { label: "Date of Birth", key: "dateOfBirth" },
+            { label: "Age", key: "age" },
+            { label: "Religion", key: "religion" },
+            { label: "Joining Date", key: "dateOfJoining" },
+            { label: "Class", key: "Class" },
+            { label: "Section", key: "section" },
+            { label: "Fees", key: "Fees" },
+            { label: "Phone", key: "phone" },
+            { label: "CNIC/B-Form", key: "CNIC_No" },
+            { label: "Present Address", key: "presentAddress", fullWidth: true },
+            { label: "Permanent Address", key: "permanentAddress", fullWidth: true }
+          ]}
+        />
+      )}
 
       <ConfirmDeletePopup
-  isOpen={isDeleteModalOpen}
-  onConfirm={handleConfirmDelete}
-  onCancel={() => setIsDeleteModalOpen(false)}
-  message="Are you sure you want to delete this student?"
-/>
+        isOpen={isDeleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        message="Are you sure you want to delete this student?"
+      />
     </>
   );
 };
