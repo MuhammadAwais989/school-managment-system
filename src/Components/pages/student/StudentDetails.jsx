@@ -116,7 +116,7 @@ const StudentDetails = () => {
 
           <div className="flex items-center justify-between py-4 gap-3 flex-wrap">
             {/* Search Bar */}
-            <div className="flex items-center bg-[#F8F8F8] rounded px-3 py-2 w-80 max-w-md flex-grow">
+            <div className="flex items-center bg-[#F8F8F8] rounded px-3 py-2 flex-grow w-10 max-sm:w-full">
               <FaSearch className="text-gray-500 mr-2" />
               <input
                 type="text"
@@ -128,7 +128,7 @@ const StudentDetails = () => {
             </div>
 
             {/* Filter Toggle Button (Center) */}
-            <div className="flex items-center">
+            <div className="flex items-center relative max-sm:w-full max-sm:justify-between gap-x-2 ">
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-md transition-colors"
@@ -136,7 +136,7 @@ const StudentDetails = () => {
                 <FaFilter className="mr-2" />
                 Filters
               </button>
-            </div>
+            
 
             {/* Add Student Button */}
             <button
@@ -145,11 +145,9 @@ const StudentDetails = () => {
             >
               <FaPlus className="mr-2" /> Add Student
             </button>
-          </div>
-
           {/* Filter Dropdown */}
           {showFilters && (
-            <div className="flex flex-wrap gap-3 items-center px-4 py-3 mb-4 bg-gray-50 rounded-lg">
+            <div className="absolute top-12 -left-6 flex flex-col gap-3 items-center px-2 py-3 mb-4 bg-white/70 shadow-md w-fit rounded-lg">
               <select
                 name="Class"
                 value={filters.Class}
@@ -199,9 +197,11 @@ const StudentDetails = () => {
               </select>
             </div>
           )}
-
+          </div>
+            </div>
+        
           {/* TABLE */}
-          <div className="overflow-x-auto max-h-[calc(100vh-255px)] scrollbar-hide">
+          <div className="overflow-x-auto h-[calc(100vh-255px)] max-sm:h-[calc(100vh-210px)] scrollbar-hide">
             <table className="min-w-full table-auto bg-white border border-gray-300 ">
               <thead className="bg-gray-100 text-gray-700 text-sm font-semibold text-center">
                 <tr>

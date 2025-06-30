@@ -77,12 +77,12 @@ const AddAccount = () => {
 
           {/* Header Controls */}
           <div className="flex items-center justify-between py-4 flex-wrap gap-3">
-            <div className="flex items-center bg-[#F8F8F8] rounded px-3 py-2 w-80 max-w-md flex-grow">
+            <div className="flex items-center bg-[#F8F8F8] rounded px-3 py-2  flex-grow max-sm:">
               <FaSearch className="text-gray-500 mr-2" />
               <input
                 type="text"
                 placeholder="Search By Name"
-                className="outline-none bg-[#F8F8F8] w-full"
+                className="outline-none bg-[#F8F8F8] "
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -96,7 +96,7 @@ const AddAccount = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto max-h-[calc(100vh-255px)] scrollbar-hide">
+          <div className="overflow-x-auto h-[calc(100vh-255px)] max-sm:h-[calc(100vh-210px)] scrollbar-hide">
             <table className="min-w-full table-auto bg-white border border-gray-300 ">
               <thead className="bg-gray-100 text-gray-700 text-sm font-semibold text-center">
                 <tr>
