@@ -1,8 +1,10 @@
 import React from 'react'
-
+import Sidebar from '../sidebar/SideBar'
 const TeacherDashboard = () => {
   return (
-    <div>TeacherDashboard</div>
+    <>
+     <Sidebar />
+    </>
   )
 }
 

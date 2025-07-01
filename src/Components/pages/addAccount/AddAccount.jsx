@@ -96,7 +96,7 @@ const AddAccount = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto h-[calc(100vh-255px)] max-sm:h-[calc(100vh-210px)] scrollbar-hide">
+          <div className="overflow-x-auto h-[calc(100vh-255px)] max-sm:h-[calc(100vh-160px)] scrollbar-hide">
             <table className="min-w-full table-auto bg-white border border-gray-300 ">
               <thead className="bg-gray-100 text-gray-700 text-sm font-semibold text-center">
                 <tr>
