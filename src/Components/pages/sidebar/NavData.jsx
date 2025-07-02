@@ -4,12 +4,13 @@ import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { PiStudentFill } from "react-icons/pi";
 import { MdGroupAdd } from "react-icons/md";
 
+const role = localStorage.getItem("role");
 
 export const navItem = [
   {
     id: 1,
     label: "Dashboard",
-    path: "/admin-dashboard",
+    path: role === "Teacher" ? "/teacher-dashboard" : "/admin-dashboard",
     icon: <RxDashboard />,
   },
   {
