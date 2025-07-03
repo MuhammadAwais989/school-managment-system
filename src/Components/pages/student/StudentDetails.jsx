@@ -205,7 +205,7 @@ const StudentDetails = () => {
             <table className="min-w-full table-auto bg-white border border-gray-300 ">
               <thead className="bg-gray-100 text-gray-700 text-sm font-semibold text-center">
                 <tr>
-                  {['', 'Photo', 'Name', 'Father Name', 'Mother Name', 'Father Occupation', 'Gender', 'Joining Date', 'Class', 'Section', 'Fees', 'DOB', 'Age', 'Religion', 'Phone', 'CNIC/B-Form', 'Present Address', 'Permanent Address', 'Actions'].map((title, idx) => (
+                  {['','Roll No', 'Photo', 'Name', 'Father Name', 'Mother Name', 'Father Occupation', 'Gender', 'Joining Date', 'Class', 'Section', 'Fees', 'DOB', 'Age', 'Religion', 'Phone', 'CNIC/B-Form', 'Present Address', 'Permanent Address', 'Actions'].map((title, idx) => (
                     <th key={idx} className="border px-3 py-3 whitespace-nowrap">{title}</th>
                   ))}
                 </tr>
@@ -217,6 +217,7 @@ const StudentDetails = () => {
                     className={`text-center text-sm transition ${index % 2 ? 'bg-green-50' : 'bg-white'} hover:bg-gray-50`}
                   >
                     <td className="border px-3 py-1 text-gray-400">{index + 1}</td>
+                    <td className="border px-3 py-1">{student.rollNo}</td>
                     <td className="border px-3 py-1">
                       <img src={student.studentPic} alt="Student" className="h-10 w-10 object-cover rounded-full mx-auto" />
                     </td>

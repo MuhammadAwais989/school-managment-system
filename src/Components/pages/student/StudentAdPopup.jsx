@@ -60,7 +60,7 @@ const StudentAdPopup = ({ isModalOpen, onclose, editMode = false, existingData =
 
     try {
       if (editMode) {
-        await axios.put(`${BaseURL}/students/details${existingData._id}`, formData, {
+        await axios.put(`${BaseURL}/students/details/${existingData._id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         showSuccess('Student updated successfully');

@@ -1,4 +1,5 @@
 const StudentInputData = [
+  { name: 'rollNo', type: 'text', placeholder: 'Roll No' },  // ✅ correct key
   { name: 'name', type: 'text', placeholder: 'Student Name' },
   { name: 'fatherName', type: 'text', placeholder: 'Father Name' },
   { name: 'motherName', type: 'text', placeholder: 'Mother Name' },
@@ -22,4 +23,4 @@ const StudentInputData = [
   { name: 'CNIC_No', type: 'text', placeholder: 'CNIC / B-Form Number' },
 ];
 
-export default StudentInputData;
+export default StudentInputData

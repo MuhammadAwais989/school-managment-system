@@ -18,10 +18,17 @@ const LoginPage = () => {
 
   try {
     const res = await axios.post(`${BaseURL}/login`, { email, password });
-    const { token, role } = res.data;
+    const { token, role, Class, section } = res.data;
 
     localStorage.setItem("token", token);
     localStorage.setItem("role", role);
+
+    // ✅ Store class and section (only if teacher)
+    if (role === "Teacher") {
+      localStorage.setItem("classAssigned", Class);
+      localStorage.setItem("sectionAssigned", section);
+}
+
 
     toast.success("Login successful");
 
