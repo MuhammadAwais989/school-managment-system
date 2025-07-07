@@ -206,7 +206,7 @@ const StudentDetails = () => {
               <thead className="bg-gray-100 text-gray-700 text-sm font-semibold text-center">
                 <tr>
                   {['','Roll No', 'Photo', 'Name', 'Father Name', 'Mother Name', 'Father Occupation', 'Gender', 'Joining Date', 'Class', 'Section', 'Fees', 'DOB', 'Age', 'Religion', 'Phone', 'CNIC/B-Form', 'Present Address', 'Permanent Address', 'Actions'].map((title, idx) => (
-                    <th key={idx} className="border px-3 py-3 whitespace-nowrap">{title}</th>
+                    <th key={idx} className="border px-2 py-3 whitespace-nowrap">{title}</th>
                   ))}
                 </tr>
               </thead>
