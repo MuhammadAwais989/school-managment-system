@@ -4,6 +4,7 @@ import axios from 'axios';
 import { BaseURL } from '../../helper/helper';
 import Sidebar from '../sidebar/SideBar';
 import ReportModal from './AttendenceReport';
+import { showError, showSuccess } from '../../utils/Toast';
 
 const StudentAttendence = () => {
   const [students, setStudents] = useState([]);
@@ -68,23 +69,23 @@ const StudentAttendence = () => {
         }))
       };
 
-      await axios.post(`${BaseURL}/attendance/mark`, payload);
-      alert("Attendance marked successfully");
+      await axios.post(`${BaseURL}/students/attendence`, payload);
+      showSuccess("Attendance marked successfully")
     } catch (err) {
       console.error("Attendance submit error:", err);
-      alert("Error marking attendance");
+      showError("Error marking attendance")
     }
   };
 
   const handleReportSelect = async (studentId, reportType) => {
     try {
-      const response = await axios.get(`${BaseURL}/attendance/report?studentId=${studentId}&type=${reportType}`);
+      const response = await axios.get(`${BaseURL}/students/attendence?studentId=${studentId}&type=${reportType}`);
       setModalTitle(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Attendance Report`);
       setModalData([response.data]);
       setShowModal(true);
     } catch (err) {
       console.error("Error fetching report:", err);
-      alert("Failed to fetch report.");
+      showError("Failed to fetch report.")
     }
   };
 
@@ -95,11 +96,11 @@ const StudentAttendence = () => {
         <div className="bg-white w-full h-full shadow-md rounded-md px-8 max-sm:px-4">
           <div className="p-4">
             <div className="flex items-center justify-between py-4 flex-wrap gap-3">
-              <h2 className="text-2xl font-bold">Student Attendance</h2>
+              <h2 className="text-2xl font-bold max-sm:text-xl">Student Attendance</h2>
               <div className="flex gap-3">
                 <button
                   onClick={handleSubmit}
-                  className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700"
+                  className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700 max-sm:text-sm"
                 >
                   Submit Attendance
                 </button>
@@ -129,7 +130,7 @@ const StudentAttendence = () => {
                   <tbody>
                     {students.map((s, index) => (
                       <tr key={s.studentId} className="text-center">
-                        <td className="border py-2">{index + 1}</td>
+                        <td className="border py-2 text-gray-400">{index + 1}</td>
                         <td className="border px-2 py-2">
                           <img
                             src={s.profilePic}
@@ -163,6 +164,7 @@ const StudentAttendence = () => {
                             <option value="weekly">Weekly</option>
                             <option value="monthly">Monthly</option>
                             <option value="previous">Previous Month</option>
+                            <option value="yearly">Yearly</option>
                           </select>
                         </td>
                       </tr>

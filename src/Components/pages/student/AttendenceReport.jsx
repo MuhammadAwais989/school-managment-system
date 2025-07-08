@@ -1,47 +1,66 @@
 // ReportModal.jsx
 import React from 'react';
 import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+
 
 const ReportModal = ({ isOpen, onClose, title, data }) => {
   if (!isOpen) return null;
 
   const handleDownload = () => {
-    const csv = [
-      [
-        'Roll No',
-        'Name',
-        'Father Name',
-        'Class',
-        'Section',
-        'Present Dates',
-        'Absent Dates',
-        'Leave Dates',
-        'Total Present',
-        'Total Absent',
-        'Total Leave'
-      ].join(',')
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Title
+  doc.setFontSize(16);
+  doc.text(title, pageWidth / 2, 15, { align: 'center' });
+
+  // Table headers
+  const headers = [
+    'Roll No',
+    'Name',
+    'Father Name',
+    'Class',
+    'Section',
+    'Total Present',
+    'Total Absent',
+    'Total Leave',
+  ];
+
+  const startX = 10;
+  let startY = 25;
+
+  // Draw table headers
+  doc.setFontSize(10);
+  headers.forEach((header, index) => {
+    doc.text(header, startX + index * 25, startY);
+  });
+
+  startY += 10;
+
+  // Draw student rows
+  data.forEach((student) => {
+    const row = [
+      student.rollNo || '-',
+      student.name || '-',
+      student.fathername || '-',
+      student.class || '-',
+      student.section || '-',
+      String(student.totalPresent || 0),
+      String(student.totalAbsent || 0),
+      String(student.totalLeave || 0),
     ];
 
-    data.forEach((student) => {
-      const row = [
-        student.rollNo,
-        student.name,
-        student.fathername,
-        student.class,
-        student.section,
-        student.presentDates?.join('|') || '-',
-        student.absentDates?.join('|') || '-',
-        student.leaveDates?.join('|') || '-',
-        student.totalPresent || 0,
-        student.totalAbsent || 0,
-        student.totalLeave || 0
-      ];
-      csv.push(row.join(','));
+    row.forEach((item, idx) => {
+      doc.text(item, startX + idx * 25, startY);
     });
 
-    const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, `${title.replace(/\s+/g, '_').toLowerCase()}_report.csv`);
-  };
+    startY += 10;
+  });
+
+  doc.save(`${title.replace(/\s+/g, '_').toLowerCase()}_report.pdf`);
+};
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex justify-center items-center z-50">
