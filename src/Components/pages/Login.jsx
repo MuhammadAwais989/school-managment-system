@@ -14,37 +14,39 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const res = await axios.post(`${BaseURL}/login`, { email, password });
-    const { token, role, Class, section } = res.data;
+    try {
+      const res = await axios.post(`${BaseURL}/login`, { email, password });
+      const { token, role, Class, section } = res.data;
 
-    localStorage.setItem("token", token);
-    localStorage.setItem("role", role);
-    localStorage.setItem("classAssigned", Class);
-
-    // ✅ Store class and section (only if teacher)
-    if (role === "Teacher") {
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
       localStorage.setItem("classAssigned", Class);
-}
+
+      // ✅ Store class and section (only if teacher)
+      if (role === "Teacher") {
+        localStorage.setItem("classAssigned", Class);
+        localStorage.setItem("teacherClass", Class); // ✅ Only Class needed
+
+      }
 
 
-    toast.success("Login successful");
+      toast.success("Login successful");
 
-    // ✅ Force reload to trigger correct route rendering
-    if (role === "Admin" || role === "Principle") {
-      window.location.href = "/admin-dashboard";
-    } else if (role === "Teacher") {
-      window.location.href = "/teacher-dashboard";
-    } else {
-      toast.error("Unauthorized role");
+      // ✅ Force reload to trigger correct route rendering
+      if (role === "Admin" || role === "Principle") {
+        window.location.href = "/admin-dashboard";
+      } else if (role === "Teacher") {
+        window.location.href = "/teacher-dashboard";
+      } else {
+        toast.error("Unauthorized role");
+      }
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Login failed");
     }
-
-  } catch (err) {
-    toast.error(err.response?.data?.message || "Login failed");
-  }
-};
+  };
 
 
   return (

@@ -1,3 +1,5 @@
+// ✅ StudentCard.jsx (Class-wise Only)
+
 import totalStudent from '../../../assets/images/toal-student-icon.png';
 import present from '../../../assets/images/present-student-icon.png';
 import absent from '../../../assets/images/absent-student-icon.png';
@@ -17,41 +19,56 @@ const StudentCard = () => {
     total: 0
   });
 
-  const role = localStorage.getItem("role"); 
+  const role = localStorage.getItem("role");
+  const teacherClass = localStorage.getItem("teacherClass");
 
-  // Fetch total student count
+  // ✅ Fetch total student count (Class-wise)
   useEffect(() => {
     const fetchStudentCount = async () => {
       try {
-        const response = await axios.get(`${BaseURL}/students/details`);
-        const count = response.data?.length || 0;
-        setStudentList(count);
+        const res = await axios.get(`${BaseURL}/students/details`);
+        if (role === "Teacher") {
+          const filtered = res.data.filter(std => std.Class === teacherClass);
+          setStudentList(filtered.length);
+        } else {
+          setStudentList(res.data.length || 0);
+        }
       } catch (err) {
         console.error("Failed to fetch student list:", err);
       }
     };
 
     fetchStudentCount();
-  }, []);
+  }, [role, teacherClass]);
 
-  // Fetch today's attendance summary
+  // ✅ Fetch today's attendance summary (Class-wise)
   useEffect(() => {
     const fetchAttendanceSummary = async () => {
       try {
-        const res = await axios.get(`${BaseURL}/`);
-        setAttendanceSummary({
-          present: res.data.present || 0,
-          absent: res.data.absent || 0,
-          leave: res.data.leave || 0,
-          total: res.data.total || 0
-        });
+        if (role === "Teacher") {
+          const res = await axios.get(`${BaseURL}/students/summary?class=${teacherClass}`);
+          setAttendanceSummary({
+            present: res.data.present || 0,
+            absent: res.data.absent || 0,
+            leave: res.data.leave || 0,
+            total: res.data.total || 0
+          });
+        } else {
+          const res = await axios.get(`${BaseURL}/`);
+          setAttendanceSummary({
+            present: res.data.present || 0,
+            absent: res.data.absent || 0,
+            leave: res.data.leave || 0,
+            total: res.data.total || 0
+          });
+        }
       } catch (err) {
         console.error("Failed to fetch today's attendance summary:", err);
       }
     };
 
     fetchAttendanceSummary();
-  }, []);
+  }, [role, teacherClass]);
 
   const StudentsData = [
     {
@@ -85,32 +102,29 @@ const StudentCard = () => {
   ];
 
   return (
-    <>
-      <div className="bg-gray-50 h-fit w-full lg:pl-28 pl-4 pt-8 max-sm:pr-1 max-lg:pl-24 max-sm:pt-0 max-sm:pl-3 sm:pt-16 flex flex-wrap gap-x-4">
-        {StudentsData.map((items) => (
-          <div
-            key={items.type}
-            className="lg:w-[23%] w-60 max-sm:w-[47%] sm:w-[47%] max-[460px]:w-full h-24 bg-white rounded-md shadow-md flex items-center justify-between px-5 mt-8"
-          >
-            <div className={`size-16 rounded-full ${items.bgColor} flex justify-center items-center`}>
-              <img src={items.img} alt="" className={`size-10 ${items.iconColor}`} />
-            </div>
-            <div className="text-center">
-              <h3 className="font-sans font-semibold text-gray-600">{items.type}</h3>
-              <h1 className="font-bold font-sans text-xl">{items.count}</h1>
-            </div>
+    <div className="bg-gray-50 h-fit w-full lg:pl-28 pl-4 pt-8 max-sm:pr-1 max-lg:pl-24 max-sm:pt-0 max-sm:pl-3 sm:pt-16 flex flex-wrap gap-x-4">
+      {StudentsData.map((items) => (
+        <div
+          key={items.type}
+          className="lg:w-[23%] w-60 max-sm:w-[47%] sm:w-[47%] max-[460px]:w-full h-24 bg-white rounded-md shadow-md flex items-center justify-between px-5 mt-8"
+        >
+          <div className={`size-16 rounded-full ${items.bgColor} flex justify-center items-center`}>
+            <img src={items.img} alt="" className={`size-10 ${items.iconColor}`} />
           </div>
-        ))}
+          <div className="text-center">
+            <h3 className="font-sans font-semibold text-gray-600">{items.type}</h3>
+            <h1 className="font-bold font-sans text-xl">{items.count}</h1>
+          </div>
+        </div>
+      ))}
 
-        {/* Only show for admin or principal */}
-        {(role === 'Admin' || role === 'Principle') && (
-          <>
-            <TeacherCard />
-            <AccountsMain />
-          </>
-        )}
-      </div>
-    </>
+      {(role === 'Admin' || role === 'Principle') && (
+        <>
+          <TeacherCard />
+          <AccountsMain />
+        </>
+      )}
+    </div>
   );
 };
 
