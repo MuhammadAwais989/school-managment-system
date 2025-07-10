@@ -1,66 +1,73 @@
 // ReportModal.jsx
 import React from 'react';
-import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
-
 
 const ReportModal = ({ isOpen, onClose, title, data }) => {
   if (!isOpen) return null;
 
   const handleDownload = () => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Title
-  doc.setFontSize(16);
-  doc.text(title, pageWidth / 2, 15, { align: 'center' });
+    // Title
+    doc.setFontSize(16);
+    doc.text(title, pageWidth / 2, 15, { align: 'center' });
 
-  // Table headers
-  const headers = [
-    'Roll No',
-    'Name',
-    'Father Name',
-    'Class',
-    'Section',
-    'Total Present',
-    'Total Absent',
-    'Total Leave',
-  ];
-
-  const startX = 10;
-  let startY = 25;
-
-  // Draw table headers
-  doc.setFontSize(10);
-  headers.forEach((header, index) => {
-    doc.text(header, startX + index * 25, startY);
-  });
-
-  startY += 10;
-
-  // Draw student rows
-  data.forEach((student) => {
-    const row = [
-      student.rollNo || '-',
-      student.name || '-',
-      student.fathername || '-',
-      student.class || '-',
-      student.section || '-',
-      String(student.totalPresent || 0),
-      String(student.totalAbsent || 0),
-      String(student.totalLeave || 0),
+    // Table headers
+    const headers = [
+      'Roll No',
+      'Name',
+      'Father Name',
+      'Class',
+      'Section',
+      'Date',
+      'Status',
     ];
 
-    row.forEach((item, idx) => {
-      doc.text(item, startX + idx * 25, startY);
+    const startX = 10;
+    let startY = 25;
+
+    doc.setFontSize(10);
+    headers.forEach((header, index) => {
+      doc.text(header, startX + index * 25, startY);
     });
 
     startY += 10;
-  });
 
-  doc.save(`${title.replace(/\s+/g, '_').toLowerCase()}_report.pdf`);
-};
+    data.forEach((student) => {
+      const baseInfo = [
+        student.rollNo || '-',
+        student.name || '-',
+        student.fathername || '-',
+        student.class || '-',
+        student.section || '-',
+      ];
 
+      const allDates = [
+        ...(student.presentDates || []).map((date) => ({ date, status: 'Present' })),
+        ...(student.absentDates || []).map((date) => ({ date, status: 'Absent' })),
+        ...(student.leaveDates || []).map((date) => ({ date, status: 'Leave' })),
+      ];
+
+      // Optional: Sort by date
+      allDates.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      allDates.forEach((entry) => {
+        const row = [...baseInfo, entry.date, entry.status];
+        row.forEach((item, idx) => {
+          doc.text(String(item), startX + idx * 25, startY);
+        });
+        startY += 10;
+
+        if (startY > 280) {
+          doc.addPage();
+          startY = 20;
+        }
+      });
+    });
+
+    doc.save(`${title.replace(/\s+/g, '_').toLowerCase()}_report.pdf`);
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex justify-center items-center z-50">
@@ -84,30 +91,32 @@ const ReportModal = ({ isOpen, onClose, title, data }) => {
                 <th className="border px-2 py-1">Father Name</th>
                 <th className="border px-2 py-1">Class</th>
                 <th className="border px-2 py-1">Section</th>
-                <th className="border px-2 py-1">Present Dates</th>
-                <th className="border px-2 py-1">Absent Dates</th>
-                <th className="border px-2 py-1">Leave Dates</th>
-                <th className="border px-2 py-1">Total Present</th>
-                <th className="border px-2 py-1">Total Absent</th>
-                <th className="border px-2 py-1">Total Leave</th>
+                <th className="border px-2 py-1">Date</th>
+                <th className="border px-2 py-1">Status</th>
               </tr>
             </thead>
             <tbody>
-              {data.map((s, idx) => (
-                <tr key={idx} className="text-center">
-                  <td className="border px-2 py-1">{s.rollNo}</td>
-                  <td className="border px-2 py-1">{s.name}</td>
-                  <td className="border px-2 py-1">{s.fathername}</td>
-                  <td className="border px-2 py-1">{s.class}</td>
-                  <td className="border px-2 py-1">{s.section}</td>
-                  <td className="border px-2 py-1 whitespace-pre-wrap text-left">{s.presentDates?.join(', ') || '-'}</td>
-                  <td className="border px-2 py-1 whitespace-pre-wrap text-left">{s.absentDates?.join(', ') || '-'}</td>
-                  <td className="border px-2 py-1 whitespace-pre-wrap text-left">{s.leaveDates?.join(', ') || '-'}</td>
-                  <td className="border px-2 py-1">{s.totalPresent || 0}</td>
-                  <td className="border px-2 py-1">{s.totalAbsent || 0}</td>
-                  <td className="border px-2 py-1">{s.totalLeave || 0}</td>
-                </tr>
-              ))}
+              {data.map((s, idx) => {
+                const allDates = [
+                  ...(s.presentDates || []).map(date => ({ date, status: 'Present' })),
+                  ...(s.absentDates || []).map(date => ({ date, status: 'Absent' })),
+                  ...(s.leaveDates || []).map(date => ({ date, status: 'Leave' })),
+                ];
+
+                allDates.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                return allDates.map((entry, i) => (
+                  <tr key={`${idx}-${i}`} className="text-center">
+                    <td className="border px-2 py-1">{s.rollNo}</td>
+                    <td className="border px-2 py-1">{s.name}</td>
+                    <td className="border px-2 py-1">{s.fathername}</td>
+                    <td className="border px-2 py-1">{s.class}</td>
+                    <td className="border px-2 py-1">{s.section}</td>
+                    <td className="border px-2 py-1">{entry.date}</td>
+                    <td className="border px-2 py-1">{entry.status}</td>
+                  </tr>
+                ));
+              })}
             </tbody>
           </table>
         </div>
