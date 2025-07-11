@@ -54,7 +54,7 @@ const LoginPage = () => {
       className="flex items-center justify-center min-h-screen bg-cover bg-center"
       style={{ backgroundImage: `url(${bg})` }}
     >
-      <div className="relative pt-16 backdrop-blur-sm bg-white/30 p-8 rounded-2xl shadow-lg w-full max-w-sm">
+      <div className="relative pt-16 backdrop-blur-sm bg-white/30 p-8 rounded-2xl shadow-lg w-full max-w-sm max-[500px]:w-[95%] ">
         {/* Avatar */}
         <div className="flex justify-center mb-4 absolute -top-10 left-1/2 -translate-x-1/2">
           <RxAvatar className="w-20 h-20 rounded-full shadow bg-[#00264D] p-4 text-white text-lg" />

@@ -1,4 +1,3 @@
-// StudentAttendence.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BaseURL } from '../../helper/helper';
@@ -14,42 +13,42 @@ const StudentAttendence = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState('Attendance Report');
   const [modalData, setModalData] = useState([]);
+  const [modalMode, setModalMode] = useState('detail');
 
- useEffect(() => {
-  const assignedClass = localStorage.getItem("classAssigned");
+  useEffect(() => {
+    const assignedClass = localStorage.getItem("classAssigned");
 
-  if (!assignedClass) return;
+    if (!assignedClass) return;
 
-  const url = `${BaseURL}/students/details?class=${encodeURIComponent(assignedClass)}`;
+    const url = `${BaseURL}/students/details?class=${encodeURIComponent(assignedClass)}`;
 
-  axios.get(url)
-    .then((res) => {
-      if (!res.data || res.data.length === 0) {
-        setStudents([]);
+    axios.get(url)
+      .then((res) => {
+        if (!res.data || res.data.length === 0) {
+          setStudents([]);
+          setLoading(false);
+          return;
+        }
+
+        const formatted = res.data.map((s) => ({
+          studentId: s._id,
+          rollNo: s.rollNo || '',
+          profilePic: s.studentPic || '',
+          name: s.name,
+          fathername: s.fatherName,
+          class: s.Class,
+          section: s.section,
+          status: "present"
+        }));
+
+        setStudents(formatted);
         setLoading(false);
-        return;
-      }
-
-      const formatted = res.data.map((s) => ({
-        studentId: s._id,
-        rollNo: s.rollNo || '',
-        profilePic: s.studentPic || '',
-        name: s.name,
-        fathername: s.fatherName,
-        class: s.Class,
-        section: s.section,
-        status: "present"
-      }));
-
-      setStudents(formatted);
-      setLoading(false);
-    })
-    .catch((err) => {
-      console.error("Error fetching filtered students:", err);
-      setLoading(false);
-    });
-}, []);
-
+      })
+      .catch((err) => {
+        console.error("Error fetching filtered students:", err);
+        setLoading(false);
+      });
+  }, []);
 
   const handleStatusChange = (index, value) => {
     const updated = [...students];
@@ -82,12 +81,41 @@ const StudentAttendence = () => {
       const response = await axios.get(`${BaseURL}/students/attendence?studentId=${studentId}&type=${reportType}`);
       setModalTitle(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Attendance Report`);
       setModalData([response.data]);
+      setModalMode("detail");
       setShowModal(true);
     } catch (err) {
       console.error("Error fetching report:", err);
       showError("Failed to fetch report.")
     }
   };
+
+  const handleMonthlySummary = async () => {
+    try {
+      const assignedClass = localStorage.getItem("classAssigned");
+      const section = localStorage.getItem("sectionAssigned") || "A";
+      const today = new Date();
+      const month = today.getMonth() + 1; 
+      const year = today.getFullYear();
+
+      const response = await axios.get(`${BaseURL}/students/summary/monthly`, {
+        params: {
+          class: assignedClass,
+          section,
+          month,
+          year,
+        },
+      });
+
+      setModalTitle(`Class ${assignedClass} ${section} - Monthly Summary`);
+      setModalData(response.data); 
+      setModalMode("summary");
+      setShowModal(true);
+    } catch (err) {
+      console.error("Error fetching class summary:", err);
+      showError("Failed to fetch monthly summary.");
+    }
+  };
+
 
   return (
     <>
@@ -98,6 +126,12 @@ const StudentAttendence = () => {
             <div className="flex items-center justify-between py-4 flex-wrap gap-3">
               <h2 className="text-2xl font-bold max-sm:text-xl">Student Attendance</h2>
               <div className="flex gap-3">
+                <button
+                  onClick={handleMonthlySummary}
+                  className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700 max-sm:text-sm"
+                >
+                  Monthly Report
+                </button>
                 <button
                   onClick={handleSubmit}
                   className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700 max-sm:text-sm"
@@ -182,6 +216,7 @@ const StudentAttendence = () => {
         onClose={() => setShowModal(false)}
         title={modalTitle}
         data={modalData}
+        mode={modalMode}
       />
     </>
   );
