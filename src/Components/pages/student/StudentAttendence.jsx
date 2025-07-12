@@ -89,30 +89,24 @@ const StudentAttendence = () => {
     }
   };
 
-  const handleMonthlySummary = async () => {
+  const handleClassReport = async (type) => {
     try {
       const assignedClass = localStorage.getItem("classAssigned");
-      const section = localStorage.getItem("sectionAssigned") || "A";
-      const today = new Date();
-      const month = today.getMonth() + 1; 
-      const year = today.getFullYear();
 
-      const response = await axios.get(`${BaseURL}/students/summary/monthly`, {
+      const response = await axios.get(`${BaseURL}/students/class/report`, {
         params: {
           class: assignedClass,
-          section,
-          month,
-          year,
+          type: type,
         },
       });
 
-      setModalTitle(`Class ${assignedClass} ${section} - Monthly Summary`);
-      setModalData(response.data); 
+      setModalTitle(`${assignedClass} - ${type} Report`);
+      setModalData(response.data);
       setModalMode("summary");
       setShowModal(true);
     } catch (err) {
-      console.error("Error fetching class summary:", err);
-      showError("Failed to fetch monthly summary.");
+      console.error("Error fetching class report:", err);
+      showError("Failed to fetch class report.");
     }
   };
 
@@ -126,12 +120,19 @@ const StudentAttendence = () => {
             <div className="flex items-center justify-between py-4 flex-wrap gap-3">
               <h2 className="text-2xl font-bold max-sm:text-xl">Student Attendance</h2>
               <div className="flex gap-3">
-                <button
-                  onClick={handleMonthlySummary}
-                  className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700 max-sm:text-sm"
+                <select
+                  onChange={(e) => handleClassReport(e.target.value)}
+                  className="border cursor-pointer border-gray-300 rounded-md px-4 py-2 bg-white text-gray-700 hover:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500 max-sm:text-sm"
+                  defaultValue=""
                 >
-                  Monthly Report
-                </button>
+                  <option value="" disabled>Select Report</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="previous">Previous Month</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+
+
                 <button
                   onClick={handleSubmit}
                   className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700 max-sm:text-sm"
