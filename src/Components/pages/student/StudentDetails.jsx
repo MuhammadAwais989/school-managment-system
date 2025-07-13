@@ -183,7 +183,7 @@ const StudentDetails = () => {
                 <option value="Female">Female</option>
               </select>
 
-              <select
+              {/* <select
                 name="religion"
                 value={filters.religion}
                 onChange={handleFilterChange}
@@ -194,7 +194,7 @@ const StudentDetails = () => {
                 <option value="Christianity">Christianity</option>
                 <option value="Hinduism">Hinduism</option>
                 <option value="Other">Other</option>
-              </select>
+              </select> */}
             </div>
           )}
           </div>

@@ -1,8 +1,8 @@
 const StudentInputData = [
   { name: 'rollNo', type: 'text', placeholder: 'Roll No' },  // ✅ correct key
-  { name: 'name', type: 'text', placeholder: 'Student Name' },
-  { name: 'fatherName', type: 'text', placeholder: 'Father Name' },
-  { name: 'motherName', type: 'text', placeholder: 'Mother Name' },
+  { name: 'name', type: 'text', placeholder: 'Enter Student Name' },
+  { name: 'fatherName', type: 'text', placeholder: 'Enter Father Name' },
+  { name: 'motherName', type: 'text', placeholder: 'Enter Mother Name' },
   { name: 'fatherOccupation', type: 'text', placeholder: 'Father Occupation' },
   {
     name: 'gender',
@@ -10,11 +10,11 @@ const StudentInputData = [
     placeholder: 'Select Gender',
     options: ['Male', 'Female', 'Other'],
   },
-  { name: 'dateOfJoining', type: 'text', placeholder: 'Date of Joining' },
+  { name: 'dateOfJoining', type: 'date', placeholder: 'Date of Joining' },
   { name: 'Class', type: 'text', placeholder: 'Class' },
   { name: 'section', type: 'text', placeholder: 'Section' },
   { name: 'Fees', type: 'text', placeholder: 'Fees' },
-  { name: 'dateOfBirth', type: 'text', placeholder: 'Date of Birth' },
+  { name: 'dateOfBirth', type: 'date', placeholder: 'Date of Birth' },
   { name: 'age', type: 'text', placeholder: 'Age' },
   { name: 'religion', type: 'text', placeholder: 'Religion' },
   { name: 'presentAddress', type: 'text', placeholder: 'Present Address' },

@@ -13,11 +13,11 @@ const Chartdata = [
 function StudentChart() {
   return (
     <div style={{ width: '100%', height: 250 }}>
-      <ResponsiveContainer width="98%" height="100%">
+      <ResponsiveContainer width="98%" height="90%">
         <BarChart
           data={Chartdata}
           margin={{
-            top: 50,
+            top: 30,
             right: 25,
             left: 0,
             bottom: 5,

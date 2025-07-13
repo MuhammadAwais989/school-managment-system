@@ -39,7 +39,7 @@ const Sidebar = () => {
       <div
         className={`h-screen transition-all duration-300 z-50 fixed left-0${
           sideBar ? "w-72" : "w-20"
-        } backdrop-blur-md bg-white/30 shadow-xl rounded-xl max-lg:fixed max-sm:fixed top-2 lg:left-0 ${
+        } backdrop-blur-md bg-white/30 shadow-xl rounded-xl max-lg:fixed max-sm:fixed lg:left-0 ${
           sideBar ? "block " : "max-sm:-translate-x-full"
         }`}
       >

@@ -39,7 +39,7 @@ const StudentCard = () => {
   return (
     <>
       {StudentsData.map((items) => (
-        <div id="card" key={items.type} className="lg:w-[23%] w-60 max-sm:w-[47%] sm:w-[47%] max-[460px]:w-full h-24  bg-white rounded-md shadow-sm hover:shadow-md transition-shadow flex items-center justify-between px-5 mt-8">
+        <div id="card" key={items.type} className="lg:w-[23%] w-60 max-sm:w-[47%] sm:w-[47%] max-[460px]:w-full h-24  bg-white border rounded-md shadow-sm hover:shadow-md transition-shadow flex items-center justify-between px-5 mt-3">
           <div className={`size-16 rounded-full ${items.bgColor} flex justify-center items-center`}>
             <img src={items.img} alt="" className={`size-10 ${items.iconColor}`} />
           </div>
