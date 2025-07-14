@@ -71,9 +71,9 @@ const AddAccount = () => {
   return (
     <>
       <Sidebar />
-      <div className="lg:pl-24 pt-24 max-md:pr-4 pr-9 pb-4 max-sm:pt-1 max-sm:pl-4 max-sm:pr-5 max-lg:pt-24 max-lg:pl-24 bg-gray-50 w-full h-screen">
-        <div className="bg-white w-full h-full shadow-md rounded-md pt-6 px-8 max-sm:px-4">
-          <h1 className="text-xl font-bold">Add Account</h1>
+      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full h-screen">
+        <div className="bg-white w-full h-full shadow-md rounded-md  px-4 max-sm:px-4">
+          {/* <h1 className="text-xl font-bold">Add Account</h1> */}
 
           {/* Header Controls */}
           <div className="flex items-center justify-between py-4 flex-wrap gap-3">
@@ -96,7 +96,7 @@ const AddAccount = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto h-[calc(100vh-255px)] max-sm:h-[calc(100vh-160px)] scrollbar-hide">
+          <div className="overflow-x-auto h-[calc(100vh-155px)] max-sm:h-[calc(100vh-160px)] scrollbar-hide">
             <table className="min-w-full table-auto bg-white border border-gray-300 ">
               <thead className="bg-gray-100 text-gray-700 text-sm font-semibold text-center">
                 <tr>

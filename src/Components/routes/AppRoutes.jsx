@@ -11,6 +11,7 @@ import { ProtectedRoute, AdminRoute, TeacherRoute } from './AuthRoutes';
 import Loading from '../pages/Loading';
 
 import { useEffect, useState } from 'react';
+import Profile from '../pages/Profile';
 
 const AppRoutes = () => {
   const [role, setRole] = useState(null);
@@ -49,12 +50,21 @@ const AppRoutes = () => {
           </>
         )}
 
+       
+
         {/* Teacher Only Routes */}
         {token && role === 'Teacher' && (
           <>
             <Route path='/teacher-dashboard' element={<TeacherRoute><TeacherDashoard /></TeacherRoute>} />
             <Route path='/students/attendence' element={<TeacherRoute><StudentAttendence /></TeacherRoute>} />
             <Route path='/students/details' element={<TeacherRoute><StudentDetails /></TeacherRoute>} />
+          </>
+        )}
+
+         {/* Admin or Principal Teacher Routes */}
+        {token && (role === 'Admin' || role === 'Principle' || role === 'Teacher') && (
+          <>
+            <Route path='/profile' element={<Profile />} />
           </>
         )}
 

@@ -102,11 +102,11 @@ const StudentCard = () => {
   ];
 
   return (
-    <div className="bg-gray-50 h-fit w-full lg:pl-28 pl-4 pt-8 max-sm:pr-1 max-lg:pl-24 max-sm:pt-0 max-sm:pl-3 sm:pt-16 flex flex-wrap gap-x-4">
+    <div className="bg-gray-50 h-fit w-full lg:pl-24 pl-4 pt-8 max-sm:pr-1 max-lg:pl-24 max-sm:pt-0 max-sm:pl-3 sm:pt-16 flex flex-wrap gap-x-4">
       {StudentsData.map((items) => (
         <div
           key={items.type}
-          className="lg:w-[23%] w-60 max-sm:w-[47%] sm:w-[47%] max-[460px]:w-full h-24 bg-white border rounded-md shadow-sm hover:shadow-md transition-shadow flex items-center justify-between px-5 mt-2"
+          className="lg:w-[23.8%] w-60 max-sm:w-[47%] sm:w-[47%] max-[460px]:w-full h-24 bg-white border rounded-md shadow-sm hover:shadow-md transition-shadow flex items-center justify-between px-5 mt-2"
         >
           <div className={`size-16 rounded-full ${items.bgColor} flex justify-center items-center`}>
             <img src={items.img} alt="" className={`size-10 ${items.iconColor}`} />
