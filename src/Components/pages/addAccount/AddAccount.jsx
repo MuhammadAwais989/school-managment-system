@@ -100,7 +100,7 @@ const AddAccount = () => {
             <table className="min-w-full table-auto bg-white border border-gray-300 ">
               <thead className="bg-gray-100 text-gray-700 text-sm font-semibold text-center">
                 <tr>
-                  {['', 'Photo', 'Name', 'Father Name', 'Designation', 'Date of Joining', 'Class', 'Section', 'Salary', 'Gender', 'Date of Birth', 'Phone', 'Email', 'Address', 'Actions'].map((title, idx) => (
+                  {['', 'Photo', 'Name', 'Father Name', 'Designation', 'Date of Joining', 'Class', 'Section', 'Salary', 'Gender', 'Last Qualification','Date of Birth', 'CNIC No', 'Phone', 'Email', 'Address', 'Actions'].map((title, idx) => (
                     <th key={idx} className="border px-3 py-3 whitespace-nowrap ">{title}</th>
                   ))}
                 </tr>
@@ -123,7 +123,9 @@ const AddAccount = () => {
                     <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.section}</td>
                     <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.salary}</td>
                     <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.gender}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.last_qualification}</td>
                     <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.dateOfBirth}</td>
+                    <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.CNIC_No}</td>
                     <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.phone}</td>
                     <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.email}</td>
                     <td className="border px-3 py-1 text-gray-500 truncate w-fit">{user.address}</td>
@@ -173,7 +175,9 @@ const AddAccount = () => {
         { label: "Section", key: "section" },
         { label: "Salary", key: "salary" },
         { label: "Gender", key: "gender" },
+        { label: "last_qualification", key: "last_qualification" },
         { label: "Date of Birth", key: "dateOfBirth" },
+        { label: "CNIC_No", key: "CNIC_No" },
         { label: "Joining Date", key: "dateOfJoining" },
         { label: "Address", key: "address", fullWidth: true }
       ]}

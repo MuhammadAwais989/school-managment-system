@@ -83,7 +83,7 @@ const MobileHeader = ({ toggleSidebar }) => {
   return (
     <>
       <div
-        className={`h-10 max-sm:h-14 px-4 flex justify-between items-center bg-gray-50 transition-all duration-300 mt-3 sm:ml-20 lg:ml-24 xl:ml-24 absolute max-sm:static`}
+        className={`h-10 max-sm:h-14 px-4 flex justify-between items-center bg-gray-50 transition-all duration-300 pt-4 sm:ml-20 lg:ml-24 xl:ml-24 absolute max-sm:static`}
       >
         <div onClick={toggleSidebar} className="sm:hidden">
           <RiMenuUnfoldFill className="text-2xl" />

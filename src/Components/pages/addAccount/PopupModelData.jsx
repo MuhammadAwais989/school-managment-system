@@ -11,6 +11,12 @@ export const InputData = [
       options: ['Male', 'Female', 'Other'], 
     },
     {
+      name: 'last_qualification',
+      type: 'select', 
+      placeholder: 'Last Qualification', 
+      options: ["Matric", "Inter", "BS / BSc / BBA", "MA / MSc / MPhil", "Ph.D."], 
+    },
+    {
       name: 'designation',
       type: 'select', 
       placeholder: 'Select Designation', 
@@ -18,6 +24,7 @@ export const InputData = [
     },
     { name: 'salary', type: 'number', placeholder: 'Salary' }, 
     { name: 'dateOfBirth', type: 'text', placeholder: 'Date of Birth' }, 
+    { name: 'CNIC_No', type: 'text', placeholder: 'CNIC_No' }, 
     { name: 'address', type: 'text', placeholder: 'Home Address' },
     { name: 'phone', type: 'text', placeholder: 'Phone Number', length: 11 },
     { name: 'email', type: 'email', placeholder: 'Email' },

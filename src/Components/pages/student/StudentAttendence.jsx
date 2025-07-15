@@ -18,6 +18,8 @@ const StudentAttendence = () => {
   const [modalData, setModalData] = useState([]);
   const [modalMode, setModalMode] = useState('detail');
 
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false); // ✅ confirm modal state
+
   useEffect(() => {
     const assignedClass = localStorage.getItem("classAssigned");
 
@@ -80,10 +82,12 @@ const StudentAttendence = () => {
       };
 
       await axios.post(`${BaseURL}/students/attendence`, payload);
-      showSuccess("Attendance marked successfully")
+      showSuccess("Attendance marked successfully");
     } catch (err) {
       console.error("Attendance submit error:", err);
-      showError("Error marking attendance")
+      showError("Error marking attendance");
+    } finally {
+      setShowConfirmPopup(false); // close popup after response
     }
   };
 
@@ -96,7 +100,7 @@ const StudentAttendence = () => {
       setShowModal(true);
     } catch (err) {
       console.error("Error fetching report:", err);
-      showError("Failed to fetch report.")
+      showError("Failed to fetch report.");
     }
   };
 
@@ -154,7 +158,7 @@ const StudentAttendence = () => {
               </select>
 
               <button
-                onClick={handleSubmit}
+                onClick={() => setShowConfirmPopup(true)} // ✅ open confirm modal
                 className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700 max-sm:text-sm"
               >
                 Submit Attendance
@@ -231,6 +235,7 @@ const StudentAttendence = () => {
         </div>
       </div>
 
+      {/* Report Modal */}
       <ReportModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -238,6 +243,51 @@ const StudentAttendence = () => {
         data={modalData}
         mode={modalMode}
       />
+
+      {/* ✅ Confirm Submit Popup */}
+      {showConfirmPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white  rounded-xl shadow-2xl w-[90%] max-w-md p-6 text-center animate-fade-in">
+            <div className="flex flex-col items-center">
+              <svg
+                className="w-12 h-12 text-rose-600 mb-3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v2m0 4h.01M12 3.75c-4.556 0-8.25 3.694-8.25 8.25s3.694 8.25 8.25 8.25 8.25-3.694 8.25-8.25S16.556 3.75 12 3.75z"
+                />
+              </svg>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">
+                Confirm Attendance Submission
+              </h2>
+              <p className="text-sm text-gray-600">
+                Are you sure you want to submit <span className="font-semibold text-rose-600">today's attendance</span>?
+              </p>
+            </div>
+
+            <div className="flex justify-center gap-4 mt-6">
+              <button
+                onClick={handleSubmit}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200"
+              >
+                Yes, Submit
+              </button>
+              <button
+                onClick={() => setShowConfirmPopup(false)}
+                className="border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded-lg transition duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </>
   );
 };

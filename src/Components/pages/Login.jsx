@@ -27,7 +27,7 @@ const LoginPage = () => {
       // ✅ Store class and section (only if teacher)
       if (role === "Teacher") {
         localStorage.setItem("classAssigned", Class);
-        localStorage.setItem("teacherClass", Class); // ✅ Only Class needed
+        localStorage.setItem("teacherClass", Class); 
 
       }
 
