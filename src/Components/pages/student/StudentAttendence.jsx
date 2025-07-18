@@ -279,8 +279,7 @@ const StudentAttendence = () => {
               </button>
               <button
                 onClick={() => setShowConfirmPopup(false)}
-                className="border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded-lg transition duration-200"
-              >
+                className="border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded-lg transition duration-200">
                 Cancel
               </button>
             </div>
