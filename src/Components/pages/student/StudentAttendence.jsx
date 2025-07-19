@@ -148,8 +148,7 @@ const StudentAttendence = () => {
               <select
                 onChange={(e) => handleClassReport(e.target.value)}
                 className="border cursor-pointer border-gray-300 rounded-md px-4 py-2 bg-white text-gray-700 hover:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500 max-sm:text-sm"
-                defaultValue=""
-              >
+                defaultValue="">
                 <option value="" disabled>Select Report</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
