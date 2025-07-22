@@ -158,8 +158,7 @@ const StudentAttendence = () => {
 
               <button
                 onClick={() => setShowConfirmPopup(true)} // ✅ open confirm modal
-                className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700 max-sm:text-sm"
-              >
+                className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700 max-sm:text-sm">
                 Submit Attendance
               </button>
             </div>
