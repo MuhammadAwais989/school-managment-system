@@ -8,6 +8,7 @@ const Income = () => {
   const [incomes, setIncomes] = useState([]);
   const [filters, setFilters] = useState("today");
   const [summary, setSummary] = useState({ today: 0, yesterday: 0, month: 0 });
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     fetchIncome();
@@ -28,6 +29,7 @@ const Income = () => {
     e.preventDefault();
     await axios.post(`${BaseURL}/accounts/income`, form);
     setForm({ source: "", amount: "", date: "", description: "" });
+    setShowModal(false);
     fetchIncome();
     fetchSummary();
   };
@@ -38,9 +40,8 @@ const Income = () => {
       <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full h-screen">
         <div className="bg-white w-full h-full shadow-md rounded-md px-4 max-sm:px-4">
 
-
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 pt-5 px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 pt-5">
             {/* Today Income */}
             <div className="bg-gradient-to-br from-cyan-100/80 via-cyan-50 to-white border border-cyan-200 rounded-xl shadow-sm p-5 group hover:shadow-md transition-all hover:-translate-y-1">
               <div className="flex items-center gap-3 mb-3">
@@ -98,31 +99,105 @@ const Income = () => {
               </div>
             </div>
           </div>
-            <button
-                className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700 max-sm:text-sm">
-                Add Income
-              </button>
-          {/* Add Income Form */}
-          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input type="text" placeholder="Source" className="border p-2 rounded" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} required />
-            <input type="number" placeholder="Amount" className="border p-2 rounded" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
-            <input type="date" className="border p-2 rounded" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
-            <input type="text" placeholder="Description" className="border p-2 rounded" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            <button type="submit" className="bg-green-600 text-white p-2 rounded hover:bg-green-700">Add Income</button>
-          </form>
 
-          {/* Filter */}
-          <div className="mb-4">
-            <select value={filters} onChange={(e) => setFilters(e.target.value)} className="border p-2 rounded">
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="thisMonth">This Month</option>
-              <option value="yearly">This Year</option>
-              <option value="previousYear">Previous Year</option>
-            </select>
+          {/* Modified Add Income Button */}
+          <div className="flex justify-between">
+            <div className="relative mb-6">
+              <label className="absolute -top-3 left-2 bg-white px-1 text-sm text-gray-500">Filter By</label>
+              <select
+                value={filters}
+                onChange={(e) => setFilters(e.target.value)}
+                className="w-full border-2 border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200"
+              >
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="thisMonth">This Month</option>
+                <option value="yearly">This Year</option>
+                <option value="previousYear">Previous Year</option>
+              </select>
+            </div>
+            {/* Add Button */}
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-rose-500 to-pink-600 text-white px-5 py-2.5 rounded-lg hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg mb-6 flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Add Income
+            </button>
           </div>
 
-          {/* Income Table */}
+          {/* New Modal Form */}
+          {showModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                <h3 className="text-xl font-semibold mb-4">Add New Income</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Source</label>
+                    <input
+                      type="text"
+                      placeholder="Salary, Business, etc."
+                      className="w-full p-2 border rounded"
+                      value={form.source}
+                      onChange={(e) => setForm({ ...form, source: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Amount</label>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      className="w-full p-2 border rounded"
+                      value={form.amount}
+                      onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Date</label>
+                    <input
+                      type="date"
+                      className="w-full p-2 border rounded"
+                      value={form.date}
+                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Description (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="Additional details"
+                      className="w-full p-2 border rounded"
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="px-4 py-2 border rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700"
+                    >
+                      Add Income
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+
+
           <table className="w-full border-collapse border">
             <thead>
               <tr className="bg-gray-100">
