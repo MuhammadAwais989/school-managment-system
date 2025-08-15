@@ -16,30 +16,41 @@ const Income = () => {
   }, [filters]);
 
   const fetchIncome = async () => {
-    const res = await axios.get(`${BaseURL}/accounts/income?filter=${filters}`);
-    setIncomes(res.data.incomes);
+    try {
+      const res = await axios.get(`${BaseURL}/accounts/income?filter=${filters}`);
+      setIncomes(res.data.incomes);
+    } catch (error) {
+      console.error("Error fetching incomes:", error);
+    }
   };
 
   const fetchSummary = async () => {
-    const res = await axios.get(`${BaseURL}/accounts/income-summary`);
-    setSummary(res.data);
+    try {
+      const res = await axios.get(`${BaseURL}/accounts/income-summary`);
+      setSummary(res.data);
+    } catch (error) {
+      console.error("Error fetching summary:", error);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post(`${BaseURL}/accounts/income`, form);
-    setForm({ source: "", amount: "", date: "", description: "" });
-    setShowModal(false);
-    fetchIncome();
-    fetchSummary();
+    try {
+      await axios.post(`${BaseURL}/accounts/income`, form);
+      setForm({ source: "", amount: "", date: "", description: "" });
+      setShowModal(false);
+      fetchIncome();
+      fetchSummary();
+    } catch (error) {
+      console.error("Error adding income:", error);
+    }
   };
 
   return (
     <>
       <Sidebar />
-      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full h-screen">
+      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full ">
         <div className="bg-white w-full h-full shadow-md rounded-md px-4 max-sm:px-4">
-
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 pt-5">
             {/* Today Income */}
@@ -196,28 +207,45 @@ const Income = () => {
             </div>
           )}
 
-
-
-          <table className="w-full border-collapse border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border p-2">Date</th>
-                <th className="border p-2">Source</th>
-                <th className="border p-2">Amount</th>
-                <th className="border p-2">Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {incomes.map((item) => (
-                <tr key={item._id}>
-                  <td className="border p-2">{new Date(item.date).toLocaleDateString()}</td>
-                  <td className="border p-2">{item.source}</td>
-                  <td className="border p-2">Rs {item.amount}</td>
-                  <td className="border p-2">{item.description}</td>
+          <div className="overflow-x-auto scrollbar-hide rounded-xl shadow-sm border border-[#E0E7FF]">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-gradient-to-r from-[#F2F5FF] to-[#E7F0FF]">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#3E54AC]">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#3E54AC]">Source</th>
+                  <th className="px-6 py-4 text-right text-sm font-medium text-[#3E54AC]">Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#3E54AC]">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#E0E7FF] bg-white">
+                {incomes.map((item) => (
+                  <tr key={item._id} className="hover:bg-[#F2F5FF] transition-colors">
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-[#1A237E]">
+                      {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-[#3E54AC]">
+                      {item.source}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-right font-mono font-bold text-[#4A6BFF]">
+                      Rs {item.amount}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-[#F2F5FF] text-[#3E54AC] border border-[#E0E7FF]">
+                        Completed
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-[#F2F5FF]">
+                <tr>
+                  <td colSpan="4" className="px-6 py-3 text-right text-sm text-[#3E54AC] font-medium">
+                    Total: Rs {incomes.reduce((sum, item) => sum + Number(item.amount), 0)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
     </>
