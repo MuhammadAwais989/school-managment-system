@@ -1,401 +1,379 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import jsPDF from "jspdf";
-import 'jspdf-autotable'; // jspdf-autotable plugin import karen
-import Sidebar from "../sidebar/SideBar"; // Assuming Sidebar exists, otherwise comment out
-import { BaseURL } from "../../helper/helper"; // Assuming BaseURL exists, otherwise use mock data
+import Sidebar from "../sidebar/SideBar";
+import { BaseURL } from "../../helper/helper";
 
-/**
- * Ye ek demo React component hai jo incomes ko manage aur display karta hai
- * aur browser mein hi ek table-formatted PDF generate karta hai.
- *
- * NOTE: Is code mein, PDF generation frontend par hota hai.
- * Ismein aapke original code ki tarah backend se download nahi kiya ja raha hai.
- */
 const Income = () => {
-  const [form, setForm] = useState({ source: "", amount: "", date: "", description: "" });
-  const [incomes, setIncomes] = useState([]);
-  const [filters, setFilters] = useState("today");
-  const [summary, setSummary] = useState({ today: 0, yesterday: 0, month: 0 });
-  const [showModal, setShowModal] = useState(false);
-  const [downloadPeriod, setDownloadPeriod] = useState("yearly"); // 'yearly' or 'monthly'
-  const [downloadYear, setDownloadYear] = useState(new Date().getFullYear());
-  const [downloadMonth, setDownloadMonth] = useState(new Date().getMonth() + 1); // Months are 1-indexed for the API
+  const [form, setForm] = useState({ source: "", amount: "", date: "", description: "" });
+  const [incomes, setIncomes] = useState([]);
+  const [filters, setFilters] = useState("today");
+  const [summary, setSummary] = useState({ today: 0, yesterday: 0, month: 0 });
+  const [showModal, setShowModal] = useState(false);
+  const [downloadPeriod, setDownloadPeriod] = useState("yearly"); // 'yearly' or 'monthly'
+  const [downloadYear, setDownloadYear] = useState(new Date().getFullYear());
+  const [downloadMonth, setDownloadMonth] = useState(new Date().getMonth() + 1); // Months are 1-indexed for the API
 
-  // Mock data for demonstration purposes, replace with your actual fetch logic
-  const mockIncomes = [
-    { _id: "1", source: "Salary", amount: 50000, date: "2024-07-15", description: "Monthly salary" },
-    { _id: "2", source: "Freelance", amount: 15000, date: "2024-07-16", description: "Project payment" },
-    { _id: "3", source: "Investment", amount: 5000, date: "2024-07-17", description: "Stock dividends" },
-  ];
 
-  useEffect(() => {
-    // Real-world scenario: fetch income from your backend
-    // For this demo, we'll use mock data.
-    // fetchIncome();
-    // fetchSummary();
-    // Mock data se state update karna
-    setIncomes(mockIncomes);
-    setSummary({ today: 5000, yesterday: 15000, month: 70000 });
-  }, [filters]);
+  useEffect(() => {
+    fetchIncome();
+    fetchSummary();
+  }, [filters]);
 
-  const fetchIncome = async () => {
-    try {
-      const res = await axios.get(`${BaseURL}/accounts/income?filter=${filters}`);
-      setIncomes(res.data.incomes);
-    } catch (error) {
-      console.error("Error fetching incomes:", error);
-    }
-  };
+  const fetchIncome = async () => {
+    try {
+      const res = await axios.get(`${BaseURL}/accounts/income?filter=${filters}`);
+      setIncomes(res.data.incomes);
+    } catch (error) {
+      console.error("Error fetching incomes:", error);
+    }
+  };
 
-  const fetchSummary = async () => {
-    try {
-      const res = await axios.get(`${BaseURL}/accounts/income-summary`);
-      setSummary(res.data);
-    } catch (error) {
-      console.error("Error fetching summary:", error);
-    }
-  };
+  const fetchSummary = async () => {
+    try {
+      const res = await axios.get(`${BaseURL}/accounts/income-summary`);
+      setSummary(res.data);
+    } catch (error) {
+      console.error("Error fetching summary:", error);
+    }
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post(`${BaseURL}/accounts/income`, form);
-      setForm({ source: "", amount: "", date: "", description: "" });
-      setShowModal(false);
-      fetchIncome();
-      fetchSummary();
-    } catch (error) {
-      console.error("Error adding income:", error);
-    }
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${BaseURL}/accounts/income`, form);
+      setForm({ source: "", amount: "", date: "", description: "" });
+      setShowModal(false);
+      fetchIncome();
+      fetchSummary();
+    } catch (error) {
+      console.error("Error adding income:", error);
+    }
+  };
 
-  /**
-   * Naya handleDownload function jo PDF ko browser mein hi generate karta hai
-   * aur data ko table format mein dikhata hai.
-   */
-  const handleDownload = () => {
-    // 1. Naya jsPDF instance banayein
-    const doc = new jsPDF();
+  /**
+   * Handles the download of the income report as a PDF.
+   *
+   * IMPORTANT: The structure of the PDF (e.g., if it contains a table)
+   * is determined by the backend API at the '/accounts/income/download' endpoint.
+   * This frontend code only requests the file and handles its download.
+   * To change the PDF's content, you need to update the backend logic.
+   */
+  const handleDownload = async () => {
+    try {
+      let params = { period: downloadPeriod, year: downloadYear, format: 'pdf' };
+      if (downloadPeriod === "monthly") {
+        params.month = downloadMonth;
+      }
 
-    // 2. Document ka title set karein
-    doc.setFontSize(18);
-    let title = `Income Statement - ${downloadYear}`;
-    if (downloadPeriod === 'monthly') {
-      const monthName = months.find(m => m.value === downloadMonth)?.name;
-      title = `Income Statement - ${monthName} ${downloadYear}`;
-    }
-    doc.text(title, 14, 20);
+      const res = await axios.get(`${BaseURL}/accounts/income/download`, {
+        params,
+        responseType: 'blob', // The server sends a file, so we expect a blob
+      });
 
-    // 3. Table ke headers aur data ko prepare karein
-    const tableColumn = ["Date", "Source", "Amount (Rs)", "Description"];
-    const tableRows = [];
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      let filename = `income-statement-${downloadYear}`;
+      if (downloadPeriod === 'monthly') {
+        filename += `-${downloadMonth}`;
+      }
+      filename += '.pdf';
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url); // Clean up the created URL
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      // More detailed error logging for debugging
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        console.error("Response headers:", error.response.headers);
+      } else if (error.request) {
+        console.error("Request made but no response received:", error.request);
+      } else {
+        console.error("Error setting up the request:", error.message);
+      }
+    }
+  };
 
-    incomes.forEach(income => {
-      const incomeData = [
-        new Date(income.date).toLocaleDateString(),
-        income.source,
-        `Rs ${income.amount}`,
-        income.description,
-      ];
-      tableRows.push(incomeData);
-    });
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Generate a list of last 5 years
+  const months = [
+    { name: 'January', value: 1 }, { name: 'February', value: 2 }, { name: 'March', value: 3 },
+    { name: 'April', value: 4 }, { name: 'May', value: 5 }, { name: 'June', value: 6 },
+    { name: 'July', value: 7 }, { name: 'August', value: 8 }, { name: 'September', value: 9 },
+    { name: 'October', value: 10 }, { name: 'November', value: 11 }, { name: 'December', value: 12 },
+  ];
 
-    // 4. jspdf-autotable plugin ka use karke table add karein
-    doc.autoTable(tableColumn, tableRows, {
-      startY: 30, // Title ke neeche start karein
-      headStyles: { fillColor: '#3E54AC', textColor: '#FFFFFF' }, // Headers ko style karein
-      alternateRowStyles: { fillColor: '#F2F5FF' }, // Rows ko alternate color dein
-      bodyStyles: { textColor: '#1A237E' },
-      styles: {
-        font: 'helvetica',
-        fontSize: 10
-      }
-    });
+  return (
+    <>
+    <Sidebar />
+      {/* Sidebar component would go here */}
+      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full ">
+        <div className="bg-white w-full h-full shadow-md rounded-md px-4 max-sm:px-4 pb-3">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 pt-5">
+            {/* Today Income */}
+            <div className="bg-gradient-to-br from-cyan-100/80 via-cyan-50 to-white border border-cyan-200 rounded-xl shadow-sm p-5 group hover:shadow-md transition-all hover:-translate-y-1">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-cyan-100 rounded-lg text-cyan-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-cyan-800">Today Income</h3>
+              </div>
+              <p className="text-3xl font-bold text-cyan-900">Rs {summary.today}</p>
+              <div className="mt-2 text-sm text-cyan-600 flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <span>Live updates</span>
+              </div>
+            </div>
 
-    // 5. File name set karein aur PDF save karein
-    let filename = `income-statement-${downloadYear}`;
-    if (downloadPeriod === 'monthly') {
-      filename += `-${downloadMonth}`;
-    }
-    doc.save(`${filename}.pdf`);
-  };
+            {/* Yesterday Income */}
+            <div className="bg-gradient-to-br from-purple-100/80 via-purple-50 to-white border border-purple-200 rounded-xl shadow-sm p-5 group hover:shadow-md transition-all hover:-translate-y-1">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-purple-800">Yesterday Income</h3>
+              </div>
+              <p className="text-3xl font-bold text-purple-900">Rs {summary.yesterday}</p>
+              <div className="mt-2 text-sm text-purple-600 flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" />
+                </svg>
+                <span>From previous day</span>
+              </div>
+            </div>
 
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Generate a list of last 5 years
-  const months = [
-    { name: 'January', value: 1 }, { name: 'February', value: 2 }, { name: 'March', value: 3 },
-    { name: 'April', value: 4 }, { name: 'May', value: 5 }, { name: 'June', value: 6 },
-    { name: 'July', value: 7 }, { name: 'August', value: 8 }, { name: 'September', value: 9 },
-    { name: 'October', value: 10 }, { name: 'November', value: 11 }, { name: 'December', value: 12 },
-  ];
+            {/* This Month Income */}
+            <div className="bg-gradient-to-br from-indigo-100/80 via-indigo-50 to-white border border-indigo-200 rounded-xl shadow-sm p-5 group hover:shadow-md transition-all hover:-translate-y-1">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-indigo-800">This Month Income</h3>
+              </div>
+              <p className="text-3xl font-bold text-indigo-900">Rs {summary.month}</p>
+              <div className="mt-2 text-sm text-indigo-600 flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <span>Growing trend</span>
+              </div>
+            </div>
+          </div>
 
-  return (
-    <>
-    <Sidebar />
-      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full ">
-        <div className="bg-white w-full h-full shadow-md rounded-md px-4 max-sm:px-4 pb-3">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 pt-5">
-            {/* Today Income */}
-            <div className="bg-gradient-to-br from-cyan-100/80 via-cyan-50 to-white border border-cyan-200 rounded-xl shadow-sm p-5 group hover:shadow-md transition-all hover:-translate-y-1">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-cyan-100 rounded-lg text-cyan-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-cyan-800">Today Income</h3>
-              </div>
-              <p className="text-3xl font-bold text-cyan-900">Rs {summary.today}</p>
-              <div className="mt-2 text-sm text-cyan-600 flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                <span>Live updates</span>
-              </div>
-            </div>
+          {/* Modified Add Income Button and New Download Section */}
+          <div className="flex justify-between items-center flex-wrap gap-4 mb-6 pt-5">
+            {/* Filter */}
+            <div className="relative">
+              <label className="absolute -top-3 left-2 bg-white px-1 text-sm text-gray-500">Filter By</label>
+              <select
+                value={filters}
+                onChange={(e) => setFilters(e.target.value)}
+                className="w-full border-2 border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200"
+              >
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="thisMonth">This Month</option>
+                <option value="yearly">This Year</option>
+                <option value="previousYear">Previous Year</option>
+              </select>
+            </div>
 
-            {/* Yesterday Income */}
-            <div className="bg-gradient-to-br from-purple-100/80 via-purple-50 to-white border border-purple-200 rounded-xl shadow-sm p-5 group hover:shadow-md transition-all hover:-translate-y-1">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-purple-800">Yesterday Income</h3>
-              </div>
-              <p className="text-3xl font-bold text-purple-900">Rs {summary.yesterday}</p>
-              <div className="mt-2 text-sm text-purple-600 flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" />
-                </svg>
-                <span>From previous day</span>
-              </div>
-            </div>
+            {/* Download Section */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="w-28 relative">
+                <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Period</label>
+                <select
+                  value={downloadPeriod}
+                  onChange={(e) => setDownloadPeriod(e.target.value)}
+                  className="w-full border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
+                >
+                  <option value="yearly">Yearly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
 
-            {/* This Month Income */}
-            <div className="bg-gradient-to-br from-indigo-100/80 via-indigo-50 to-white border border-indigo-200 rounded-xl shadow-sm p-5 group hover:shadow-md transition-all hover:-translate-y-1">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-indigo-800">This Month Income</h3>
-              </div>
-              <p className="text-3xl font-bold text-indigo-900">Rs {summary.month}</p>
-              <div className="mt-2 text-sm text-indigo-600 flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                <span>Growing trend</span>
-              </div>
-            </div>
-          </div>
+              <div className="relative">
+                <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Year</label>
+                <select
+                  value={downloadYear}
+                  onChange={(e) => setDownloadYear(Number(e.target.value))}
+                  className="w-full border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
+                >
+                  {years.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Modified Add Income Button and New Download Section */}
-          <div className="flex justify-between items-center flex-wrap gap-4 mb-6 pt-5">
-            {/* Filter */}
-            <div className="relative">
-              <label className="absolute -top-3 left-2 bg-white px-1 text-sm text-gray-500">Filter By</label>
-              <select
-                value={filters}
-                onChange={(e) => setFilters(e.target.value)}
-                className="w-full border-2 border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200"
-              >
-                <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="thisMonth">This Month</option>
-                <option value="yearly">This Year</option>
-                <option value="previousYear">Previous Year</option>
-              </select>
-            </div>
+              {downloadPeriod === "monthly" && (
+                <div className="relative">
+                  <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Month</label>
+                  <select
+                    value={downloadMonth}
+                    onChange={(e) => setDownloadMonth(Number(e.target.value))}
+                    className="w-full border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
+                  >
+                    {months.map(month => (
+                      <option key={month.value} value={month.value}>{month.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-            {/* Download Section */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="w-28 relative">
-                <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Period</label>
-                <select
-                  value={downloadPeriod}
-                  onChange={(e) => setDownloadPeriod(e.target.value)}
-                  className="w-full border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
-                >
-                  <option value="yearly">Yearly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-              </div>
+              <button
+                onClick={handleDownload}
+                className="border-2 border-indigo-500 text-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L10 11.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v7a1 1 0 11-2 0V4a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                <span className="hidden sm:inline">Download</span>
+              </button>
+            </div>
 
-              <div className="relative">
-                <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Year</label>
-                <select
-                  value={downloadYear}
-                  onChange={(e) => setDownloadYear(Number(e.target.value))}
-                  className="w-full border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
-                >
-                  {years.map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
+            {/* Add Button */}
+            <button
+              onClick={() => setShowModal(true)}
+              className="fixed sm:static bottom-4 right-4 sm:bottom-auto sm:right-auto bg-gradient-to-r from-rose-500 to-pink-600 text-white p-3 sm:px-5 sm:py-2.5 rounded-full sm:rounded-lg hover:from-rose-600 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 z-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              <span className="hidden sm:inline">Add Income</span>
+            </button>
+          </div>
 
-              {downloadPeriod === "monthly" && (
-                <div className="relative">
-                  <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Month</label>
-                  <select
-                    value={downloadMonth}
-                    onChange={(e) => setDownloadMonth(Number(e.target.value))}
-                    className="w-full border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
-                  >
-                    {months.map(month => (
-                      <option key={month.value} value={month.value}>{month.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+          {/* New Modal Form */}
+          {showModal && (
+            <div className="fixed inset-0 px-2 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                <h3 className="text-xl font-semibold mb-4">Add New Income</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Source</label>
+                    <input
+                      type="text"
+                      placeholder="Salary, Business, etc."
+                      className="w-full p-2 border rounded"
+                      value={form.source}
+                      onChange={(e) => setForm({ ...form, source: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Amount</label>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      className="w-full p-2 border rounded"
+                      value={form.amount}
+                      onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Date</label>
+                    <input
+                      type="date"
+                      className="w-full p-2 border rounded"
+                      value={form.date}
+                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Description (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="Additional details"
+                      className="w-full p-2 border rounded"
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="px-4 py-2 border rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700"
+                    >
+                      Add Income
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
-              <button
-                onClick={handleDownload}
-                className="border-2 border-indigo-500 text-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L10 11.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z" clipRule="evenodd" />
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v7a1 1 0 11-2 0V4a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                <span className="hidden sm:inline">Download</span>
-              </button>
-            </div>
+          <div className="overflow-x-auto scrollbar-hide rounded-xl shadow-sm border border-[#E0E7FF] ">
+            <table className="min-w-full table-auto ">
+              <thead>
+                <tr className="bg-gradient-to-r from-[#F2F5FF] to-[#E7F0FF]">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#3E54AC]">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#3E54AC]">Source</th>
+                  <th className="px-6 py-4 text-right text-sm font-medium text-[#3E54AC]">Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#3E54AC]">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E0E7FF] bg-white">
+                {incomes.map((item) => {
+                  const parts = item.date.split('-');
+                  const displayDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
 
-            {/* Add Button */}
-            <button
-              onClick={() => setShowModal(true)}
-              className="fixed sm:static bottom-4 right-4 sm:bottom-auto sm:right-auto bg-gradient-to-r from-rose-500 to-pink-600 text-white p-3 sm:px-5 sm:py-2.5 rounded-full sm:rounded-lg hover:from-rose-600 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 z-50"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              <span className="hidden sm:inline">Add Income</span>
-            </button>
-          </div>
-
-          {/* New Modal Form */}
-          {showModal && (
-            <div className="fixed inset-0 px-2 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                <h3 className="text-xl font-semibold mb-4">Add New Income</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Source</label>
-                    <input
-                      type="text"
-                      placeholder="Salary, Business, etc."
-                      className="w-full p-2 border rounded"
-                      value={form.source}
-                      onChange={(e) => setForm({ ...form, source: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Amount</label>
-                    <input
-                      type="number"
-                      placeholder="0.00"
-                      className="w-full p-2 border rounded"
-                      value={form.amount}
-                      onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Date</label>
-                    <input
-                      type="date"
-                      className="w-full p-2 border rounded"
-                      value={form.date}
-                      onChange={(e) => setForm({ ...form, date: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Description (Optional)</label>
-                    <input
-                      type="text"
-                      placeholder="Additional details"
-                      className="w-full p-2 border rounded"
-                      value={form.description}
-                      onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="flex justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="px-4 py-2 border rounded"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700"
-                    >
-                      Add Income
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          <div className="overflow-x-auto scrollbar-hide rounded-xl shadow-sm border border-[#E0E7FF] ">
-            <table className="min-w-full table-auto ">
-              <thead>
-                <tr className="bg-gradient-to-r from-[#F2F5FF] to-[#E7F0FF]">
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#3E54AC]">Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#3E54AC]">Source</th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-[#3E54AC]">Amount</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#3E54AC]">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E0E7FF] bg-white">
-                {incomes.map((item) => {
-                  const parts = item.date.split('-');
-                  const displayDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-
-                  return (
-                    <tr key={item._id} className="hover:bg-[#F2F5FF] transition-colors">
-                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-[#1A237E]">
-                        {displayDate.toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-[#3E54AC]">
-                        {item.source}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-right font-mono font-bold text-[#4A6BFF]">
-                        Rs {item.amount}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-[#F2F5FF] text-[#3E54AC] border border-[#E0E7FF]">
-                          Completed
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot className="bg-[#F2F5FF]">
-                <tr>
-                  <td colSpan="4" className="px-6 py-3 text-right text-sm text-[#3E54AC] font-medium">
-                    Total: Rs {incomes.reduce((sum, item) => sum + Number(item.amount), 0)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+                  return (
+                    <tr key={item._id} className="hover:bg-[#F2F5FF] transition-colors">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-[#1A237E]">
+                        {displayDate.toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-[#3E54AC]">
+                        {item.source}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-right font-mono font-bold text-[#4A6BFF]">
+                        Rs {item.amount}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-[#F2F5FF] text-[#3E54AC] border border-[#E0E7FF]">
+                          Completed
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot className="bg-[#F2F5FF]">
+                <tr>
+                  <td colSpan="4" className="px-6 py-3 text-right text-sm text-[#3E54AC] font-medium">
+                    Total: Rs {incomes.reduce((sum, item) => sum + Number(item.amount), 0)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 };
 
 export default Income;
