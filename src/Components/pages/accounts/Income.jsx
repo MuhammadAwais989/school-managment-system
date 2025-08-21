@@ -3,21 +3,57 @@ import axios from "axios";
 import Sidebar from "../sidebar/SideBar";
 import { BaseURL } from "../../helper/helper";
 
+// --- Chart Component Start ---
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+
+function MonthlyBarChart({ data, year }) {
+  return (
+    <div>
+      <h2 className="text-xl font-bold text-gray-800 mb-2">Income & Expense for {year}</h2>
+      <div style={{ width: '100%', height: 250 }}>
+        <ResponsiveContainer width="98%" height="90%">
+          <BarChart
+            data={data}
+            margin={{
+              top: 30,
+              right: 25,
+              left: 0,
+              bottom: 5,
+            }}
+          >
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Bar dataKey="income" fill="#178C4B" name="Income" />
+            <Bar dataKey="expense" fill="#D80808" name="Expense" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+// --- Chart Component End ---
+
 const Income = () => {
   const [form, setForm] = useState({ source: "", amount: "", date: "", description: "" });
   const [incomes, setIncomes] = useState([]);
   const [filters, setFilters] = useState("today");
   const [summary, setSummary] = useState({ today: 0, yesterday: 0, month: 0 });
   const [showModal, setShowModal] = useState(false);
-  const [downloadPeriod, setDownloadPeriod] = useState("yearly"); // 'yearly' or 'monthly'
+  const [downloadPeriod, setDownloadPeriod] = useState("yearly");
   const [downloadYear, setDownloadYear] = useState(new Date().getFullYear());
-  const [downloadMonth, setDownloadMonth] = useState(new Date().getMonth() + 1); // Months are 1-indexed for the API
-
+  const [downloadMonth, setDownloadMonth] = useState(new Date().getMonth() + 1);
+  const [chartData, setChartData] = useState([]); // State to hold dynamic chart data
+  const [chartYear, setChartYear] = useState(new Date().getFullYear()); // State for chart year
 
   useEffect(() => {
     fetchIncome();
     fetchSummary();
   }, [filters]);
+
+  // Fetch chart data on component mount and when chartYear changes
+  useEffect(() => {
+    fetchChartData();
+  }, [chartYear]);
 
   const fetchIncome = async () => {
     try {
@@ -37,6 +73,17 @@ const Income = () => {
     }
   };
 
+  // --- New Function to Fetch Chart Data ---
+  const fetchChartData = async () => {
+    try {
+      const res = await axios.get(`${BaseURL}/accounts/income/yearly-summary?year=${chartYear}`);
+      setChartData(res.data);
+    } catch (error) {
+      console.error("Error fetching chart data:", error);
+    }
+  };
+  // --- End New Function ---
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -45,19 +92,12 @@ const Income = () => {
       setShowModal(false);
       fetchIncome();
       fetchSummary();
+      fetchChartData(); // Refresh chart data after adding new income
     } catch (error) {
       console.error("Error adding income:", error);
     }
   };
 
-  /**
-   * Handles the download of the income report as a PDF.
-   *
-   * IMPORTANT: The structure of the PDF (e.g., if it contains a table)
-   * is determined by the backend API at the '/accounts/income/download' endpoint.
-   * This frontend code only requests the file and handles its download.
-   * To change the PDF's content, you need to update the backend logic.
-   */
   const handleDownload = async () => {
     try {
       let params = { period: downloadPeriod, year: downloadYear, format: 'pdf' };
@@ -67,7 +107,7 @@ const Income = () => {
 
       const res = await axios.get(`${BaseURL}/accounts/income/download`, {
         params,
-        responseType: 'blob', // The server sends a file, so we expect a blob
+        responseType: 'blob',
       });
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -82,14 +122,12 @@ const Income = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(url); // Clean up the created URL
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error downloading file:", error);
-      // More detailed error logging for debugging
       if (error.response) {
         console.error("Response data:", error.response.data);
         console.error("Response status:", error.response.status);
-        console.error("Response headers:", error.response.headers);
       } else if (error.request) {
         console.error("Request made but no response received:", error.request);
       } else {
@@ -99,7 +137,7 @@ const Income = () => {
   };
 
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Generate a list of last 5 years
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
   const months = [
     { name: 'January', value: 1 }, { name: 'February', value: 2 }, { name: 'March', value: 3 },
     { name: 'April', value: 4 }, { name: 'May', value: 5 }, { name: 'June', value: 6 },
@@ -109,8 +147,7 @@ const Income = () => {
 
   return (
     <>
-    <Sidebar />
-      {/* Sidebar component would go here */}
+      <Sidebar />
       <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full ">
         <div className="bg-white w-full h-full shadow-md rounded-md px-4 max-sm:px-4 pb-3">
           {/* Summary Cards */}
@@ -170,6 +207,29 @@ const Income = () => {
                 </svg>
                 <span>Growing trend</span>
               </div>
+            </div>
+          </div>
+
+          {/* New Chart Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h2 className="text-2xl font-bold text-gray-800">Monthly Overview</h2>
+              {/* Year Selector for Chart */}
+              <div className="relative">
+                <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Select Year</label>
+                <select
+                  value={chartYear}
+                  onChange={(e) => setChartYear(Number(e.target.value))}
+                  className="w-full border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
+                >
+                  {years.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="bg-gray-100 p-4 rounded-lg shadow-sm mt-4">
+              <MonthlyBarChart data={chartData} year={chartYear} />
             </div>
           </div>
 
