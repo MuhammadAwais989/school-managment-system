@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "../sidebar/SideBar";
 import { BaseURL } from "../../helper/helper";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-// --- Chart Component Start ---
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 
 function MonthlyBarChart({ data, year }) {
   return (
@@ -23,6 +22,8 @@ function MonthlyBarChart({ data, year }) {
           >
             <XAxis dataKey="name" />
             <YAxis />
+            <Tooltip />
+            <Legend />
             <Bar dataKey="income" fill="#178C4B" name="Income" />
             <Bar dataKey="expense" fill="#D80808" name="Expense" />
           </BarChart>
@@ -73,16 +74,34 @@ const Income = () => {
     }
   };
 
-  // --- New Function to Fetch Chart Data ---
-  const fetchChartData = async () => {
-    try {
-      const res = await axios.get(`${BaseURL}/accounts/income/yearly-summary?year=${chartYear}`);
-      setChartData(res.data);
-    } catch (error) {
-      console.error("Error fetching chart data:", error);
-    }
-  };
-  // --- End New Function ---
+  // --- Function to Fetch Chart Data ---
+const fetchChartData = async () => {
+  try {
+    // Fetch both income and expense data for the selected year
+    const [incomeRes, expenseRes] = await Promise.all([
+      axios.get(`${BaseURL}/accounts/income/yearly-summary?year=${chartYear}`),
+      axios.get(`${BaseURL}/accounts/expense/yearly-summary?year=${chartYear}`)
+    ]);
+    
+    const incomeData = incomeRes.data;
+    const expenseData = expenseRes.data;
+    
+    // Combine the data
+    const combinedData = incomeData.map((incomeMonth, index) => {
+      const expenseMonth = expenseData[index] || { expense: 0 };
+      return {
+        name: incomeMonth.name,
+        income: incomeMonth.income || 0,
+        expense: expenseMonth.expense || 0
+      };
+    });
+    
+    setChartData(combinedData);
+  } catch (error) {
+    console.error("Error fetching chart data:", error);
+  }
+};
+// --- End Updated Function ---
 
   const handleSubmit = async (e) => {
     e.preventDefault();
