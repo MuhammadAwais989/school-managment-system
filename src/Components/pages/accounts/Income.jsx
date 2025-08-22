@@ -32,7 +32,6 @@ function MonthlyBarChart({ data, year }) {
     </div>
   );
 }
-// --- Chart Component End ---
 
 const Income = () => {
   const [form, setForm] = useState({ source: "", amount: "", date: "", description: "" });
