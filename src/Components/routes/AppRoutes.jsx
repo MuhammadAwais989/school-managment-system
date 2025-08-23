@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import Profile from '../pages/Profile';
 import Income from '../pages/accounts/Income';
 import Expense from '../pages/accounts/Expense';
+import BalanceSheet from '../pages/accounts/BalanceSheet';
 
 const AppRoutes = () => {
   const [role, setRole] = useState(null);
@@ -51,7 +52,7 @@ const AppRoutes = () => {
             <Route path='/students/details' element={<AdminRoute><StudentDetails /></AdminRoute>} />
             <Route path='/accounts/income' element={<AdminRoute><Income /></AdminRoute>} />
             <Route path='/accounts/expenses' element={<AdminRoute><Expense /></AdminRoute>} />
-            <Route path='/accounts/balancesheet' element={<AdminRoute><Income /></AdminRoute>} />
+            <Route path='/accounts/balancesheet' element={<AdminRoute><BalanceSheet /></AdminRoute>} />
 
           </>
         )}
