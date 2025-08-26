@@ -35,8 +35,7 @@ function SectionCard({ title, right, children }) {
 }
 
 export default function BalanceSheet() {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [timeRange, setTimeRange] = useState("thisMonth");
   const [incomeData, setIncomeData] = useState([]);
   const [expenseData, setExpenseData] = useState([]);
   const [yearlyIncomeData, setYearlyIncomeData] = useState([]);
@@ -47,21 +46,24 @@ export default function BalanceSheet() {
   const [downloadPeriod, setDownloadPeriod] = useState("yearly");
   const [downloadYear, setDownloadYear] = useState(new Date().getFullYear());
   const [downloadMonth, setDownloadMonth] = useState(new Date().getMonth() + 1);
+  
+  // Filter states
+  const [filterPeriod, setFilterPeriod] = useState("yearly");
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
+  const [filteredIncome, setFilteredIncome] = useState(0);
+  const [filteredExpense, setFilteredExpense] = useState(0);
+  const [filterLoading, setFilterLoading] = useState(false);
 
-  // Arrays for the dropdowns
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
-  const months = [
-    { name: 'January', value: 1 }, { name: 'February', value: 2 }, { name: 'March', value: 3 },
-    { name: 'April', value: 4 }, { name: 'May', value: 5 }, { name: 'June', value: 6 },
-    { name: 'July', value: 7 }, { name: 'August', value: 8 }, { name: 'September', value: 9 },
-    { name: 'October', value: 10 }, { name: 'November', value: 11 }, { name: 'December', value: 12 },
-  ];
-
-  // Fetch all data when year or month changes
+  // Fetch all data on component mount
   useEffect(() => {
     fetchAllData();
-  }, [selectedYear, selectedMonth]);
+  }, [timeRange]);
+
+  // Fetch filtered data when filter values change
+  useEffect(() => {
+    fetchFilteredData();
+  }, [filterPeriod, filterYear, filterMonth]);
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -81,54 +83,45 @@ export default function BalanceSheet() {
     }
   };
 
+  const fetchFilteredData = async () => {
+    setFilterLoading(true);
+    try {
+      const incomeParams = { period: filterPeriod, year: filterYear };
+      if (filterPeriod === "monthly") {
+        incomeParams.month = filterMonth;
+      }
+      
+      const expenseParams = { ...incomeParams };
+      
+      const [incomeRes, expenseRes] = await Promise.all([
+        axios.get(`${BaseURL}/accounts/income/filtered-summary`, { params: incomeParams }),
+        axios.get(`${BaseURL}/accounts/expense/filtered-summary`, { params: expenseParams })
+      ]);
+      
+      setFilteredIncome(incomeRes.data.total || 0);
+      setFilteredExpense(expenseRes.data.total || 0);
+    } catch (error) {
+      console.error("Error fetching filtered data:", error);
+    } finally {
+      setFilterLoading(false);
+    }
+  };
+
   const fetchIncome = async () => {
     try {
-      // For custom month/year selection, we need to create a custom filter
-      const startDate = new Date(selectedYear, selectedMonth - 1, 1);
-      const endDate = new Date(selectedYear, selectedMonth, 0); // Last day of the month
-      
-      // If your backend supports date range filtering
-      const res = await axios.get(`${BaseURL}/accounts/income`, {
-        params: {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString()
-        }
-      });
+      const res = await axios.get(`${BaseURL}/accounts/income?filter=${timeRange}`);
       setIncomeData(res.data.incomes || []);
     } catch (error) {
       console.error("Error fetching income:", error);
-      // Fallback to using filter parameter if date range not supported
-      try {
-        const res = await axios.get(`${BaseURL}/accounts/income?filter=thisMonth`);
-        setIncomeData(res.data.incomes || []);
-      } catch (fallbackError) {
-        console.error("Fallback income fetch failed:", fallbackError);
-      }
     }
   };
 
   const fetchExpenses = async () => {
     try {
-      // For custom month/year selection, we need to create a custom filter
-      const startDate = new Date(selectedYear, selectedMonth - 1, 1);
-      const endDate = new Date(selectedYear, selectedMonth, 0); // Last day of the month
-      
-      const res = await axios.get(`${BaseURL}/accounts/expense`, {
-        params: {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString()
-        }
-      });
+      const res = await axios.get(`${BaseURL}/accounts/expense?filter=${timeRange}`);
       setExpenseData(res.data.expenses || []);
     } catch (error) {
       console.error("Error fetching expenses:", error);
-      // Fallback to using filter parameter if date range not supported
-      try {
-        const res = await axios.get(`${BaseURL}/accounts/expense?filter=thisMonth`);
-        setExpenseData(res.data.expenses || []);
-      } catch (fallbackError) {
-        console.error("Fallback expense fetch failed:", fallbackError);
-      }
     }
   };
 
@@ -152,7 +145,8 @@ export default function BalanceSheet() {
 
   const fetchYearlyIncomeData = async () => {
     try {
-      const res = await axios.get(`${BaseURL}/accounts/income/yearly-summary?year=${selectedYear}`);
+      const currentYear = new Date().getFullYear();
+      const res = await axios.get(`${BaseURL}/accounts/income/yearly-summary?year=${currentYear}`);
       setYearlyIncomeData(res.data);
     } catch (error) {
       console.error("Error fetching yearly income data:", error);
@@ -161,7 +155,8 @@ export default function BalanceSheet() {
 
   const fetchYearlyExpenseData = async () => {
     try {
-      const res = await axios.get(`${BaseURL}/accounts/expense/yearly-summary?year=${selectedYear}`);
+      const currentYear = new Date().getFullYear();
+      const res = await axios.get(`${BaseURL}/accounts/expense/yearly-summary?year=${currentYear}`);
       setYearlyExpenseData(res.data);
     } catch (error) {
       console.error("Error fetching yearly expense data:", error);
@@ -206,6 +201,7 @@ export default function BalanceSheet() {
   const totalIncome = incomeData.reduce((sum, item) => sum + Number(item.amount), 0);
   const totalExpenses = expenseData.reduce((sum, item) => sum + Number(item.amount), 0);
   const netProfit = totalIncome - totalExpenses;
+  const filteredNetProfit = filteredIncome - filteredExpense;
 
   // Prepare chart data - combine income and expense data
   const chartData = yearlyIncomeData.map((incomeMonth, index) => {
@@ -238,6 +234,16 @@ export default function BalanceSheet() {
     return acc;
   }, []);
 
+  // Arrays for the dropdowns
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+  const months = [
+    { name: 'Jan', value: 1 }, { name: 'Feb', value: 2 }, { name: 'Mar', value: 3 },
+    { name: 'Apr', value: 4 }, { name: 'May', value: 5 }, { name: 'Jun', value: 6 },
+    { name: 'Jul', value: 7 }, { name: 'Aug', value: 8 }, { name: 'Sep', value: 9 },
+    { name: 'Oct', value: 10 }, { name: 'Nov', value: 11 }, { name: 'Dec', value: 12 },
+  ];
+
   if (loading) {
     return (
       <>
@@ -265,42 +271,13 @@ export default function BalanceSheet() {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                {/* Year and Month Selection for Data Filtering */}
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="relative">
-                    <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Year</label>
-                    <select
-                      value={selectedYear}
-                      onChange={(e) => setSelectedYear(Number(e.target.value))}
-                      className="border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
-                    >
-                      {years.map(year => (
-                        <option key={year} value={year}>{year}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="relative">
-                    <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Month</label>
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                      className="border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
-                    >
-                      {months.map(month => (
-                        <option key={month.value} value={month.value}>{month.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Download Options */}
+                {/* Filter Controls */}
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="w-28 relative">
-                    <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Period</label>
+                    <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Filter Period</label>
                     <select
-                      value={downloadPeriod}
-                      onChange={(e) => setDownloadPeriod(e.target.value)}
+                      value={filterPeriod}
+                      onChange={(e) => setFilterPeriod(e.target.value)}
                       className="w-full border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
                     >
                       <option value="yearly">Yearly</option>
@@ -311,8 +288,8 @@ export default function BalanceSheet() {
                   <div className="relative">
                     <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Year</label>
                     <select
-                      value={downloadYear}
-                      onChange={(e) => setDownloadYear(Number(e.target.value))}
+                      value={filterYear}
+                      onChange={(e) => setFilterYear(Number(e.target.value))}
                       className="w-full border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
                     >
                       {years.map(year => (
@@ -321,12 +298,12 @@ export default function BalanceSheet() {
                     </select>
                   </div>
 
-                  {downloadPeriod === "monthly" && (
+                  {filterPeriod === "monthly" && (
                     <div className="relative">
                       <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Month</label>
                       <select
-                        value={downloadMonth}
-                        onChange={(e) => setDownloadMonth(Number(e.target.value))}
+                        value={filterMonth}
+                        onChange={(e) => setFilterMonth(Number(e.target.value))}
                         className="w-full border-2 border-gray-200 bg-transparent text-gray-700 px-3 py-2 rounded-lg focus:outline-none focus:border-indigo-400"
                       >
                         {months.map(month => (
@@ -336,7 +313,6 @@ export default function BalanceSheet() {
                     </div>
                   )}
                 </div>
-
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleDownload('income')}
@@ -366,14 +342,14 @@ export default function BalanceSheet() {
 
           <div className="py-6 space-y-6">
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="bg-gradient-to-br from-emerald-100 via-emerald-50 to-white border border-emerald-200 rounded-2xl p-5">
                 <div className="text-sm font-medium text-emerald-700">Total Income</div>
                 <div className="mt-1 text-3xl font-bold text-emerald-900">
                   <Currency value={totalIncome} />
                 </div>
                 <div className="mt-2 text-xs text-emerald-600">
-                  {months.find(m => m.value === selectedMonth)?.name} {selectedYear}
+                  Today: Rs {incomeSummary.today.toLocaleString()} | Month: Rs {incomeSummary.month.toLocaleString()}
                 </div>
               </div>
               
@@ -383,7 +359,7 @@ export default function BalanceSheet() {
                   <Currency value={totalExpenses} />
                 </div>
                 <div className="mt-2 text-xs text-rose-600">
-                  {months.find(m => m.value === selectedMonth)?.name} {selectedYear}
+                  Today: Rs {expenseSummary.today.toLocaleString()} | Month: Rs {expenseSummary.month.toLocaleString()}
                 </div>
               </div>
               
@@ -394,13 +370,58 @@ export default function BalanceSheet() {
                 </div>
                 <div className="mt-2 text-xs text-indigo-600">Income − Expense</div>
               </div>
+            </div> */}
+
+            {/* Filtered KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-gradient-to-br from-emerald-100 via-emerald-50 to-white border border-emerald-200 rounded-2xl p-5">
+                <div className="text-sm font-medium text-emerald-700">Total Income</div>
+                <div className="mt-1 text-3xl font-bold text-emerald-900">
+                  {filterLoading ? (
+                    <div className="animate-pulse h-8 bg-emerald-200 rounded"></div>
+                  ) : (
+                    <Currency value={filteredIncome} />
+                  )}
+                </div>
+                <div className="mt-2 text-xs text-emerald-600">
+                  {filterPeriod === "yearly" ? `Year: ${filterYear}` : `${months.find(m => m.value === filterMonth)?.name} ${filterYear}`}
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-rose-100 via-rose-50 to-white border border-rose-200 rounded-2xl p-5">
+                <div className="text-sm font-medium text-rose-700">Total Expense</div>
+                <div className="mt-1 text-3xl font-bold text-rose-900">
+                  {filterLoading ? (
+                    <div className="animate-pulse h-8 bg-rose-200 rounded"></div>
+                  ) : (
+                    <Currency value={filteredExpense} />
+                  )}
+                </div>
+                <div className="mt-2 text-xs text-rose-600">
+                  {filterPeriod === "yearly" ? `Year: ${filterYear}` : `${months.find(m => m.value === filterMonth)?.name} ${filterYear}`}
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-indigo-100 via-indigo-50 to-white border border-indigo-200 rounded-2xl p-5">
+                <div className="text-sm font-medium text-indigo-700">Net Balance</div>
+                <div className={`mt-1 text-3xl font-bold ${filteredNetProfit >= 0 ? "text-indigo-900" : "text-rose-700"}`}>
+                  {filterLoading ? (
+                    <div className="animate-pulse h-8 bg-indigo-200 rounded"></div>
+                  ) : (
+                    <Currency value={filteredNetProfit} />
+                  )}
+                </div>
+                <div className="mt-2 text-xs text-indigo-600">
+                  {filterPeriod === "yearly" ? `Year: ${filterYear}` : `${months.find(m => m.value === filterMonth)?.name} ${filterYear}`}
+                </div>
+              </div>
             </div>
 
             {/* Chart + Pies */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <SectionCard
                 title="Income vs Expense — Yearly"
-                right={<span className="text-xs text-gray-500">{selectedYear}</span>}
+                right={<span className="text-xs text-gray-500">{new Date().getFullYear()}</span>}
               >
                 <div className="w-full h-[320px]">
                   <ResponsiveContainer width="100%" height="100%">
