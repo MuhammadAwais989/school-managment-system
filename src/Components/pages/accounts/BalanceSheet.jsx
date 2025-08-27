@@ -341,36 +341,6 @@ export default function BalanceSheet() {
           </div>
 
           <div className="py-6 space-y-6">
-            {/* KPI Cards */}
-            {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-emerald-100 via-emerald-50 to-white border border-emerald-200 rounded-2xl p-5">
-                <div className="text-sm font-medium text-emerald-700">Total Income</div>
-                <div className="mt-1 text-3xl font-bold text-emerald-900">
-                  <Currency value={totalIncome} />
-                </div>
-                <div className="mt-2 text-xs text-emerald-600">
-                  Today: Rs {incomeSummary.today.toLocaleString()} | Month: Rs {incomeSummary.month.toLocaleString()}
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-rose-100 via-rose-50 to-white border border-rose-200 rounded-2xl p-5">
-                <div className="text-sm font-medium text-rose-700">Total Expense</div>
-                <div className="mt-1 text-3xl font-bold text-rose-900">
-                  <Currency value={totalExpenses} />
-                </div>
-                <div className="mt-2 text-xs text-rose-600">
-                  Today: Rs {expenseSummary.today.toLocaleString()} | Month: Rs {expenseSummary.month.toLocaleString()}
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-indigo-100 via-indigo-50 to-white border border-indigo-200 rounded-2xl p-5">
-                <div className="text-sm font-medium text-indigo-700">Net Balance</div>
-                <div className={`mt-1 text-3xl font-bold ${netProfit >= 0 ? "text-indigo-900" : "text-rose-700"}`}>
-                  <Currency value={netProfit} />
-                </div>
-                <div className="mt-2 text-xs text-indigo-600">Income − Expense</div>
-              </div>
-            </div> */}
 
             {/* Filtered KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
