@@ -43,9 +43,6 @@ export default function BalanceSheet() {
   const [incomeSummary, setIncomeSummary] = useState({ today: 0, yesterday: 0, month: 0 });
   const [expenseSummary, setExpenseSummary] = useState({ today: 0, yesterday: 0, month: 0 });
   const [loading, setLoading] = useState(true);
-  const [downloadPeriod, setDownloadPeriod] = useState("yearly");
-  const [downloadYear, setDownloadYear] = useState(new Date().getFullYear());
-  const [downloadMonth, setDownloadMonth] = useState(new Date().getMonth() + 1);
   
   // Filter states
   const [filterPeriod, setFilterPeriod] = useState("yearly");
@@ -53,6 +50,11 @@ export default function BalanceSheet() {
   const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
   const [filteredIncome, setFilteredIncome] = useState(0);
   const [filteredExpense, setFilteredExpense] = useState(0);
+  const [filteredChartData, setFilteredChartData] = useState([]);
+  const [filteredIncomePieData, setFilteredIncomePieData] = useState([]);
+  const [filteredExpensePieData, setFilteredExpensePieData] = useState([]);
+  const [filteredIncomeData, setFilteredIncomeData] = useState([]);
+  const [filteredExpenseData, setFilteredExpenseData] = useState([]);
   const [filterLoading, setFilterLoading] = useState(false);
 
   // Fetch all data on component mount
@@ -87,19 +89,34 @@ export default function BalanceSheet() {
     setFilterLoading(true);
     try {
       const incomeParams = { period: filterPeriod, year: filterYear };
+      const expenseParams = { period: filterPeriod, year: filterYear };
+      
       if (filterPeriod === "monthly") {
         incomeParams.month = filterMonth;
+        expenseParams.month = filterMonth;
       }
       
-      const expenseParams = { ...incomeParams };
-      
-      const [incomeRes, expenseRes] = await Promise.all([
+      const [incomeRes, expenseRes, chartRes, incomePieRes, expensePieRes, incomeDataRes, expenseDataRes] = await Promise.all([
         axios.get(`${BaseURL}/accounts/income/filtered-summary`, { params: incomeParams }),
-        axios.get(`${BaseURL}/accounts/expense/filtered-summary`, { params: expenseParams })
+        axios.get(`${BaseURL}/accounts/expense/filtered-summary`, { params: expenseParams }),
+        axios.get(`${BaseURL}/accounts/income-expense-chart`, { 
+          params: filterPeriod === "yearly" 
+            ? { year: filterYear } 
+            : { year: filterYear, month: filterMonth }
+        }),
+        axios.get(`${BaseURL}/accounts/income-pie`, { params: incomeParams }),
+        axios.get(`${BaseURL}/accounts/expense-pie`, { params: expenseParams }),
+        axios.get(`${BaseURL}/accounts/income`, { params: incomeParams }),
+        axios.get(`${BaseURL}/accounts/expense`, { params: expenseParams })
       ]);
       
       setFilteredIncome(incomeRes.data.total || 0);
       setFilteredExpense(expenseRes.data.total || 0);
+      setFilteredChartData(chartRes.data || []);
+      setFilteredIncomePieData(incomePieRes.data || []);
+      setFilteredExpensePieData(expensePieRes.data || []);
+      setFilteredIncomeData(incomeDataRes.data.incomes || []);
+      setFilteredExpenseData(expenseDataRes.data.expenses || []);
     } catch (error) {
       console.error("Error fetching filtered data:", error);
     } finally {
@@ -163,18 +180,14 @@ export default function BalanceSheet() {
     }
   };
 
-  const handleDownload = async (type) => {
+  const handleDownloadBalanceSheet = async () => {
     try {
-      let params = { period: downloadPeriod, year: downloadYear, format: 'pdf' };
-      if (downloadPeriod === "monthly") {
-        params.month = downloadMonth;
+      let params = { period: filterPeriod, year: filterYear, format: 'pdf' };
+      if (filterPeriod === "monthly") {
+        params.month = filterMonth;
       }
 
-      const endpoint = type === 'income' 
-        ? `${BaseURL}/accounts/income/download` 
-        : `${BaseURL}/accounts/expense/download`;
-
-      const res = await axios.get(endpoint, {
+      const res = await axios.get(`${BaseURL}/accounts/balance-sheet/download`, {
         params,
         responseType: 'blob',
       });
@@ -182,9 +195,9 @@ export default function BalanceSheet() {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      let filename = `${type}-statement-${downloadYear}`;
-      if (downloadPeriod === 'monthly') {
-        filename += `-${downloadMonth}`;
+      let filename = `balance-sheet-${filterYear}`;
+      if (filterPeriod === 'monthly') {
+        filename += `-${filterMonth}`;
       }
       filename += '.pdf';
       link.setAttribute('download', filename);
@@ -193,7 +206,8 @@ export default function BalanceSheet() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error(`Error downloading ${type} file:`, error);
+      console.error("Error downloading balance sheet:", error);
+      alert("Failed to download balance sheet. Please try again.");
     }
   };
 
@@ -313,35 +327,23 @@ export default function BalanceSheet() {
                     </div>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleDownload('income')}
-                    className="border-2 border-green-500 text-green-600 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors flex items-center gap-2"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L10 11.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z" clipRule="evenodd" />
-                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v7a1 1 0 11-2 0V4a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                    <span>Income Report</span>
-                  </button>
 
-                  <button
-                    onClick={() => handleDownload('expense')}
-                    className="border-2 border-red-500 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L10 11.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z" clipRule="evenodd" />
-                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v7a1 1 0 11-2 0V4a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                    <span>Expense Report</span>
-                  </button>
-                </div>
+                {/* Single Download Button */}
+                <button
+                  onClick={handleDownloadBalanceSheet}
+                  className="border-2 border-blue-500 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L10 11.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v7a1 1 0 11-2 0V4a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                  <span>Download Balance Sheet</span>
+                </button>
               </div>
             </div>
           </div>
 
           <div className="py-6 space-y-6">
-
             {/* Filtered KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="bg-gradient-to-br from-emerald-100 via-emerald-50 to-white border border-emerald-200 rounded-2xl p-5">
@@ -390,53 +392,71 @@ export default function BalanceSheet() {
             {/* Chart + Pies */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <SectionCard
-                title="Income vs Expense — Yearly"
-                right={<span className="text-xs text-gray-500">{new Date().getFullYear()}</span>}
+                title={`Income vs Expense — ${filterPeriod === "yearly" ? filterYear : `${months.find(m => m.value === filterMonth)?.name} ${filterYear}`}`}
+                right={<span className="text-xs text-gray-500">{filterPeriod === "yearly" ? "Yearly" : "Monthly"}</span>}
               >
                 <div className="w-full h-[320px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 12, right: 20, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip formatter={(val) => `Rs ${Number(val).toLocaleString()}`} />
-                      <Legend />
-                      <Bar dataKey="income" name="Income" fill="#178C4B" radius={[6, 6, 0, 0]} />
-                      <Bar dataKey="expense" name="Expense" fill="#D80808" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {filterLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={filteredChartData} margin={{ top: 12, right: 20, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(val) => `Rs ${Number(val).toLocaleString()}`} />
+                        <Legend />
+                        <Bar dataKey="income" name="Income" fill="#178C4B" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="expense" name="Expense" fill="#D80808" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </SectionCard>
 
               <SectionCard title="Income Sources (Share)">
                 <div className="w-full h-[320px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Tooltip formatter={(val) => `Rs ${Number(val).toLocaleString()}`} />
-                      <Legend />
-                      <Pie data={incomePieData} dataKey="value" nameKey="name" outerRadius={110} label>
-                        {incomePieData.map((_, i) => (
-                          <Cell key={`inc-${i}`} fill={COLORS[i % COLORS.length]} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {filterLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Tooltip formatter={(val) => `Rs ${Number(val).toLocaleString()}`} />
+                        <Legend />
+                        <Pie data={filteredIncomePieData} dataKey="value" nameKey="name" outerRadius={110} label>
+                          {filteredIncomePieData.map((_, i) => (
+                            <Cell key={`inc-${i}`} fill={COLORS[i % COLORS.length]} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </SectionCard>
 
               <SectionCard title="Expense Breakdown (Share)">
                 <div className="w-full h-[320px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Tooltip formatter={(val) => `Rs ${Number(val).toLocaleString()}`} />
-                      <Legend />
-                      <Pie data={expensePieData} dataKey="value" nameKey="name" outerRadius={110} label>
-                        {expensePieData.map((_, i) => (
-                          <Cell key={`exp-${i}`} fill={COLORS[(i + 2) % COLORS.length]} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {filterLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Tooltip formatter={(val) => `Rs ${Number(val).toLocaleString()}`} />
+                        <Legend />
+                        <Pie data={filteredExpensePieData} dataKey="value" nameKey="name" outerRadius={110} label>
+                          {filteredExpensePieData.map((_, i) => (
+                            <Cell key={`exp-${i}`} fill={COLORS[(i + 2) % COLORS.length]} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </SectionCard>
             </div>
@@ -445,75 +465,87 @@ export default function BalanceSheet() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <SectionCard
                 title="Income Details"
-                right={<span className="text-xs text-gray-500">{incomeData.length} records</span>}
+                right={<span className="text-xs text-gray-500">{filteredIncomeData.length} records</span>}
               >
                 <div className="overflow-auto rounded-xl border border-gray-200 max-h-96">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-600 sticky top-0">
-                      <tr>
-                        <th className="text-left px-4 py-3">Date</th>
-                        <th className="text-left px-4 py-3">Source</th>
-                        <th className="text-left px-4 py-3">Description</th>
-                        <th className="text-right px-4 py-3">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white">
-                      {incomeData.map((r) => {
-                        const d = new Date(r.date);
-                        return (
-                          <tr key={r._id} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 whitespace-nowrap">{d.toLocaleDateString("en-PK", { month: "short", day: "numeric" })}</td>
-                            <td className="px-4 py-3">{r.source}</td>
-                            <td className="px-4 py-3 text-gray-500">{r.description || "N/A"}</td>
-                            <td className="px-4 py-3 text-right font-semibold text-green-600"><Currency value={r.amount} /></td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot className="bg-gray-50 sticky bottom-0">
-                      <tr>
-                        <td className="px-4 py-3 text-right font-medium" colSpan={3}>Total</td>
-                        <td className="px-4 py-3 text-right font-bold"><Currency value={totalIncome} /></td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                  {filterLoading ? (
+                    <div className="flex items-center justify-center h-48">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : (
+                    <table className="min-w-full text-sm">
+                      <thead className="bg-gray-50 text-gray-600 sticky top-0">
+                        <tr>
+                          <th className="text-left px-4 py-3">Date</th>
+                          <th className="text-left px-4 py-3">Source</th>
+                          <th className="text-left px-4 py-3">Description</th>
+                          <th className="text-right px-4 py-3">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 bg-white">
+                        {filteredIncomeData.map((r) => {
+                          const d = new Date(r.date);
+                          return (
+                            <tr key={r._id} className="hover:bg-gray-50">
+                              <td className="px-4 py-3 whitespace-nowrap">{d.toLocaleDateString("en-PK", { month: "short", day: "numeric" })}</td>
+                              <td className="px-4 py-3">{r.source}</td>
+                              <td className="px-4 py-3 text-gray-500">{r.description || "N/A"}</td>
+                              <td className="px-4 py-3 text-right font-semibold text-green-600"><Currency value={r.amount} /></td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="bg-gray-50 sticky bottom-0">
+                        <tr>
+                          <td className="px-4 py-3 text-right font-medium" colSpan={3}>Total</td>
+                          <td className="px-4 py-3 text-right font-bold"><Currency value={filteredIncome} /></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  )}
                 </div>
               </SectionCard>
 
               <SectionCard
                 title="Expense Details"
-                right={<span className="text-xs text-gray-500">{expenseData.length} records</span>}
+                right={<span className="text-xs text-gray-500">{filteredExpenseData.length} records</span>}
               >
                 <div className="overflow-auto rounded-xl border border-gray-200 max-h-96">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-600 sticky top-0">
-                      <tr>
-                        <th className="text-left px-4 py-3">Date</th>
-                        <th className="text-left px-4 py-3">Category</th>
-                        <th className="text-left px-4 py-3">Description</th>
-                        <th className="text-right px-4 py-3">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white">
-                      {expenseData.map((r) => {
-                        const d = new Date(r.date);
-                        return (
-                          <tr key={r._id} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 whitespace-nowrap">{d.toLocaleDateString("en-PK", { month: "short", day: "numeric" })}</td>
-                            <td className="px-4 py-3">{r.category}</td>
-                            <td className="px-4 py-3 text-gray-500">{r.description || "N/A"}</td>
-                            <td className="px-4 py-3 text-right font-semibold text-red-600"><Currency value={r.amount} /></td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot className="bg-gray-50 sticky bottom-0">
-                      <tr>
-                        <td className="px-4 py-3 text-right font-medium" colSpan={3}>Total</td>
-                        <td className="px-4 py-3 text-right font-bold"><Currency value={totalExpenses} /></td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                  {filterLoading ? (
+                    <div className="flex items-center justify-center h-48">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : (
+                    <table className="min-w-full text-sm">
+                      <thead className="bg-gray-50 text-gray-600 sticky top-0">
+                        <tr>
+                          <th className="text-left px-4 py-3">Date</th>
+                          <th className="text-left px-4 py-3">Category</th>
+                          <th className="text-left px-4 py-3">Description</th>
+                          <th className="text-right px-4 py-3">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 bg-white">
+                        {filteredExpenseData.map((r) => {
+                          const d = new Date(r.date);
+                          return (
+                            <tr key={r._id} className="hover:bg-gray-50">
+                              <td className="px-4 py-3 whitespace-nowrap">{d.toLocaleDateString("en-PK", { month: "short", day: "numeric" })}</td>
+                              <td className="px-4 py-3">{r.category}</td>
+                              <td className="px-4 py-3 text-gray-500">{r.description || "N/A"}</td>
+                              <td className="px-4 py-3 text-right font-semibold text-red-600"><Currency value={r.amount} /></td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="bg-gray-50 sticky bottom-0">
+                        <tr>
+                          <td className="px-4 py-3 text-right font-medium" colSpan={3}>Total</td>
+                          <td className="px-4 py-3 text-right font-bold"><Currency value={filteredExpense} /></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  )}
                 </div>
               </SectionCard>
             </div>
