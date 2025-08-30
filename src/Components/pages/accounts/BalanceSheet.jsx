@@ -182,7 +182,7 @@ export default function BalanceSheet() {
 
   const handleDownloadBalanceSheet = async () => {
     try {
-      let params = { period: filterPeriod, year: filterYear, format: 'pdf' };
+      let params = { period: filterPeriod, year: filterYear };
       if (filterPeriod === "monthly") {
         params.month = filterMonth;
       }
