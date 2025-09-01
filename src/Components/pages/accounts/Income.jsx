@@ -231,7 +231,7 @@ const fetchChartData = async () => {
           {/* New Chart Section */}
           <div className="mb-8">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h2 className="text-2xl font-bold text-gray-800">Monthly Overview</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Yearly Overview</h2>
               {/* Year Selector for Chart */}
               <div className="relative">
                 <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">Select Year</label>
