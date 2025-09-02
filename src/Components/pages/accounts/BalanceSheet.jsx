@@ -465,7 +465,7 @@ export default function BalanceSheet() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <SectionCard
                 title="Income Details"
-                right={<span className="text-xs text-gray-500">{filteredIncomeData.length} records</span>}
+                right={<span className="text-xs text-gray-500"> {filteredIncomeData.length} records</span>}
               >
                 <div className="overflow-auto rounded-xl border border-gray-200 max-h-96">
                   {filterLoading ? (
