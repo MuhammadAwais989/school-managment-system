@@ -86,43 +86,46 @@ export default function BalanceSheet() {
   };
 
   const fetchFilteredData = async () => {
-    setFilterLoading(true);
-    try {
-      const incomeParams = { period: filterPeriod, year: filterYear };
-      const expenseParams = { period: filterPeriod, year: filterYear };
-      
-      if (filterPeriod === "monthly") {
-        incomeParams.month = filterMonth;
-        expenseParams.month = filterMonth;
-      }
-      
-      const [incomeRes, expenseRes, chartRes, incomePieRes, expensePieRes, incomeDataRes, expenseDataRes] = await Promise.all([
-        axios.get(`${BaseURL}/accounts/income/filtered-summary`, { params: incomeParams }),
-        axios.get(`${BaseURL}/accounts/expense/filtered-summary`, { params: expenseParams }),
-        axios.get(`${BaseURL}/accounts/income-expense-chart`, { 
-          params: filterPeriod === "yearly" 
-            ? { year: filterYear } 
-            : { year: filterYear, month: filterMonth }
-        }),
-        axios.get(`${BaseURL}/accounts/income-pie`, { params: incomeParams }),
-        axios.get(`${BaseURL}/accounts/expense-pie`, { params: expenseParams }),
-        axios.get(`${BaseURL}/accounts/income`, { params: incomeParams }),
-        axios.get(`${BaseURL}/accounts/expense`, { params: expenseParams })
-      ]);
-      
-      setFilteredIncome(incomeRes.data.total || 0);
-      setFilteredExpense(expenseRes.data.total || 0);
-      setFilteredChartData(chartRes.data || []);
-      setFilteredIncomePieData(incomePieRes.data || []);
-      setFilteredExpensePieData(expensePieRes.data || []);
-      setFilteredIncomeData(incomeDataRes.data.incomes || []);
-      setFilteredExpenseData(expenseDataRes.data.expenses || []);
-    } catch (error) {
-      console.error("Error fetching filtered data:", error);
-    } finally {
-      setFilterLoading(false);
+  setFilterLoading(true);
+  try {
+    const incomeParams = { period: filterPeriod, year: filterYear };
+    const expenseParams = { period: filterPeriod, year: filterYear };
+    
+    if (filterPeriod === "monthly") {
+      incomeParams.month = filterMonth;
+      expenseParams.month = filterMonth;
     }
-  };
+    
+    const [incomeRes, expenseRes, chartRes, incomePieRes, expensePieRes, incomeDataRes, expenseDataRes] = await Promise.all([
+      axios.get(`${BaseURL}/accounts/income/filtered-summary`, { params: incomeParams }),
+      axios.get(`${BaseURL}/accounts/expense/filtered-summary`, { params: expenseParams }),
+      axios.get(`${BaseURL}/accounts/income-expense-chart`, { 
+        params: filterPeriod === "yearly" 
+          ? { year: filterYear } 
+          : { year: filterYear, month: filterMonth }
+      }),
+      axios.get(`${BaseURL}/accounts/income-pie`, { params: incomeParams }),
+      axios.get(`${BaseURL}/accounts/expense-pie`, { params: expenseParams }),
+      // FIXED: Use filtered-data endpoints instead of regular endpoints
+      axios.get(`${BaseURL}/accounts/income/filtered-data`, { params: incomeParams }),
+      axios.get(`${BaseURL}/accounts/expense/filtered-data`, { params: expenseParams })
+    ]);
+    
+    setFilteredIncome(incomeRes.data.total || 0);
+    setFilteredExpense(expenseRes.data.total || 0);
+    setFilteredChartData(chartRes.data || []);
+    setFilteredIncomePieData(incomePieRes.data || []);
+    setFilteredExpensePieData(expensePieRes.data || []);
+    
+    // FIXED: Handle different response formats from filtered-data endpoints
+    setFilteredIncomeData(incomeDataRes.data.incomes || incomeDataRes.data || []);
+    setFilteredExpenseData(expenseDataRes.data.expenses || expenseDataRes.data || []);
+  } catch (error) {
+    console.error("Error fetching filtered data:", error);
+  } finally {
+    setFilterLoading(false);
+  }
+};
 
   const fetchIncome = async () => {
     try {
