@@ -1,167 +1,307 @@
-// ✅ StudentCard.jsx
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { FaSearch, FaPlus, FaEye, FaEdit, FaTrash, FaFilter } from "react-icons/fa";
 
-import totalStudent from '../../../assets/images/toal-student-icon.png';
-import present from '../../../assets/images/present-student-icon.png';
-import absent from '../../../assets/images/absent-student-icon.png';
-import leave from '../../../assets/images/leave.png';
-import TeacherCard from '../teacher/TeacherCard';
-import AccountsMain from '../accounts/AccountsMain';
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { BaseURL } from '../../helper/helper';
+import Sidebar from "../sidebar/SideBar";
+import StudentAdPopup from "./StudentAdPopup";
+import ViewPopup from "../addAccount/ViewPopup";
+import ConfirmDeletePopup from "../addAccount/DeletePopup";
+import { BaseURL } from "../../helper/helper";
+import { showSuccess, showError } from "../../utils/Toast";
 
-const StudentCard = () => {
-  const [studentList, setStudentList] = useState(0);
-  const [attendanceSummary, setAttendanceSummary] = useState({
-    present: 0,
-    absent: 0,
-    leave: 0,
-    total: 0
+const StudentDetails = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [studentList, setStudentList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState(null);
+  const [filters, setFilters] = useState({ 
+    Class: "", 
+    section: "", 
+    gender: "", 
+    religion: "" 
   });
-  const [todayAttendance, setTodayAttendance] = useState([]); // 👈 new state
+  const [showFilters, setShowFilters] = useState(false);
 
-  const role = localStorage.getItem("role");
-  const teacherClass = localStorage.getItem("teacherClass");
-
-  // ✅ Fetch total student count (Class-wise)
-  useEffect(() => {
-    const fetchStudentCount = async () => {
-      try {
-        const res = await axios.get(`${BaseURL}/students/details`);
-        if (role === "Teacher") {
-          const filtered = res.data.filter(std => std.Class === teacherClass);
-          setStudentList(filtered.length);
-        } else {
-          setStudentList(res.data.length || 0);
-        }
-      } catch (err) {
-        console.error("Failed to fetch student list:", err);
-      }
-    };
-
-    fetchStudentCount();
-  }, [role, teacherClass]);
-
-  // ✅ Fetch today's attendance summary + list (Class-wise)
-  useEffect(() => {
-    const fetchAttendance = async () => {
-      try {
-        if (role === "Teacher") {
-          // Summary
-          const resSummary = await axios.get(`${BaseURL}/students/summary?class=${teacherClass}`);
-          setAttendanceSummary({
-            present: resSummary.data.present || 0,
-            absent: resSummary.data.absent || 0,
-            leave: resSummary.data.leave || 0,
-            total: resSummary.data.total || 0
-          });
-
-          // Detailed list
-          const resList = await axios.get(`${BaseURL}/students/today-attendance?class=${teacherClass}`);
-          setTodayAttendance(resList.data || []);
-        } 
-      } catch (err) {
-        console.error("Failed to fetch today's attendance:", err);
-      }
-    };
-
-    fetchAttendance();
-  }, [role, teacherClass]);
-
-  const StudentsData = [
-    {
-      type: "Total Students",
-      count: studentList,
-      iconColor: "text-blue-600",
-      bgColor: "bg-blue-100",
-      img: totalStudent,
-    },
-    {
-      type: "Present Students",
-      count: attendanceSummary.present,
-      iconColor: "text-green-600",
-      bgColor: "bg-green-100",
-      img: present,
-    },
-    {
-      type: "Absent Students",
-      count: attendanceSummary.absent,
-      iconColor: "text-red-600",
-      bgColor: "bg-red-100",
-      img: absent,
-    },
-    {
-      type: "Leave Students",
-      count: attendanceSummary.leave,
-      iconColor: "text-yellow-600",
-      bgColor: "bg-yellow-100",
-      img: leave,
-    },
+  const classOrder = [
+    "Nursery", "KG-I", "KG-II", "One", "Two", "Three", "Four", "Five",
+    "Six", "Seven", "Eight", "Nine", "Matric"
   ];
 
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      const res = await axios.get(`${BaseURL}/students/details`);
+      setStudentList(res.data);
+    } catch (err) {
+      console.error("Student Fetch Error:", err);
+      showError("Failed to fetch students");
+    }
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const getFilteredData = () => {
+    return studentList
+      .filter((student) =>
+        student.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter((student) =>
+        (!filters.Class || student.Class === filters.Class) &&
+        (!filters.section || student.section === filters.section) &&
+        (!filters.gender || student.gender === filters.gender) &&
+        (!filters.religion || student.religion === filters.religion)
+      );
+  };
+
+  const groupedData = () => {
+    const sorted = [...getFilteredData()].sort((a, b) => {
+      const classA = classOrder.indexOf(a.Class);
+      const classB = classOrder.indexOf(b.Class);
+      if (classA === classB) {
+        return a.section.localeCompare(b.section);
+      }
+      return classA - classB;
+    });
+    return sorted;
+  };
+
+  const handleView = (student) => {
+    setSelectedStudent(student);
+    setIsEditMode(false);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEdit = (student) => {
+    setSelectedStudent(student);
+    setIsEditMode(true);
+    setIsModalOpen(true);
+  };
+
+  const confirmDelete = (student) => {
+    setStudentToDelete(student);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await axios.delete(`${BaseURL}/students/details/${studentToDelete._id}`);
+      setStudentList((prev) => prev.filter((s) => s._id !== studentToDelete._id));
+      showSuccess("Student deleted successfully");
+      fetchStudents();
+    } catch (error) {
+      showError("Delete failed");
+      console.error(error);
+    } finally {
+      setIsDeleteModalOpen(false);
+      setStudentToDelete(null);
+    }
+  };
+
   return (
-    <div className="bg-gray-50 h-fit w-full lg:pl-24 pl-4 pt-8">
-      {/* Summary cards */}
-      <div className="flex flex-wrap gap-x-4">
-        {StudentsData.map((items) => (
-          <div
-            key={items.type}
-            className="lg:w-[23.8%] w-60 bg-white border rounded-md shadow-sm flex items-center justify-between px-5 mt-2"
-          >
-            <div className={`size-16 rounded-full ${items.bgColor} flex justify-center items-center`}>
-              <img src={items.img} alt="" className={`size-10 ${items.iconColor}`} />
+    <>
+      <Sidebar />
+      <div className="lg:pl-24 pt-14 max-md:pr-4 pr-9 pb-4 max-sm:pt-1 max-sm:pl-4 max-sm:pr-5 max-lg:pl-24 bg-gray-50 w-full h-screen">
+        <div className="bg-white w-full h-full shadow-md rounded-md  px-4 max-sm:px-4">
+          {/* <h1 className="text-xl font-bold">Student Details</h1> */}
+
+          <div className="flex items-center justify-between py-4 gap-3 flex-wrap">
+            {/* Search Bar */}
+            <div className="flex items-center bg-[#F8F8F8] rounded px-3 py-2 flex-grow w-10 max-sm:w-full">
+              <FaSearch className="text-gray-500 mr-2" />
+              <input
+                type="text"
+                placeholder="Search By Name"
+                className="outline-none bg-[#F8F8F8] w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            <div className="text-center">
-              <h3 className="font-semibold text-gray-600">{items.type}</h3>
-              <h1 className="font-bold text-xl">{items.count}</h1>
+
+            {/* Filter Toggle Button (Center) */}
+            <div className="flex items-center relative max-sm:w-full max-sm:justify-between gap-x-2 ">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-md transition-colors"
+              >
+                <FaFilter className="mr-2" />
+                Filters
+              </button>
+            
+
+            {/* Add Student Button */}
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700"
+            >
+              <FaPlus className="mr-2" /> Add Student
+            </button>
+          {/* Filter Dropdown */}
+          {showFilters && (
+            <div className="absolute top-12 -left-6 flex flex-col gap-3 items-center px-2 py-3 mb-4 bg-white/70 shadow-md w-fit rounded-lg">
+              <select
+                name="Class"
+                value={filters.Class}
+                onChange={handleFilterChange}
+                className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">All Classes</option>
+                {classOrder.map((cls) => (
+                  <option key={cls} value={cls}>{cls}</option>
+                ))}
+              </select>
+
+              <select
+                name="section"
+                value={filters.section}
+                onChange={handleFilterChange}
+                className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">All Sections</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+              </select>
+
+              <select
+                name="gender"
+                value={filters.gender}
+                onChange={handleFilterChange}
+                className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">All Genders</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+
+              {/* <select
+                name="religion"
+                value={filters.religion}
+                onChange={handleFilterChange}
+                className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">All Religions</option>
+                <option value="Islam">Islam</option>
+                <option value="Christianity">Christianity</option>
+                <option value="Hinduism">Hinduism</option>
+                <option value="Other">Other</option>
+              </select> */}
             </div>
+          )}
           </div>
-        ))}
-      </div>
-
-      {/* Today's attendance table */}
-      <div className="mt-6 bg-white shadow-sm border rounded-md p-4">
-        <h2 className="text-lg font-bold mb-4">Today's Attendance</h2>
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-left">Student Name</th>
-              <th className="border p-2 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {todayAttendance.length > 0 ? (
-              todayAttendance.map((student, idx) => (
-                <tr key={idx}>
-                  <td className="border p-2">{student.name}</td>
-                  <td className={`border p-2 capitalize ${
-                    student.status === 'present' ? 'text-green-600' :
-                    student.status === 'absent' ? 'text-red-600' :
-                    'text-yellow-600'
-                  }`}>
-                    {student.status}
-                  </td>
+            </div>
+        
+          {/* TABLE */}
+          <div className="overflow-x-auto h-[calc(100vh-155px)] max-sm:h-[calc(100vh-160px)] scrollbar-hide">
+            <table className="min-w-full table-auto bg-white border border-gray-300 ">
+              <thead className="bg-gray-100 text-gray-700 text-sm font-semibold text-center">
+                <tr>
+                  {['','Roll No', 'Photo', 'Name', 'Father Name', 'Mother Name', 'Father Occupation', 'Gender', 'Joining Date', 'Class', 'Section', 'Fees', 'DOB', 'Age', 'Religion', 'Phone', 'CNIC/B-Form', 'Present Address', 'Permanent Address', 'Actions'].map((title, idx) => (
+                    <th key={idx} className="border px-2 py-3 whitespace-nowrap">{title}</th>
+                  ))}
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="2" className="text-center p-4 text-gray-500">
-                  No attendance data found for today
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {groupedData().map((student, index) => (
+                  <tr
+                    key={student._id}
+                    className={`text-center text-sm transition ${index % 2 ? 'bg-green-50' : 'bg-white'} hover:bg-gray-50`}
+                  >
+                    <td className="border px-3 py-1 text-gray-400">{index + 1}</td>
+                    <td className="border px-3 py-1">{student.rollNo}</td>
+                    <td className="border px-3 py-1">
+                      <img src={student.studentPic} alt="Student" className="h-10 w-10 object-cover rounded-full mx-auto" />
+                    </td>
+                    <td className="border px-3 py-1">{student.name}</td>
+                    <td className="border px-3 py-1">{student.fatherName}</td>
+                    <td className="border px-3 py-1">{student.motherName}</td>
+                    <td className="border px-3 py-1">{student.fatherOccupation}</td>
+                    <td className="border px-3 py-1">{student.gender}</td>
+                    <td className="border px-3 py-1 truncate w-fit">{student.dateOfJoining}</td>
+                    <td className="border px-3 py-1">{student.Class}</td>
+                    <td className="border px-3 py-1">{student.section}</td>
+                    <td className="border px-3 py-1">{student.Fees}</td>
+                    <td className="border px-3 py-1 truncate w-fit">{student.dateOfBirth}</td>
+                    <td className="border px-3 py-1">{student.age}</td>
+                    <td className="border px-3 py-1">{student.religion}</td>
+                    <td className="border px-3 py-1">{student.phone}</td>
+                    <td className="border px-3 py-1">{student.CNIC_No}</td>
+                    <td className="border px-3 py-1 truncate w-fit">{student.presentAddress}</td>
+                    <td className="border px-3 py-1 truncate w-fit">{student.permanentAddress}</td>
+                    <td className="px-3 py-1 flex justify-center items-center gap-4 text-lg h-12  ">
+                      <button title="View" className="text-blue-500 hover:text-blue-700" onClick={() => handleView(student)}><FaEye /></button>
+                      <button title="Edit" className="text-green-500 hover:text-green-700" onClick={() => handleEdit(student)}><FaEdit /></button>
+                      <button title="Delete" className="text-red-500 hover:text-red-700" onClick={() => confirmDelete(student)}><FaTrash /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      {(role === 'Admin' || role === 'Principle') && (
-        <>
-          <TeacherCard />
-          <AccountsMain />
-        </>
+      {isModalOpen && (
+        <StudentAdPopup
+          isModalOpen={isModalOpen}
+          onclose={() => {
+            setIsModalOpen(false);
+            setIsEditMode(false);
+            setSelectedStudent(null);
+            fetchStudents();
+          }}
+          editMode={isEditMode}
+          existingData={selectedStudent}
+        />
       )}
-    </div>
+
+      {isViewModalOpen && selectedStudent && (
+        <ViewPopup
+          data={selectedStudent}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setSelectedStudent(null);
+          }}
+          title="Student Details"
+          imageKey="studentPic"
+          fields={[
+            { label: "Name", key: "name" },
+            { label: "Father Name", key: "fatherName" },
+            { label: "Mother Name", key: "motherName" },
+            { label: "Father Occupation", key: "fatherOccupation" },
+            { label: "Gender", key: "gender" },
+            { label: "Date of Birth", key: "dateOfBirth" },
+            { label: "Age", key: "age" },
+            { label: "Religion", key: "religion" },
+            { label: "Joining Date", key: "dateOfJoining" },
+            { label: "Class", key: "Class" },
+            { label: "Section", key: "section" },
+            { label: "Fees", key: "Fees" },
+            { label: "Phone", key: "phone" },
+            { label: "CNIC/B-Form", key: "CNIC_No" },
+            { label: "Present Address", key: "presentAddress", fullWidth: true },
+            { label: "Permanent Address", key: "permanentAddress", fullWidth: true }
+          ]}
+        />
+      )}
+
+      <ConfirmDeletePopup
+        isOpen={isDeleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        message="Are you sure you want to delete this student?"
+      />
+    </>
   );
 };
 
-export default StudentCard;
+export default StudentDetails;

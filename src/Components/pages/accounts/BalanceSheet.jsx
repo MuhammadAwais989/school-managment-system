@@ -1,20 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  CartesianGrid,
-  PieChart,
-  Pie,
-  Cell,
+import {BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell,
 } from "recharts";
 import Sidebar from "../sidebar/SideBar";
 import { BaseURL } from "../../helper/helper";
+
 
 const COLORS = ["#178C4B", "#D80808", "#2563eb", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6"];
 
@@ -43,7 +33,7 @@ export default function BalanceSheet() {
   const [incomeSummary, setIncomeSummary] = useState({ today: 0, yesterday: 0, month: 0 });
   const [expenseSummary, setExpenseSummary] = useState({ today: 0, yesterday: 0, month: 0 });
   const [loading, setLoading] = useState(true);
-  
+
   // Filter states
   const [filterPeriod, setFilterPeriod] = useState("yearly");
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
@@ -86,46 +76,46 @@ export default function BalanceSheet() {
   };
 
   const fetchFilteredData = async () => {
-  setFilterLoading(true);
-  try {
-    const incomeParams = { period: filterPeriod, year: filterYear };
-    const expenseParams = { period: filterPeriod, year: filterYear };
-    
-    if (filterPeriod === "monthly") {
-      incomeParams.month = filterMonth;
-      expenseParams.month = filterMonth;
+    setFilterLoading(true);
+    try {
+      const incomeParams = { period: filterPeriod, year: filterYear };
+      const expenseParams = { period: filterPeriod, year: filterYear };
+
+      if (filterPeriod === "monthly") {
+        incomeParams.month = filterMonth;
+        expenseParams.month = filterMonth;
+      }
+
+      const [incomeRes, expenseRes, chartRes, incomePieRes, expensePieRes, incomeDataRes, expenseDataRes] = await Promise.all([
+        axios.get(`${BaseURL}/accounts/income/filtered-summary`, { params: incomeParams }),
+        axios.get(`${BaseURL}/accounts/expense/filtered-summary`, { params: expenseParams }),
+        axios.get(`${BaseURL}/accounts/income-expense-chart`, {
+          params: filterPeriod === "yearly"
+            ? { year: filterYear }
+            : { year: filterYear, month: filterMonth }
+        }),
+        axios.get(`${BaseURL}/accounts/income-pie`, { params: incomeParams }),
+        axios.get(`${BaseURL}/accounts/expense-pie`, { params: expenseParams }),
+        // FIXED: Use filtered-data endpoints instead of regular endpoints
+        axios.get(`${BaseURL}/accounts/income/filtered-data`, { params: incomeParams }),
+        axios.get(`${BaseURL}/accounts/expense/filtered-data`, { params: expenseParams })
+      ]);
+
+      setFilteredIncome(incomeRes.data.total || 0);
+      setFilteredExpense(expenseRes.data.total || 0);
+      setFilteredChartData(chartRes.data || []);
+      setFilteredIncomePieData(incomePieRes.data || []);
+      setFilteredExpensePieData(expensePieRes.data || []);
+
+      // FIXED: Handle different response formats from filtered-data endpoints
+      setFilteredIncomeData(incomeDataRes.data.incomes || incomeDataRes.data || []);
+      setFilteredExpenseData(expenseDataRes.data.expenses || expenseDataRes.data || []);
+    } catch (error) {
+      console.error("Error fetching filtered data:", error);
+    } finally {
+      setFilterLoading(false);
     }
-    
-    const [incomeRes, expenseRes, chartRes, incomePieRes, expensePieRes, incomeDataRes, expenseDataRes] = await Promise.all([
-      axios.get(`${BaseURL}/accounts/income/filtered-summary`, { params: incomeParams }),
-      axios.get(`${BaseURL}/accounts/expense/filtered-summary`, { params: expenseParams }),
-      axios.get(`${BaseURL}/accounts/income-expense-chart`, { 
-        params: filterPeriod === "yearly" 
-          ? { year: filterYear } 
-          : { year: filterYear, month: filterMonth }
-      }),
-      axios.get(`${BaseURL}/accounts/income-pie`, { params: incomeParams }),
-      axios.get(`${BaseURL}/accounts/expense-pie`, { params: expenseParams }),
-      // FIXED: Use filtered-data endpoints instead of regular endpoints
-      axios.get(`${BaseURL}/accounts/income/filtered-data`, { params: incomeParams }),
-      axios.get(`${BaseURL}/accounts/expense/filtered-data`, { params: expenseParams })
-    ]);
-    
-    setFilteredIncome(incomeRes.data.total || 0);
-    setFilteredExpense(expenseRes.data.total || 0);
-    setFilteredChartData(chartRes.data || []);
-    setFilteredIncomePieData(incomePieRes.data || []);
-    setFilteredExpensePieData(expensePieRes.data || []);
-    
-    // FIXED: Handle different response formats from filtered-data endpoints
-    setFilteredIncomeData(incomeDataRes.data.incomes || incomeDataRes.data || []);
-    setFilteredExpenseData(expenseDataRes.data.expenses || expenseDataRes.data || []);
-  } catch (error) {
-    console.error("Error fetching filtered data:", error);
-  } finally {
-    setFilterLoading(false);
-  }
-};
+  };
 
   const fetchIncome = async () => {
     try {
@@ -284,7 +274,7 @@ export default function BalanceSheet() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">Balance Sheet</h1>
-                <p className="text-sm text-gray-500">Income & Expense overview with professional charts</p>
+                <p className="text-sm text-gray-500">Income & Expense overview</p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
@@ -362,7 +352,7 @@ export default function BalanceSheet() {
                   {filterPeriod === "yearly" ? `Year: ${filterYear}` : `${months.find(m => m.value === filterMonth)?.name} ${filterYear}`}
                 </div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-rose-100 via-rose-50 to-white border border-rose-200 rounded-2xl p-5">
                 <div className="text-sm font-medium text-rose-700">Total Expense</div>
                 <div className="mt-1 text-3xl font-bold text-rose-900">
@@ -376,7 +366,7 @@ export default function BalanceSheet() {
                   {filterPeriod === "yearly" ? `Year: ${filterYear}` : `${months.find(m => m.value === filterMonth)?.name} ${filterYear}`}
                 </div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-indigo-100 via-indigo-50 to-white border border-indigo-200 rounded-2xl p-5">
                 <div className="text-sm font-medium text-indigo-700">Net Balance</div>
                 <div className={`mt-1 text-3xl font-bold ${filteredNetProfit >= 0 ? "text-indigo-900" : "text-rose-700"}`}>
@@ -419,7 +409,7 @@ export default function BalanceSheet() {
                 </div>
               </SectionCard>
 
-              <SectionCard title="Income Sources (Share)">
+              <SectionCard title="Income Sources">
                 <div className="w-full h-[320px]">
                   {filterLoading ? (
                     <div className="flex items-center justify-center h-full">
@@ -441,7 +431,7 @@ export default function BalanceSheet() {
                 </div>
               </SectionCard>
 
-              <SectionCard title="Expense Breakdown (Share)">
+              <SectionCard title="Expense Breakdown">
                 <div className="w-full h-[320px]">
                   {filterLoading ? (
                     <div className="flex items-center justify-center h-full">
