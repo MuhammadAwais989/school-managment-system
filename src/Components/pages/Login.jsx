@@ -23,6 +23,7 @@ const LoginPage = () => {
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("classAssigned", Class);
+      localStorage.setItem("classSection", section);
 
       // ✅ Store class and section (only if teacher)
       if (role === "Teacher") {

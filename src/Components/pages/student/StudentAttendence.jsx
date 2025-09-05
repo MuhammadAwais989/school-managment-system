@@ -17,8 +17,7 @@ const StudentAttendence = () => {
   const [modalTitle, setModalTitle] = useState('Attendance Report');
   const [modalData, setModalData] = useState([]);
   const [modalMode, setModalMode] = useState('detail');
-
-  const [showConfirmPopup, setShowConfirmPopup] = useState(false); // ✅ confirm modal state
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false); 
 
   useEffect(() => {
     const assignedClass = localStorage.getItem("classAssigned");
