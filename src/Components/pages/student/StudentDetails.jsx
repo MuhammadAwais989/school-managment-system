@@ -247,7 +247,7 @@ const StudentDetails = () => {
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
-    
+
     // Generate Excel file and trigger download
     XLSX.writeFile(workbook, "Students_Data.xlsx");
     showSuccess("Data exported to Excel successfully");
@@ -272,21 +272,23 @@ const StudentDetails = () => {
             </div>
 
             {/* Button Group */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ">
               {/* Export to Excel Button */}
               <button
                 onClick={exportToExcel}
-                className="flex items-center bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+                className="flex items-center bg-teal-500 text-white px-4 py-2.5 rounded-md hover:bg-teal-600 transition-all duration-300 shadow-sm hover:shadow-md"
               >
-                <FaFileExport className="mr-2" />
-                Export Excel
+                <svg className="w-5 h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                </svg>
+                <span className="hidden sm:inline">Export To Excel</span>
               </button>
 
               {/* Filter Button - Hide for teachers */}
               {(userRole !== "Teacher") && (
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-md transition-colors"
+                  className=" flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-md transition-colors"
                 >
                   <FaFilter className="mr-2" />
                   Filters
