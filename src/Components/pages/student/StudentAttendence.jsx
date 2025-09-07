@@ -4,63 +4,116 @@ import { BaseURL } from '../../helper/helper';
 import Sidebar from '../sidebar/SideBar';
 import ReportModal from './AttendenceReport';
 import { showError, showSuccess } from '../../utils/Toast';
-import { FaSearch } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaUserGraduate, FaCalendarCheck } from 'react-icons/fa';
 
 const StudentAttendence = () => {
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState('');
+  const [classFilter, setClassFilter] = useState('');
+  const [sectionFilter, setSectionFilter] = useState('');
   const today = new Date().toISOString().split('T')[0];
 
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState('Attendance Report');
   const [modalData, setModalData] = useState([]);
   const [modalMode, setModalMode] = useState('detail');
-  const [showConfirmPopup, setShowConfirmPopup] = useState(false); 
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    const assignedClass = localStorage.getItem("classAssigned");
-
-    if (!assignedClass) return;
-
-    const url = `${BaseURL}/students/details?class=${encodeURIComponent(assignedClass)}`;
-
-    axios.get(url)
-      .then((res) => {
-        if (!res.data || res.data.length === 0) {
-          setStudents([]);
-          setFilteredStudents([]);
-          setLoading(false);
-          return;
-        }
-
-        const formatted = res.data.map((s) => ({
-          studentId: s._id,
-          rollNo: s.rollNo || '',
-          profilePic: s.studentPic || '',
-          name: s.name,
-          fathername: s.fatherName,
-          class: s.Class,
-          section: s.section,
-          status: "present"
-        }));
-
-        setStudents(formatted);
-        setFilteredStudents(formatted);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching filtered students:", err);
-        setLoading(false);
-      });
+    const role = localStorage.getItem("role");
+    setUserRole(role);
+    fetchStudents(role);
   }, []);
 
+  const fetchStudents = async (role) => {
+    try {
+      let url = `${BaseURL}/students/details`;
+      let params = {};
+
+      if (role === "Teacher") {
+        const assignedClass = localStorage.getItem("classAssigned");
+        const assignedSection = localStorage.getItem("sectionAssigned");
+
+        if (assignedClass) {
+          params.class = assignedClass;
+        }
+        if (assignedSection) {
+          params.section = assignedSection;
+        }
+      }
+
+      const queryString = Object.keys(params).map(key => 
+        `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
+      ).join('&');
+      
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+
+      const res = await axios.get(url);
+
+      if (!res.data || res.data.length === 0) {
+        setStudents([]);
+        setFilteredStudents([]);
+        setLoading(false);
+        return;
+      }
+
+      const formatted = res.data.map((s) => ({
+        studentId: s._id,
+        rollNo: s.rollNo || "N/A",
+        profilePic: s.studentPic || "",
+        name: s.name,
+        fathername: s.fatherName,
+        class: s.Class,
+        section: s.section,
+        status: "present",
+      }));
+
+      setStudents(formatted);
+      setFilteredStudents(formatted);
+      
+      if (role === "Teacher") {
+        const assignedClass = localStorage.getItem("classAssigned");
+        const assignedSection = localStorage.getItem("sectionAssigned");
+        
+        if (assignedClass) setClassFilter(assignedClass);
+        if (assignedSection) setSectionFilter(assignedSection);
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching students:", err);
+      showError("Failed to fetch students");
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const lowerSearch = searchTerm.toLowerCase();
-    const filtered = students.filter((s) => s.name.toLowerCase().includes(lowerSearch));
+    let filtered = students;
+    
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter((s) => 
+        s.name.toLowerCase().includes(lowerSearch) ||
+        (s.rollNo && s.rollNo.toLowerCase().includes(lowerSearch))
+      );
+    }
+    
+    if (classFilter) {
+      filtered = filtered.filter((s) => s.class === classFilter);
+    }
+    
+    if (sectionFilter) {
+      filtered = filtered.filter((s) => s.section === sectionFilter);
+    }
+    
     setFilteredStudents(filtered);
-  }, [searchTerm, students]);
+  }, [searchTerm, students, classFilter, sectionFilter]);
 
   const handleStatusChange = (index, value) => {
     const updated = [...filteredStudents];
@@ -86,7 +139,7 @@ const StudentAttendence = () => {
       console.error("Attendance submit error:", err);
       showError("Error marking attendance");
     } finally {
-      setShowConfirmPopup(false); // close popup after response
+      setShowConfirmPopup(false);
     }
   };
 
@@ -105,16 +158,30 @@ const StudentAttendence = () => {
 
   const handleClassReport = async (type) => {
     try {
-      const assignedClass = localStorage.getItem("classAssigned");
+      let params = { type: type };
+      
+      if (userRole === "Teacher") {
+        const assignedClass = localStorage.getItem("classAssigned");
+        if (assignedClass) params.class = assignedClass;
+      } else if (classFilter) {
+        params.class = classFilter;
+        if (sectionFilter) params.section = sectionFilter;
+      }
 
-      const response = await axios.get(`${BaseURL}/students/class/report`, {
-        params: {
-          class: assignedClass,
-          type: type,
-        },
-      });
+      const response = await axios.get(`${BaseURL}/students/class/report`, { params });
 
-      setModalTitle(`${assignedClass} - ${type} Report`);
+      let title = '';
+      if (userRole === "Teacher") {
+        const assignedClass = localStorage.getItem("classAssigned");
+        const assignedSection = localStorage.getItem("sectionAssigned");
+        title = `${assignedClass}${assignedSection ? `-${assignedSection}` : ''} - ${type} Report`;
+      } else if (classFilter) {
+        title = `${classFilter}${sectionFilter ? `-${sectionFilter}` : ''} - ${type} Report`;
+      } else {
+        title = `All Classes - ${type} Report`;
+      }
+
+      setModalTitle(title);
       setModalData(response.data);
       setModalMode("summary");
       setShowModal(true);
@@ -124,84 +191,204 @@ const StudentAttendence = () => {
     }
   };
 
+  const uniqueClasses = [...new Set(students.map(student => student.class))].sort();
+  const uniqueSections = [...new Set(students.map(student => student.section))].sort();
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setClassFilter('');
+    setSectionFilter('');
+  };
+
   return (
     <>
       <Sidebar />
-      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full h-screen">
-        <div className="bg-white w-full h-full shadow-md rounded-md px-4 max-sm:px-4">
-          <div className="flex items-center justify-between py-4 flex-wrap gap-3">
-            {/* Search Input */}
-            <div className="flex items-center bg-[#F8F8F8] rounded px-3 py-2 flex-grow w-10 max-sm:w-full">
-              <FaSearch className="text-gray-500 mr-2" />
-              <input
-                type="text"
-                placeholder="Search By Name"
-                className="outline-none bg-[#F8F8F8] w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+        <div className="bg-white w-full min-h-screen shadow-md rounded-md px-4 max-sm:px-4 overflow-hidden">
+          {/* Header Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-t-md mb-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center">
+                <div className="bg-white p-2 rounded-full shadow-sm mr-3">
+                  <FaCalendarCheck className="text-indigo-600 text-xl" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">Student Attendance</h1>
+                  <p className="text-sm text-gray-600">
+                    {userRole === "Teacher" ? (
+                      <>Class: {localStorage.getItem("classAssigned") || "N/A"}, Section: {localStorage.getItem("sectionAssigned") || "N/A"}</>
+                    ) : (
+                      "Manage student attendance records"
+                    )}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm hover:bg-gray-50"
+                >
+                  <FaFilter className="text-gray-500" />
+                  Filters
+                </button>
+                
+                <select
+                  onChange={(e) => handleClassReport(e.target.value)}
+                  className="border cursor-pointer border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                  defaultValue=""
+                >
+                  <option value="" disabled>Reports</option>
+                  <option value="weekly">Weekly Report</option>
+                  <option value="monthly">Monthly Report</option>
+                  <option value="previous">Previous Month</option>
+                  <option value="yearly">Yearly Report</option>
+                </select>
 
-            {/* Report and Submit */}
-            <div className="flex gap-3 max-sm:w-full justify-end">
-              <select
-                onChange={(e) => handleClassReport(e.target.value)}
-                className="border cursor-pointer border-gray-300 rounded-md px-4 py-2 bg-white text-gray-700 hover:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500 max-sm:text-sm"
-                defaultValue="">
-                <option value="" disabled>Select Report</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="previous">Previous Month</option>
-                <option value="yearly">Yearly</option>
-              </select>
-
-              <button
-                onClick={() => setShowConfirmPopup(true)} // ✅ open confirm modal
-                className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700 max-sm:text-sm">
-                Submit Attendance
-              </button>
+                <button
+                  onClick={() => setShowConfirmPopup(true)}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium"
+                  disabled={filteredStudents.length === 0}
+                >
+                  Submit Attendance
+                </button>
+              </div>
             </div>
           </div>
 
+          {/* Search and Filters Section */}
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-3 items-center justify-between">
+              <div className="relative flex-grow max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search students by name or roll number"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <div className="text-sm text-gray-500">
+                Showing {filteredStudents.length} of {students.length} students
+              </div>
+            </div>
+
+            {/* Filters - Collapsible */}
+            <div className={`mt-4 bg-gray-50 p-4 rounded-lg ${showFilters ? 'block' : 'hidden'}`}>
+              <div className="flex flex-wrap gap-4 items-end">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+                  <select
+                    value={classFilter}
+                    onChange={(e) => setClassFilter(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
+                    disabled={userRole === "Teacher"}
+                  >
+                    <option value="">All Classes</option>
+                    {uniqueClasses.map(cls => (
+                      <option key={cls} value={cls}>{cls}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+                  <select
+                    value={sectionFilter}
+                    onChange={(e) => setSectionFilter(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
+                    disabled={userRole === "Teacher"}
+                  >
+                    <option value="">All Sections</option>
+                    {uniqueSections.map(sec => (
+                      <option key={sec} value={sec}>{sec}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                {(searchTerm || classFilter || sectionFilter) && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-indigo-600 text-sm font-medium hover:text-indigo-800"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Students Table */}
           {loading ? (
-            <p>Loading students...</p>
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+            </div>
           ) : filteredStudents.length === 0 ? (
-            <p>No students found.</p>
+            <div className="flex flex-col items-center justify-center h-64 text-gray-500 bg-gray-50 rounded-lg">
+              <FaUserGraduate className="text-6xl mb-4 opacity-50" />
+              <p className="text-lg font-medium">No students found</p>
+              <p className="text-sm mt-2">
+                {searchTerm || classFilter || sectionFilter 
+                  ? "Try adjusting your search or filters" 
+                  : "No students available for attendance"}
+              </p>
+            </div>
           ) : (
-            <div className="overflow-x-auto h-[calc(100vh-155px)] max-sm:h-[calc(100vh-160px)] scrollbar-hide">
-              <table className="min-w-full table-auto border border-gray-300">
-                <thead className="bg-gray-100 text-gray-700 text-sm font-semibold text-center">
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="border py-3 px-1 whitespace-nowrap"></th>
-                    <th className="border py-3 px-1 whitespace-nowrap">Photo</th>
-                    <th className="border py-3 px-1 whitespace-nowrap">Roll No</th>
-                    <th className="border py-3 px-1 whitespace-nowrap">Name</th>
-                    <th className="border py-3 px-1 whitespace-nowrap">Father Name</th>
-                    <th className="border py-3 px-1 whitespace-nowrap">Class</th>
-                    <th className="border py-3 px-1 whitespace-nowrap">Section</th>
-                    <th className="border py-3 px-1 whitespace-nowrap">Status</th>
-                    <th className="border py-0 px-1 whitespace-nowrap">Report</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-white divide-y divide-gray-200">
                   {filteredStudents.map((s, index) => (
-                    <tr key={s.studentId} className="text-center">
-                      <td className="border py-2 text-gray-400">{index + 1}</td>
-                      <td className="border px-2 py-2">
-                        <img
-                          src={s.profilePic}
-                          alt="student"
-                          className="w-10 h-10 rounded-full object-cover mx-auto"
-                        />
+                    <tr key={s.studentId} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            <img
+                              src={s.profilePic}
+                              alt="student"
+                              className="h-10 w-10 rounded-full object-cover"
+                              onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/40';
+                              }}
+                            />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{s.name}</div>
+                            <div className="text-sm text-gray-500">{s.fathername}</div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="border px-3 py-0 truncate w-fit">{s.rollNo}</td>
-                      <td className="border px-3 py-0">{s.name}</td>
-                      <td className="border px-3 py-0">{s.fathername}</td>
-                      <td className="border px-3 py-0">{s.class}</td>
-                      <td className="border px-3 py-0">{s.section}</td>
-                      <td className="border px-3 py-0">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{s.rollNo}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {s.class}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {s.section}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <select
-                          className="border rounded px-2 py-1"
+                          className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-600 ${
+                            s.status === 'absent' 
+                              ? 'bg-red-100 text-red-800' 
+                              : s.status === 'leave' 
+                                ? 'bg-amber-100 text-amber-800' 
+                                : 'bg-green-100 text-green-800'
+                          }`}
                           value={s.status}
                           onChange={(e) => handleStatusChange(index, e.target.value)}
                         >
@@ -210,13 +397,13 @@ const StudentAttendence = () => {
                           <option value="leave">Leave</option>
                         </select>
                       </td>
-                      <td className="border px-0 py-0 truncate w-fit">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <select
                           onChange={(e) => handleReportSelect(s.studentId, e.target.value)}
-                          className="border px-0 py-2 rounded-md"
+                          className="block w-full rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           defaultValue=""
                         >
-                          <option value="" disabled>Select Report</option>
+                          <option value="" disabled>View Report</option>
                           <option value="weekly">Weekly</option>
                           <option value="monthly">Monthly</option>
                           <option value="previous">Previous Month</option>
@@ -241,49 +428,51 @@ const StudentAttendence = () => {
         mode={modalMode}
       />
 
-      {/* ✅ Confirm Submit Popup */}
+      {/* Confirm Submit Popup */}
       {showConfirmPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white  rounded-xl shadow-2xl w-[90%] max-w-md p-6 text-center animate-fade-in">
+          <div className="bg-white rounded-xl shadow-2xl w-[90%] max-w-md p-6 text-center">
             <div className="flex flex-col items-center">
-              <svg
-                className="w-12 h-12 text-rose-600 mb-3"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v2m0 4h.01M12 3.75c-4.556 0-8.25 3.694-8.25 8.25s3.694 8.25 8.25 8.25 8.25-3.694 8.25-8.25S16.556 3.75 12 3.75z"
-                />
-              </svg>
-              <h2 className="text-xl font-bold text-gray-800 mb-2">
+              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100">
+                <svg
+                  className="h-6 w-6 text-indigo-600"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v2m0 4h.01M12 3.75c-4.556 0-8.25 3.694-8.25 8.25s3.694 8.25 8.25 8.25 8.25-3.694 8.25-8.25S16.556 3.75 12 3.75z"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mt-4">
                 Confirm Attendance Submission
               </h2>
-              <p className="text-sm text-gray-600">
-                Are you sure you want to submit <span className="font-semibold text-rose-600">today's attendance</span>?
+              <p className="text-sm text-gray-600 mt-2">
+                Are you sure you want to submit attendance for {filteredStudents.length} students?
               </p>
             </div>
 
             <div className="flex justify-center gap-4 mt-6">
               <button
                 onClick={handleSubmit}
-                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200"
               >
-                Yes, Submit
+                Submit
               </button>
               <button
                 onClick={() => setShowConfirmPopup(false)}
-                className="border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded-lg transition duration-200">
+                className="border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded-lg transition duration-200"
+              >
                 Cancel
               </button>
             </div>
           </div>
         </div>
       )}
-
     </>
   );
 };
