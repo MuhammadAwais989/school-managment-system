@@ -18,73 +18,150 @@ const StudentCard = () => {
     total: 0
   });
   const [todayAttendance, setTodayAttendance] = useState([]);
+  const [classFilter, setClassFilter] = useState('');
+  const [sectionFilter, setSectionFilter] = useState('');
+  const [allStudents, setAllStudents] = useState([]);
+  const [uniqueClasses, setUniqueClasses] = useState([]);
+  const [uniqueSections, setUniqueSections] = useState([]);
 
   const role = localStorage.getItem("role");
   const teacherClass = localStorage.getItem("teacherClass");
+  const teacherSection = localStorage.getItem("sectionAssigned");
 
-  // ✅ Fetch total student count (Class-wise)
+  // Fetch all students data
+  useEffect(() => {
+    const fetchAllStudents = async () => {
+      try {
+        const res = await axios.get(`${BaseURL}/students/details`);
+        setAllStudents(res.data || []);
+        
+        // Extract unique classes and sections
+        const classes = [...new Set(res.data.map(std => std.Class))].filter(c => c).sort();
+        const sections = [...new Set(res.data.map(std => std.section))].filter(s => s).sort();
+        
+        setUniqueClasses(classes);
+        setUniqueSections(sections);
+      } catch (err) {
+        console.error("Failed to fetch student list:", err);
+      }
+    };
+    
+    if (role !== "Teacher") {
+      fetchAllStudents();
+    }
+  }, [role]);
+
+  // ✅ Fetch total student count (Class-wise and Section-wise)
   useEffect(() => {
     const fetchStudentCount = async () => {
       try {
-        const res = await axios.get(`${BaseURL}/students/details`);
         if (role === "Teacher") {
-          const filtered = res.data.filter(std => std.Class === teacherClass);
+          // For teachers, use their assigned class and section
+          const res = await axios.get(`${BaseURL}/students/details`);
+          const filtered = res.data.filter(std => 
+            std.Class === teacherClass && 
+            std.section === teacherSection
+          );
           setStudentList(filtered.length);
         } else {
-          setStudentList(res.data.length || 0);
+          // For admin/principal, apply filters if selected
+          let filtered = allStudents;
+          
+          if (classFilter) {
+            filtered = filtered.filter(std => std.Class === classFilter);
+          }
+          
+          if (sectionFilter) {
+            filtered = filtered.filter(std => std.section === sectionFilter);
+          }
+          
+          setStudentList(filtered.length || 0);
         }
       } catch (err) {
         console.error("Failed to fetch student list:", err);
       }
     };
+    
     fetchStudentCount();
-  }, [role, teacherClass]);
+  }, [role, teacherClass, teacherSection, classFilter, sectionFilter, allStudents]);
 
-  // ✅ Fetch today's attendance summary (Class-wise)
+  // ✅ Fetch today's attendance summary (Class-wise and Section-wise)
   useEffect(() => {
     const fetchAttendanceSummary = async () => {
       try {
+        let url = `${BaseURL}/students/summary`;
+        let params = {};
+        
         if (role === "Teacher") {
-          const res = await axios.get(`${BaseURL}/students/summary?class=${teacherClass}`);
-          setAttendanceSummary({
-            present: res.data.present || 0,
-            absent: res.data.absent || 0,
-            leave: res.data.leave || 0,
-            total: res.data.total || 0
-          });
+          params.class = teacherClass;
+          params.section = teacherSection;
         } else {
-          const res = await axios.get(`${BaseURL}/`);
-          setAttendanceSummary({
-            present: res.data.present || 0,
-            absent: res.data.absent || 0,
-            leave: res.data.leave || 0,
-            total: res.data.total || 0
-          });
+          if (classFilter) params.class = classFilter;
+          if (sectionFilter) params.section = sectionFilter;
         }
+        
+        // Build query string if params exist
+        const queryString = Object.keys(params)
+          .map(key => `${key}=${encodeURIComponent(params[key])}`)
+          .join('&');
+        
+        if (queryString) {
+          url += `?${queryString}`;
+        }
+        
+        const res = await axios.get(url);
+        setAttendanceSummary({
+          present: res.data.present || 0,
+          absent: res.data.absent || 0,
+          leave: res.data.leave || 0,
+          total: res.data.total || 0
+        });
       } catch (err) {
         console.error("Failed to fetch today's attendance summary:", err);
       }
     };
+    
     fetchAttendanceSummary();
-  }, [role, teacherClass]);
+  }, [role, teacherClass, teacherSection, classFilter, sectionFilter]);
 
   // ✅ Fetch today's attendance student list
   useEffect(() => {
     const fetchTodayAttendance = async () => {
       try {
+        let url = `${BaseURL}/students/today-attendance`;
+        let params = {};
+        
         if (role === "Teacher") {
-          const res = await axios.get(`${BaseURL}/students/today-attendance?class=${teacherClass}`);
-          setTodayAttendance(res.data || []);
+          params.class = teacherClass;
+          params.section = teacherSection;
         } else {
-          const res = await axios.get(`${BaseURL}/students/today-attendance`);
-          setTodayAttendance(res.data || []);
+          if (classFilter) params.class = classFilter;
+          if (sectionFilter) params.section = sectionFilter;
         }
+        
+        // Build query string if params exist
+        const queryString = Object.keys(params)
+          .map(key => `${key}=${encodeURIComponent(params[key])}`)
+          .join('&');
+        
+        if (queryString) {
+          url += `?${queryString}`;
+        }
+        
+        const res = await axios.get(url);
+        setTodayAttendance(res.data || []);
       } catch (err) {
         console.error("Failed to fetch today's attendance:", err);
       }
     };
+    
     fetchTodayAttendance();
-  }, [role, teacherClass]);
+  }, [role, teacherClass, teacherSection, classFilter, sectionFilter]);
+
+  const clearFilters = () => {
+    setClassFilter('');
+    setSectionFilter('');
+  };
 
   const StudentsData = [
     {
@@ -131,10 +208,10 @@ const StudentCard = () => {
 
   return (
     <>
+      <div className="bg-gray-50 min-h-screen w-full lg:pl-24 pl-4 pt-8 max-sm:pr-1 max-lg:pl-24 max-sm:pt-0 max-sm:pl-3 sm:pt-16">
 
-      <div className="bg-gray-50 h-screen w-full lg:pl-24 pl-4 pt-8 max-sm:pr-1 max-lg:pl-24 max-sm:pt-0 max-sm:pl-3 sm:pt-16">
         {/* Cards */}
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-4 mr-4">
           {StudentsData.map((items) => (
             <div
               key={items.type}
@@ -159,49 +236,58 @@ const StudentCard = () => {
         </div>
 
         {/* Today's Attendance Table */}
-        {(role === 'Teacher') && (
-
+        {(role === 'Teacher' || classFilter || sectionFilter) && (
           <div className="mt-6 bg-white p-4 rounded-md shadow-sm mr-4">
-            <h3 className="font-bold text-lg mb-3">Today's Attendance</h3>
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todayAttendance.length > 0 ? (
-                  todayAttendance.map((student) => (
-                    <tr key={student._id}>
-                      <td className="border border-gray-300 px-4 py-2">{student.name}</td>
+            <h3 className="font-bold text-lg mb-3">
+              Today's Attendance 
+              {classFilter && ` - Class ${classFilter}`}
+              {sectionFilter && `, Section ${sectionFilter}`}
+              {role === 'Teacher' && ` - Class ${teacherClass}, Section ${teacherSection}`}
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Class</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Section</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todayAttendance.length > 0 ? (
+                    todayAttendance.map((student) => (
+                      <tr key={student._id}>
+                        <td className="border border-gray-300 px-4 py-2">{student.name}</td>
+                        <td className="border border-gray-300 px-4 py-2">{student.Class}</td>
+                        <td className="border border-gray-300 px-4 py-2">{student.section}</td>
+                        <td
+                          className={`border border-gray-300 px-4 py-2 font-semibold ${student.status === "Present"
+                              ? "text-green-600"
+                              : student.status === "Absent"
+                                ? "text-red-600"
+                                : "text-yellow-600"
+                            }`}
+                        >
+                          {student.status}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
                       <td
-                        className={`border border-gray-300 px-4 py-2 font-semibold ${student.status === "Present"
-                            ? "text-green-600"
-                            : student.status === "Absent"
-                              ? "text-red-600"
-                              : "text-yellow-600"
-                          }`}
+                        colSpan="4"
+                        className="border border-gray-300 px-4 py-2 text-center text-gray-500"
                       >
-                        {student.status}
+                        No attendance data for today.
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="2"
-                      className="border border-gray-300 px-4 py-2 text-center text-gray-500"
-                    >
-                      No attendance data for today.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
-
       </div>
     </>
   );

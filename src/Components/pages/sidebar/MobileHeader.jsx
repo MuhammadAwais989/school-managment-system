@@ -117,7 +117,16 @@ const MobileHeader = ({ toggleSidebar }) => {
       </div>
 
       <div className="sm:absolute left-24 top-4 bg-gray-50">
-        <h1 className="max-sm:pl-4 font-bold text-black text-2xl">{pageTitle}</h1>
+        <div className="flex items-center space-x-3">
+  <div className="p-1.5 text-blue-600">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+    </svg>
+  </div>
+  <h1 className="max-sm:pl-4 font-bold text-gray-800 text-2xl">
+    {pageTitle}
+  </h1>
+</div>
       </div>
     </>
   );

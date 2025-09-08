@@ -36,7 +36,7 @@ const StudentAttendence = () => {
 
       if (role === "Teacher") {
         const assignedClass = localStorage.getItem("classAssigned");
-        const assignedSection = localStorage.getItem("sectionAssigned");
+        const assignedSection = localStorage.getItem("classSection");
 
         if (assignedClass) {
           params.class = assignedClass;
@@ -79,7 +79,7 @@ const StudentAttendence = () => {
       
       if (role === "Teacher") {
         const assignedClass = localStorage.getItem("classAssigned");
-        const assignedSection = localStorage.getItem("sectionAssigned");
+        const assignedSection = localStorage.getItem("classSection");
         
         if (assignedClass) setClassFilter(assignedClass);
         if (assignedSection) setSectionFilter(assignedSection);
@@ -96,6 +96,7 @@ const StudentAttendence = () => {
   useEffect(() => {
     let filtered = students;
     
+    // Apply search filter
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter((s) => 
@@ -104,12 +105,16 @@ const StudentAttendence = () => {
       );
     }
     
+    // Apply class filter
     if (classFilter) {
       filtered = filtered.filter((s) => s.class === classFilter);
     }
     
+    // Apply section filter - FIXED: Added trim() to handle whitespace issues
     if (sectionFilter) {
-      filtered = filtered.filter((s) => s.section === sectionFilter);
+      filtered = filtered.filter((s) => 
+        s.section && s.section.trim() === sectionFilter.trim()
+      );
     }
     
     setFilteredStudents(filtered);
@@ -173,7 +178,7 @@ const StudentAttendence = () => {
       let title = '';
       if (userRole === "Teacher") {
         const assignedClass = localStorage.getItem("classAssigned");
-        const assignedSection = localStorage.getItem("sectionAssigned");
+        const assignedSection = localStorage.getItem("classSection");
         title = `${assignedClass}${assignedSection ? `-${assignedSection}` : ''} - ${type} Report`;
       } else if (classFilter) {
         title = `${classFilter}${sectionFilter ? `-${sectionFilter}` : ''} - ${type} Report`;
@@ -191,6 +196,7 @@ const StudentAttendence = () => {
     }
   };
 
+  // Get unique classes and sections for filters
   const uniqueClasses = [...new Set(students.map(student => student.class))].sort();
   const uniqueSections = [...new Set(students.map(student => student.section))].sort();
 
@@ -206,7 +212,7 @@ const StudentAttendence = () => {
       <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
         <div className="bg-white w-full min-h-screen shadow-md rounded-md px-4 max-sm:px-4 overflow-hidden">
           {/* Header Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-t-md mb-4">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-t-md mb-4 rounded-lg border border-blue-100">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center">
                 <div className="bg-white p-2 rounded-full shadow-sm mr-3">
@@ -216,7 +222,7 @@ const StudentAttendence = () => {
                   <h1 className="text-2xl font-bold text-gray-800">Student Attendance</h1>
                   <p className="text-sm text-gray-600">
                     {userRole === "Teacher" ? (
-                      <>Class: {localStorage.getItem("classAssigned") || "N/A"}, Section: {localStorage.getItem("sectionAssigned") || "N/A"}</>
+                      <>Class: {localStorage.getItem("classAssigned") || "N/A"}, Section: {localStorage.getItem("classSection") || "N/A"}</>
                     ) : (
                       "Manage student attendance records"
                     )}
