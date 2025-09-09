@@ -7,7 +7,7 @@ export const InputData = [
     {
       name: 'gender',
       type: 'select', 
-      placeholder: 'Select Gender', 
+      placeholder: 'Gender', 
       options: ['Male', 'Female', 'Other'], 
     },
     {
@@ -19,8 +19,8 @@ export const InputData = [
     {
       name: 'designation',
       type: 'select', 
-      placeholder: 'Select Designation', 
-      options: ['Principle', 'Admin', 'Teacher'], 
+      placeholder: 'Designation', 
+      options: ['Principle', 'Admin', 'Teacher', 'Incharge', 'Sub Incharge', 'Sweeper', 'Gatekeeper',], 
     },
     { name: 'salary', type: 'number', placeholder: 'Salary' }, 
     { name: 'dateOfBirth', type: 'text', placeholder: 'Date of Birth' }, 

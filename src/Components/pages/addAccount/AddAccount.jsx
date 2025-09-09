@@ -27,7 +27,7 @@ const AddAccount = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -144,7 +144,7 @@ const AddAccount = () => {
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
-    
+
     // Generate Excel file and trigger download
     XLSX.writeFile(workbook, "Users_Data.xlsx");
     showSuccess("Data exported to Excel successfully");
@@ -234,8 +234,17 @@ const AddAccount = () => {
         <div className="bg-white w-full min-h-[calc(100vh-56px)] shadow-md rounded-lg px-6 py-4 max-sm:px-4">
           {/* Header Section */}
           <div className="flex flex-col mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
-            <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-            <p className="text-gray-600 mt-1">Manage all user accounts and permissions</p>
+            <div className="flex items-center">
+              <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+                <p className="text-gray-600 mt-1">Manage all user accounts and permissions</p>
+              </div>
+            </div>
           </div>
 
           {/* Controls Section */}

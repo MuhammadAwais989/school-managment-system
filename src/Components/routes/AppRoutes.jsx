@@ -15,6 +15,7 @@ import Profile from '../pages/Profile';
 import Income from '../pages/accounts/Income';
 import Expense from '../pages/accounts/Expense';
 import BalanceSheet from '../pages/accounts/BalanceSheet';
+import TeacherAttendence from '../pages/teacher/TeacherAttendence';
 
 const AppRoutes = () => {
   const [role, setRole] = useState(null);
@@ -48,6 +49,7 @@ const AppRoutes = () => {
             <Route path='/admin-dashboard' element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path='/addaccount' element={<AdminRoute><AddAccount /></AdminRoute>} />
             <Route path='/teacher/details' element={<AdminRoute><TeacherDetails /></AdminRoute>} />
+            <Route path='/teacher/attendenace' element={<AdminRoute><TeacherAttendence /></AdminRoute>} />
             <Route path='/students/attendence' element={<AdminRoute><StudentAttendence /></AdminRoute>} />
             <Route path='/students/details' element={<AdminRoute><StudentDetails /></AdminRoute>} />
             <Route path='/accounts/income' element={<AdminRoute><Income /></AdminRoute>} />

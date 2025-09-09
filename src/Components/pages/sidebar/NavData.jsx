@@ -30,6 +30,7 @@ export const navItem = [
     icon: <LiaChalkboardTeacherSolid />,
     children: [
       { id: 3.1, label: "Teacher Details", path: "/teacher/details" },
+      { id: 3.2, label: "Teacher Attendance", path: "/teacher/attendenace" },
     ],
   },
   {
