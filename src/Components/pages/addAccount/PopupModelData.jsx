@@ -14,7 +14,7 @@ export const InputData = [
       name: 'last_qualification',
       type: 'select', 
       placeholder: 'Last Qualification', 
-      options: ["Matric", "Inter", "BS / BSc / BBA", "MA / MSc / MPhil", "Ph.D."], 
+      options: ["None", "Matric", "Inter", "BS / BSc / BBA", "MA / MSc / MPhil", "Ph.D."], 
     },
     {
       name: 'designation',

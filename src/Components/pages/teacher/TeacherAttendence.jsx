@@ -4,13 +4,14 @@ import { BaseURL } from '../../helper/helper';
 import Sidebar from '../sidebar/SideBar';
 import ReportModal from '../student/AttendenceReport';
 import { showError, showSuccess } from '../../utils/Toast';
-import { FaSearch, FaFilter, FaChalkboardTeacher, FaCalendarCheck, FaCalendarAlt } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaChalkboardTeacher, FaCalendarCheck, FaCalendarAlt, FaUserTie, FaUserShield, FaUserCog, FaUser, FaShieldAlt, FaDoorOpen, FaTimes, FaSpinner } from 'react-icons/fa';
 
 const TeacherAttendence = () => {
   const [teachers, setTeachers] = useState([]);
   const [filteredTeachers, setFilteredTeachers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [userRole, setUserRole] = useState('');
   const today = new Date().toISOString().split('T')[0];
 
@@ -22,7 +23,7 @@ const TeacherAttendence = () => {
   const [showFilters, setShowFilters] = useState(false);
   
   // For filters
-  const [designationFilter, setDesignationFilter] = useState('Teacher');
+  const [designationFilter, setDesignationFilter] = useState('all');
   const [sectionFilter, setSectionFilter] = useState('all');
   const [classFilter, setClassFilter] = useState('all');
   
@@ -30,6 +31,18 @@ const TeacherAttendence = () => {
   const [reportYear, setReportYear] = useState(new Date().getFullYear());
   const [reportMonth, setReportMonth] = useState(new Date().getMonth() + 1);
   const [showDateSelector, setShowDateSelector] = useState(false);
+  
+  // For custom report modal
+  const [showCustomReportModal, setShowCustomReportModal] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [customReportType, setCustomReportType] = useState('monthly');
+  const [customYear, setCustomYear] = useState(new Date().getFullYear());
+  const [customMonth, setCustomMonth] = useState(new Date().getMonth() + 1);
+
+  // Allowed designations
+  const allowedDesignations = [
+    'Principle', 'Admin', 'Teacher', 'Incharge', 'Sub Incharge', 'Sweeper', 'Gatekeeper'
+  ];
 
   useEffect(() => {
     const role = localStorage.getItem("role");
@@ -49,9 +62,9 @@ const TeacherAttendence = () => {
         return;
       }
 
-      // Filter for teachers only and format the data
+      // Filter for all allowed designations and format the data
       const teacherData = res.data
-        .filter(item => item.designation === 'Teacher')
+        .filter(item => allowedDesignations.includes(item.designation))
         .map((t) => ({
           teacherId: t._id,
           class: t.Class || "N/A",
@@ -68,7 +81,7 @@ const TeacherAttendence = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching teachers:", err);
-      showError("Failed to fetch teachers");
+      showError("Failed to fetch staff members");
       setLoading(false);
     }
   };
@@ -83,7 +96,8 @@ const TeacherAttendence = () => {
         t.name.toLowerCase().includes(lowerSearch) ||
         (t.class && t.class.toLowerCase().includes(lowerSearch)) ||
         (t.email && t.email.toLowerCase().includes(lowerSearch)) ||
-        (t.section && t.section.toLowerCase().includes(lowerSearch))
+        (t.section && t.section.toLowerCase().includes(lowerSearch)) ||
+        (t.designation && t.designation.toLowerCase().includes(lowerSearch))
       );
     }
     
@@ -112,22 +126,30 @@ const TeacherAttendence = () => {
   };
 
   const handleSubmit = async () => {
-    try {
-      const payload = {
-        date: today,
-        records: filteredTeachers.map(({ teacherId, status }) => ({
-          teacherId,
-          status
-        }))
-      };
+    setSubmitting(true);
+    
+    const payload = {
+      date: today,
+      records: filteredTeachers.map(({ teacherId, status }) => ({
+        teacherId,
+        status,
+      })),
+    };
 
-      await axios.post(`${BaseURL}/teachers/attendence`, payload);
-      showSuccess("Attendance marked successfully");
-    } catch (err) {
-      console.error("Attendance submit error:", err);
-      showError("Error marking attendance");
-    } finally {
+    console.log("Submitting attendance payload:", payload);
+
+    try {
+      const res = await axios.post(`${BaseURL}/teachers/attendence`, payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      showSuccess(res.data.message || "Attendance submitted successfully!");
       setShowConfirmPopup(false);
+    } catch (err) {
+      console.error("Attendance submit error:", err.response?.data || err.message);
+      showError(err.response?.data?.message || "Failed to submit attendance");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -163,11 +185,11 @@ const TeacherAttendence = () => {
 
       const response = await axios.get(`${BaseURL}/teachers/all/report`, { params });
 
-      let title = `All Teachers - ${type} Report`;
+      let title = `All Staff - ${type} Report`;
       if (customDate) {
         const monthNames = ["January", "February", "March", "April", "May", "June",
           "July", "August", "September", "October", "November", "December"];
-        title = `All Teachers - ${monthNames[customDate.month - 1]} ${customDate.year} Report`;
+        title = `All Staff - ${monthNames[customDate.month - 1]} ${customDate.year} Report`;
       }
 
       setModalTitle(title);
@@ -175,21 +197,22 @@ const TeacherAttendence = () => {
       setModalMode("summary");
       setShowModal(true);
     } catch (err) {
-      console.error("Error fetching all teachers report:", err);
-      showError("Failed to fetch teachers report.");
+      console.error("Error fetching all staff report:", err);
+      showError("Failed to fetch staff report.");
     }
   };
 
   const clearFilters = () => {
     setSearchTerm('');
-    setDesignationFilter('Teacher');
+    setDesignationFilter('all');
     setSectionFilter('all');
     setClassFilter('all');
   };
 
-  // Get unique sections and classes for filter
+  // Get unique sections, classes, and designations for filter
   const sections = [...new Set(teachers.map(teacher => teacher.section))];
   const classes = [...new Set(teachers.map(teacher => teacher.class))];
+  const designations = [...new Set(teachers.map(teacher => teacher.designation))];
 
   // Generate years for dropdown (last 10 years and next 2 years)
   const generateYears = () => {
@@ -230,6 +253,48 @@ const TeacherAttendence = () => {
     }
   };
 
+  // Get icon based on designation
+  const getDesignationIcon = (designation) => {
+    switch (designation) {
+      case 'Principle':
+        return <FaUserTie className="text-purple-600" />;
+      case 'Admin':
+        return <FaUserShield className="text-blue-600" />;
+      case 'Teacher':
+        return <FaChalkboardTeacher className="text-indigo-600" />;
+      case 'Incharge':
+        return <FaUserCog className="text-green-600" />;
+      case 'Sub Incharge':
+        return <FaUserCog className="text-teal-600" />;
+      case 'Sweeper':
+        return <FaUser className="text-orange-600" />;
+      case 'Gatekeeper':
+        return <FaDoorOpen className="text-red-600" />;
+      default:
+        return <FaUser className="text-gray-600" />;
+    }
+  };
+
+  // Open custom report modal
+  const openCustomReportModal = (teacher, reportType) => {
+    setSelectedTeacher(teacher);
+    setCustomReportType(reportType);
+    setCustomYear(new Date().getFullYear());
+    setCustomMonth(new Date().getMonth() + 1);
+    setShowCustomReportModal(true);
+  };
+
+  // Generate custom report
+  const generateCustomReport = () => {
+    if (selectedTeacher) {
+      handleReportSelect(selectedTeacher.teacherId, customReportType, { 
+        year: customYear, 
+        month: customMonth 
+      });
+    }
+    setShowCustomReportModal(false);
+  };
+
   return (
     <>
       <Sidebar />
@@ -240,11 +305,11 @@ const TeacherAttendence = () => {
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center">
                 <div className="bg-white p-2 rounded-full shadow-sm mr-3">
-                  <FaChalkboardTeacher className="text-indigo-600 text-xl" />
+                  <FaUserTie className="text-indigo-600 text-xl" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800">Teacher Attendance</h1>
-                  <p className="text-sm text-gray-600">Manage teacher attendance records</p>
+                  <h1 className="text-2xl font-bold text-gray-800">Staff Attendance</h1>
+                  <p className="text-sm text-gray-600">Manage staff attendance records</p>
                 </div>
               </div>
               
@@ -281,9 +346,9 @@ const TeacherAttendence = () => {
                 <button
                   onClick={() => setShowConfirmPopup(true)}
                   className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium"
-                  disabled={filteredTeachers.length === 0}
+                  disabled={filteredTeachers.length === 0 || submitting}
                 >
-                  Submit Attendance
+                  {submitting ? "Submitting..." : "Submit Attendance"}
                 </button>
               </div>
             </div>
@@ -355,7 +420,7 @@ const TeacherAttendence = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="Search teachers by name, class, email or section"
+                  placeholder="Search staff by name, designation, class, email or section"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -363,7 +428,7 @@ const TeacherAttendence = () => {
               </div>
               
               <div className="text-sm text-gray-500">
-                Showing {filteredTeachers.length} of {teachers.length} teachers
+                Showing {filteredTeachers.length} of {teachers.length} staff members
               </div>
             </div>
 
@@ -379,9 +444,9 @@ const TeacherAttendence = () => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="all">All Designations</option>
-                    <option value="Teacher">Teacher</option>
-                    <option value="Senior Teacher">Senior Teacher</option>
-                    <option value="Head of Department">Head of Department</option>
+                    {designations.map((desig, index) => (
+                      <option key={index} value={desig}>{desig}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -428,19 +493,19 @@ const TeacherAttendence = () => {
             </div>
           </div>
 
-          {/* Teachers Table */}
+          {/* Staff Table */}
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
             </div>
           ) : filteredTeachers.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500 bg-gray-50 rounded-lg">
-              <FaChalkboardTeacher className="text-6xl mb-4 opacity-50" />
-              <p className="text-lg font-medium">No teachers found</p>
+              <FaUserTie className="text-6xl mb-4 opacity-50" />
+              <p className="text-lg font-medium">No staff members found</p>
               <p className="text-sm mt-2">
                 {searchTerm || designationFilter !== 'all' || sectionFilter !== 'all' || classFilter !== 'all'
                   ? "Try adjusting your search or filters" 
-                  : "No teachers available for attendance"}
+                  : "No staff members available for attendance"}
               </p>
             </div>
           ) : (
@@ -448,7 +513,8 @@ const TeacherAttendence = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teacher</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Member</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
@@ -464,7 +530,7 @@ const TeacherAttendence = () => {
                           <div className="flex-shrink-0 h-10 w-10">
                             <img
                               src={t.profilePic}
-                              alt="teacher"
+                              alt="staff"
                               className="h-10 w-10 rounded-full object-cover"
                               onError={(e) => {
                                 e.target.src = 'https://via.placeholder.com/40';
@@ -473,8 +539,13 @@ const TeacherAttendence = () => {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">{t.name}</div>
-                            <div className="text-sm text-gray-500">{t.designation}</div>
                           </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <span className="mr-2">{getDesignationIcon(t.designation)}</span>
+                          <span className="text-sm text-gray-900">{t.designation}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -497,6 +568,7 @@ const TeacherAttendence = () => {
                           }`}
                           value={t.status}
                           onChange={(e) => handleStatusChange(index, e.target.value)}
+                          disabled={submitting}
                         >
                           <option value="present">Present</option>
                           <option value="absent">Absent</option>
@@ -508,22 +580,14 @@ const TeacherAttendence = () => {
                           <select
                             onChange={(e) => {
                               if (e.target.value === "custom") {
-                                // For custom report, we'll show a modal or prompt
-                                const year = prompt("Enter year (e.g., 2023):", new Date().getFullYear());
-                                const month = prompt("Enter month (1-12):", new Date().getMonth() + 1);
-                                
-                                if (year && month) {
-                                  handleReportSelect(t.teacherId, "monthly", { 
-                                    year: parseInt(year), 
-                                    month: parseInt(month) 
-                                  });
-                                }
+                                openCustomReportModal(t, "monthly");
                               } else if (e.target.value) {
                                 handleReportSelect(t.teacherId, e.target.value);
                               }
                             }}
                             className="block w-full rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                             defaultValue=""
+                            disabled={submitting}
                           >
                             <option value="" disabled>View Report</option>
                             <option value="weekly">Weekly</option>
@@ -551,48 +615,153 @@ const TeacherAttendence = () => {
         mode={modalMode}
       />
 
+      {/* Custom Report Modal */}
+      {showCustomReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-xl shadow-2xl w-[90%] max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800">Custom Report</h2>
+              <button
+                onClick={() => setShowCustomReportModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors text-xl"
+                disabled={submitting}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            
+            {selectedTeacher && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <p className="font-medium text-gray-700">{selectedTeacher.name}</p>
+                <p className="text-sm text-gray-500">{selectedTeacher.designation}</p>
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
+                <select
+                  value={customReportType}
+                  onChange={(e) => setCustomReportType(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={submitting}
+                >
+                  <option value="monthly">Monthly Report</option>
+                  <option value="yearly">Yearly Report</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                <select
+                  value={customYear}
+                  onChange={(e) => setCustomYear(parseInt(e.target.value))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={submitting}
+                >
+                  {generateYears().map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {customReportType === 'monthly' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                  <select
+                    value={customMonth}
+                    onChange={(e) => setCustomMonth(parseInt(e.target.value))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    disabled={submitting}
+                  >
+                    {generateMonths().map(month => (
+                      <option key={month.value} value={month.value}>{month.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowCustomReportModal(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={submitting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={generateCustomReport}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                disabled={submitting}
+              >
+                {submitting ? "Generating..." : "Generate Report"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirm Submit Popup */}
       {showConfirmPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-xl shadow-2xl w-[90%] max-w-md p-6 text-center">
             <div className="flex flex-col items-center">
-              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100">
-                <svg
-                  className="h-6 w-6 text-indigo-600"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9v2m0 4h.01M12 3.75c-4.556 0-8.25 3.694-8.25 8.25s3.694 8.25 8.25 8.25 8.25-3.694 8.25-8.25S16.556 3.75 12 3.75z"
-                  />
-                </svg>
-              </div>
+              {submitting ? (
+                <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+                  <FaSpinner className="h-6 w-6 text-blue-600 animate-spin" />
+                </div>
+              ) : (
+                <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100">
+                  <svg
+                    className="h-6 w-6 text-indigo-600"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01M12 3.75c-4.556 0-8.25 3.694-8.25 8.25s3.694 8.25 8.25 8.25 8.25-3.694 8.25-8.25S16.556 3.75 12 3.75z"
+                    />
+                  </svg>
+                </div>
+              )}
+              
               <h2 className="text-xl font-bold text-gray-800 mt-4">
-                Confirm Attendance Submission
+                {submitting ? "Submitting Attendance..." : "Confirm Attendance Submission"}
               </h2>
-              <p className="text-sm text-gray-600 mt-2">
-                Are you sure you want to submit attendance for {filteredTeachers.length} teachers?
-              </p>
+              
+              {!submitting && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Are you sure you want to submit attendance for {filteredTeachers.length} staff members?
+                </p>
+              )}
             </div>
 
-            <div className="flex justify-center gap-4 mt-6">
-              <button
-                onClick={handleSubmit}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200"
-              >
-                Submit
-              </button>
-              <button
-                onClick={() => setShowConfirmPopup(false)}
-                className="border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded-lg transition duration-200"
-              >
-                Cancel
-              </button>
-            </div>
+            {!submitting && (
+              <div className="flex justify-center gap-4 mt-6">
+                <button
+                  onClick={handleSubmit}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200"
+                >
+                  Submit
+                </button>
+                <button
+                  onClick={() => setShowConfirmPopup(false)}
+                  className="border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded-lg transition duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {submitting && (
+              <div className="mt-6">
+                <p className="text-sm text-gray-600">Please wait while we save attendance...</p>
+              </div>
+            )}
           </div>
         </div>
       )}

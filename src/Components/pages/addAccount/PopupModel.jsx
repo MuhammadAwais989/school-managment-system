@@ -15,14 +15,14 @@ const PopupModel = ({ isModalOpen, onclose, editMode = false, existingData = nul
   useEffect(() => {
     if (editMode && existingData) {
       // Format existing data for display
-      const formattedDisplay = {...existingData};
+      const formattedDisplay = { ...existingData };
       if (existingData.phone) {
         formattedDisplay.phone = formatPhoneForDisplay(existingData.phone);
       }
       if (existingData.CNIC_No) {
         formattedDisplay.CNIC_No = formatCNICForDisplay(existingData.CNIC_No);
       }
-      
+
       // Format dates for input type="date" (YYYY-MM-DD)
       if (existingData.dateOfBirth) {
         formattedDisplay.dateOfBirth = formatDateForInput(existingData.dateOfBirth);
@@ -30,7 +30,7 @@ const PopupModel = ({ isModalOpen, onclose, editMode = false, existingData = nul
       if (existingData.dateOfJoining) {
         formattedDisplay.dateOfJoining = formatDateForInput(existingData.dateOfJoining);
       }
-      
+
       setFormValues(existingData);
       setDisplayValues(formattedDisplay);
       setPreviewImage(existingData.profilePic || null);
@@ -44,24 +44,24 @@ const PopupModel = ({ isModalOpen, onclose, editMode = false, existingData = nul
   // Format date for input type="date" (YYYY-MM-DD)
   const formatDateForInput = (dateString) => {
     if (!dateString) return '';
-    
+
     // If it's already in YYYY-MM-DD format, return as is
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       return dateString;
     }
-    
+
     // Try to parse the date and format it
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
-    
+
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day}`;
   };
 
-  // Format phone number for display (XXXX-XXXXXXX)
+  // Format phone number for display and storage (XXXX-XXXXXXX)
   const formatPhoneForDisplay = (value) => {
     if (!value) return '';
     const numbers = value.replace(/\D/g, '');
@@ -69,7 +69,7 @@ const PopupModel = ({ isModalOpen, onclose, editMode = false, existingData = nul
     return `${numbers.slice(0, 4)}-${numbers.slice(4, 11)}`;
   };
 
-  // Format CNIC for display (XXXXX-XXXXXXX-X)
+  // Format CNIC for display and storage (XXXXX-XXXXXXX-X)
   const formatCNICForDisplay = (value) => {
     if (!value) return '';
     const numbers = value.replace(/\D/g, '');
@@ -78,27 +78,21 @@ const PopupModel = ({ isModalOpen, onclose, editMode = false, existingData = nul
     return `${numbers.slice(0, 5)}-${numbers.slice(5, 12)}-${numbers.slice(12, 13)}`;
   };
 
-  // Remove formatting for backend (remove hyphens)
-  const removeFormatting = (value) => {
-    return value ? value.replace(/\D/g, '') : '';
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     let formattedDisplayValue = value;
     let rawValue = value;
 
-    // Apply formatting for display
+    // Apply formatting for display and storage
     if (name === 'phone') {
       formattedDisplayValue = formatPhoneForDisplay(value);
-      rawValue = removeFormatting(value);
+      rawValue = formattedDisplayValue; // Keep the hyphens for storage
     } else if (name === 'CNIC_No') {
       formattedDisplayValue = formatCNICForDisplay(value);
-      rawValue = removeFormatting(value);
+      rawValue = formattedDisplayValue; // Keep the hyphens for storage
     } else if (name === 'dateOfBirth' || name === 'dateOfJoining') {
       // For date inputs, the value is already in YYYY-MM-DD format
-      // which is what we want to send to the backend
       formattedDisplayValue = value;
       rawValue = value;
     }
@@ -132,7 +126,7 @@ const PopupModel = ({ isModalOpen, onclose, editMode = false, existingData = nul
     setloading(true);
     const formData = new FormData();
 
-    // Send raw values (without hyphens) to backend
+    // Send formatted values (with hyphens) to backend
     Object.entries(formValues).forEach(([key, value]) => {
       formData.append(key, value);
     });
@@ -211,6 +205,7 @@ const PopupModel = ({ isModalOpen, onclose, editMode = false, existingData = nul
                           </option>
                           {field.name === 'Class' ? (
                             <>
+                              <option value="None">None</option>
                               <option value="Nursery">Nursery</option>
                               <option value="KG-I">KG-I</option>
                               <option value="KG-II">KG-II</option>
@@ -227,6 +222,7 @@ const PopupModel = ({ isModalOpen, onclose, editMode = false, existingData = nul
                             </>
                           ) : field.name === 'section' ? (
                             <>
+                              <option value="None">None</option>
                               <option value="A">A</option>
                               <option value="B">B</option>
                               <option value="C">C</option>
