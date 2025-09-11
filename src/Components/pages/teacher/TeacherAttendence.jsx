@@ -153,54 +153,86 @@ const TeacherAttendence = () => {
     }
   };
 
-  const handleReportSelect = async (teacherId, reportType, customDate = null) => {
-    try {
-      let url = `${BaseURL}/teachers/attendence?teacherId=${teacherId}&type=${reportType}`;
-      
-      // Add custom date parameters if provided
-      if (customDate) {
-        url += `&year=${customDate.year}&month=${customDate.month}`;
-      }
-      
-      const response = await axios.get(url);
-      setModalTitle(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Attendance Report`);
-      setModalData([response.data]);
-      setModalMode("detail");
-      setShowModal(true);
-    } catch (err) {
-      console.error("Error fetching report:", err);
-      showError("Failed to fetch report.");
+// ... (previous imports and component setup)
+
+const handleReportSelect = async (teacherId, reportType, customDate = null) => {
+  try {
+    let url = `${BaseURL}/teachers/attendence?teacherId=${teacherId}&type=${reportType}`;
+    
+    if (customDate) {
+      url += `&year=${customDate.year}&month=${customDate.month}`;
     }
-  };
-
-  const handleAllTeachersReport = async (type, customDate = null) => {
-    try {
-      let params = { type: type };
-      
-      // Add custom date parameters if provided
-      if (customDate) {
-        params.year = customDate.year;
-        params.month = customDate.month;
-      }
-
-      const response = await axios.get(`${BaseURL}/teachers/all/report`, { params });
-
-      let title = `All Staff - ${type} Report`;
-      if (customDate) {
-        const monthNames = ["January", "February", "March", "April", "May", "June",
-          "July", "August", "September", "October", "November", "December"];
-        title = `All Staff - ${monthNames[customDate.month - 1]} ${customDate.year} Report`;
-      }
-
-      setModalTitle(title);
-      setModalData(response.data);
-      setModalMode("summary");
-      setShowModal(true);
-    } catch (err) {
-      console.error("Error fetching all staff report:", err);
-      showError("Failed to fetch staff report.");
+    
+    const response = await axios.get(url);
+    const responseData = response.data;
+    
+    // Handle both single staff and all staff report structures
+    let modalData = [];
+    let modalMode = "detail";
+    
+    if (responseData.records) {
+      // Single staff detail report
+      modalData = [{
+        staffId: teacherId,
+        name: responseData.staff?.name || '',
+        designation: responseData.staff?.designation || '',
+        class: responseData.staff?.class || '',
+        section: responseData.staff?.section || '',
+        records: responseData.records
+      }];
+      modalMode = "detail";
+    } else if (Array.isArray(responseData)) {
+      // Direct array response
+      modalData = responseData;
+      modalMode = responseData[0]?.records ? "detail" : "summary";
+    } else if (responseData.reportData) {
+      // All staff summary report
+      modalData = responseData.reportData;
+      modalMode = "summary";
     }
-  };
+    
+    setModalTitle(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Attendance Report`);
+    setModalData(modalData);
+    setModalMode(modalMode);
+    setShowModal(true);
+  } catch (err) {
+    console.error("Error fetching report:", err);
+    showError("Failed to fetch report.");
+  }
+};
+
+const handleAllTeachersReport = async (type, customDate = null) => {
+  try {
+    let params = { type: type };
+    
+    if (customDate) {
+      params.year = customDate.year;
+      if (customDate.month) params.month = customDate.month;
+    }
+
+    const response = await axios.get(`${BaseURL}/teachers/all/report`, { params });
+    const responseData = response.data;
+
+    let title = `All Staff - ${type} Report`;
+    if (customDate) {
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+      title = `All Staff - ${monthNames[customDate.month - 1]} ${customDate.year} Report`;
+    }
+
+    setModalTitle(title);
+    
+    // Ensure we're using the reportData array from the response
+    setModalData(responseData.reportData || responseData);
+    setModalMode("summary");
+    setShowModal(true);
+  } catch (err) {
+    console.error("Error fetching all staff report:", err);
+    showError("Failed to fetch staff report.");
+  }
+};
+
+// ... (rest of the component remains the same)
 
   const clearFilters = () => {
     setSearchTerm('');
