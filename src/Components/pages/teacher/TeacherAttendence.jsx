@@ -5,6 +5,7 @@ import Sidebar from '../sidebar/SideBar';
 import ReportModal from '../student/AttendenceReport';
 import { showError, showSuccess } from '../../utils/Toast';
 import { FaSearch, FaFilter, FaChalkboardTeacher, FaCalendarCheck, FaCalendarAlt, FaUserTie, FaUserShield, FaUserCog, FaUser, FaShieldAlt, FaDoorOpen, FaTimes, FaSpinner } from 'react-icons/fa';
+import TeacherReportModal from './TeacherAttendenceReport';
 
 const TeacherAttendence = () => {
   const [teachers, setTeachers] = useState([]);
@@ -21,17 +22,17 @@ const TeacherAttendence = () => {
   const [modalMode, setModalMode] = useState('detail');
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // For filters
   const [designationFilter, setDesignationFilter] = useState('all');
   const [sectionFilter, setSectionFilter] = useState('all');
   const [classFilter, setClassFilter] = useState('all');
-  
+
   // For custom date selection in reports
   const [reportYear, setReportYear] = useState(new Date().getFullYear());
   const [reportMonth, setReportMonth] = useState(new Date().getMonth() + 1);
   const [showDateSelector, setShowDateSelector] = useState(false);
-  
+
   // For custom report modal
   const [showCustomReportModal, setShowCustomReportModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
@@ -88,11 +89,11 @@ const TeacherAttendence = () => {
 
   useEffect(() => {
     let filtered = teachers;
-    
+
     // Apply search filter
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
-      filtered = filtered.filter((t) => 
+      filtered = filtered.filter((t) =>
         t.name.toLowerCase().includes(lowerSearch) ||
         (t.class && t.class.toLowerCase().includes(lowerSearch)) ||
         (t.email && t.email.toLowerCase().includes(lowerSearch)) ||
@@ -100,22 +101,22 @@ const TeacherAttendence = () => {
         (t.designation && t.designation.toLowerCase().includes(lowerSearch))
       );
     }
-    
+
     // Apply designation filter
     if (designationFilter && designationFilter !== 'all') {
       filtered = filtered.filter((t) => t.designation === designationFilter);
     }
-    
+
     // Apply section filter
     if (sectionFilter && sectionFilter !== 'all') {
       filtered = filtered.filter((t) => t.section === sectionFilter);
     }
-    
+
     // Apply class filter
     if (classFilter && classFilter !== 'all') {
       filtered = filtered.filter((t) => t.class === classFilter);
     }
-    
+
     setFilteredTeachers(filtered);
   }, [searchTerm, teachers, designationFilter, sectionFilter, classFilter]);
 
@@ -127,7 +128,7 @@ const TeacherAttendence = () => {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    
+
     const payload = {
       date: today,
       records: filteredTeachers.map(({ teacherId, status }) => ({
@@ -142,7 +143,7 @@ const TeacherAttendence = () => {
       const res = await axios.post(`${BaseURL}/teachers/attendence`, payload, {
         headers: { "Content-Type": "application/json" },
       });
-      
+
       showSuccess(res.data.message || "Attendance submitted successfully!");
       setShowConfirmPopup(false);
     } catch (err) {
@@ -153,86 +154,86 @@ const TeacherAttendence = () => {
     }
   };
 
-// ... (previous imports and component setup)
+  // ... (previous imports and component setup)
 
-const handleReportSelect = async (teacherId, reportType, customDate = null) => {
-  try {
-    let url = `${BaseURL}/teachers/attendence?teacherId=${teacherId}&type=${reportType}`;
-    
-    if (customDate) {
-      url += `&year=${customDate.year}&month=${customDate.month}`;
+  const handleReportSelect = async (teacherId, reportType, customDate = null) => {
+    try {
+      let url = `${BaseURL}/teachers/attendence?teacherId=${teacherId}&type=${reportType}`;
+
+      if (customDate) {
+        url += `&year=${customDate.year}&month=${customDate.month}`;
+      }
+
+      const response = await axios.get(url);
+      const responseData = response.data;
+
+      // Handle both single staff and all staff report structures
+      let modalData = [];
+      let modalMode = "detail";
+
+      if (responseData.records) {
+        // Single staff detail report
+        modalData = [{
+          staffId: teacherId,
+          name: responseData.staff?.name || '',
+          designation: responseData.staff?.designation || '',
+          class: responseData.staff?.class || '',
+          section: responseData.staff?.section || '',
+          records: responseData.records
+        }];
+        modalMode = "detail";
+      } else if (Array.isArray(responseData)) {
+        // Direct array response
+        modalData = responseData;
+        modalMode = responseData[0]?.records ? "detail" : "summary";
+      } else if (responseData.reportData) {
+        // All staff summary report
+        modalData = responseData.reportData;
+        modalMode = "summary";
+      }
+
+      setModalTitle(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Attendance Report`);
+      setModalData(modalData);
+      setModalMode(modalMode);
+      setShowModal(true);
+    } catch (err) {
+      console.error("Error fetching report:", err);
+      showError("Failed to fetch report.");
     }
-    
-    const response = await axios.get(url);
-    const responseData = response.data;
-    
-    // Handle both single staff and all staff report structures
-    let modalData = [];
-    let modalMode = "detail";
-    
-    if (responseData.records) {
-      // Single staff detail report
-      modalData = [{
-        staffId: teacherId,
-        name: responseData.staff?.name || '',
-        designation: responseData.staff?.designation || '',
-        class: responseData.staff?.class || '',
-        section: responseData.staff?.section || '',
-        records: responseData.records
-      }];
-      modalMode = "detail";
-    } else if (Array.isArray(responseData)) {
-      // Direct array response
-      modalData = responseData;
-      modalMode = responseData[0]?.records ? "detail" : "summary";
-    } else if (responseData.reportData) {
-      // All staff summary report
-      modalData = responseData.reportData;
-      modalMode = "summary";
+  };
+
+  const handleAllTeachersReport = async (type, customDate = null) => {
+    try {
+      let params = { type: type };
+
+      if (customDate) {
+        params.year = customDate.year;
+        if (customDate.month) params.month = customDate.month;
+      }
+
+      const response = await axios.get(`${BaseURL}/teachers/all/report`, { params });
+      const responseData = response.data;
+
+      let title = `All Staff - ${type} Report`;
+      if (customDate) {
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"];
+        title = `All Staff - ${monthNames[customDate.month - 1]} ${customDate.year} Report`;
+      }
+
+      setModalTitle(title);
+
+      // Ensure we're using the reportData array from the response
+      setModalData(responseData.reportData || responseData);
+      setModalMode("summary");
+      setShowModal(true);
+    } catch (err) {
+      console.error("Error fetching all staff report:", err);
+      showError("Failed to fetch staff report.");
     }
-    
-    setModalTitle(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Attendance Report`);
-    setModalData(modalData);
-    setModalMode(modalMode);
-    setShowModal(true);
-  } catch (err) {
-    console.error("Error fetching report:", err);
-    showError("Failed to fetch report.");
-  }
-};
+  };
 
-const handleAllTeachersReport = async (type, customDate = null) => {
-  try {
-    let params = { type: type };
-    
-    if (customDate) {
-      params.year = customDate.year;
-      if (customDate.month) params.month = customDate.month;
-    }
-
-    const response = await axios.get(`${BaseURL}/teachers/all/report`, { params });
-    const responseData = response.data;
-
-    let title = `All Staff - ${type} Report`;
-    if (customDate) {
-      const monthNames = ["January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"];
-      title = `All Staff - ${monthNames[customDate.month - 1]} ${customDate.year} Report`;
-    }
-
-    setModalTitle(title);
-    
-    // Ensure we're using the reportData array from the response
-    setModalData(responseData.reportData || responseData);
-    setModalMode("summary");
-    setShowModal(true);
-  } catch (err) {
-    console.error("Error fetching all staff report:", err);
-    showError("Failed to fetch staff report.");
-  }
-};
-
-// ... (rest of the component remains the same)
+  // ... (rest of the component remains the same)
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -319,9 +320,9 @@ const handleAllTeachersReport = async (type, customDate = null) => {
   // Generate custom report
   const generateCustomReport = () => {
     if (selectedTeacher) {
-      handleReportSelect(selectedTeacher.teacherId, customReportType, { 
-        year: customYear, 
-        month: customMonth 
+      handleReportSelect(selectedTeacher.teacherId, customReportType, {
+        year: customYear,
+        month: customMonth
       });
     }
     setShowCustomReportModal(false);
@@ -344,16 +345,16 @@ const handleAllTeachersReport = async (type, customDate = null) => {
                   <p className="text-sm text-gray-600">Manage staff attendance records</p>
                 </div>
               </div>
-              
+
               <div className="flex gap-2 flex-wrap">
-                <button 
+                <button
                   onClick={() => setShowFilters(!showFilters)}
                   className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm hover:bg-gray-50"
                 >
                   <FaFilter className="text-gray-500" />
                   Filters
                 </button>
-                
+
                 <div className="relative">
                   <select
                     onChange={(e) => {
@@ -391,7 +392,7 @@ const handleAllTeachersReport = async (type, customDate = null) => {
             <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium text-gray-700">Select Report Period</h3>
-                <button 
+                <button
                   onClick={() => setShowDateSelector(false)}
                   className="text-red-500 hover:text-red-700"
                 >
@@ -424,7 +425,7 @@ const handleAllTeachersReport = async (type, customDate = null) => {
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleAllTeachersReport("monthly", { year: reportYear, month: reportMonth })}
@@ -458,7 +459,7 @@ const handleAllTeachersReport = async (type, customDate = null) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+
               <div className="text-sm text-gray-500">
                 Showing {filteredTeachers.length} of {teachers.length} staff members
               </div>
@@ -536,7 +537,7 @@ const handleAllTeachersReport = async (type, customDate = null) => {
               <p className="text-lg font-medium">No staff members found</p>
               <p className="text-sm mt-2">
                 {searchTerm || designationFilter !== 'all' || sectionFilter !== 'all' || classFilter !== 'all'
-                  ? "Try adjusting your search or filters" 
+                  ? "Try adjusting your search or filters"
                   : "No staff members available for attendance"}
               </p>
             </div>
@@ -591,13 +592,12 @@ const handleAllTeachersReport = async (type, customDate = null) => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
-                          className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-600 ${
-                            t.status === 'absent' 
-                              ? 'bg-red-100 text-red-800' 
-                              : t.status === 'leave' 
-                                ? 'bg-amber-100 text-amber-800' 
+                          className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-600 ${t.status === 'absent'
+                              ? 'bg-red-100 text-red-800'
+                              : t.status === 'leave'
+                                ? 'bg-amber-100 text-amber-800'
                                 : 'bg-green-100 text-green-800'
-                          }`}
+                            }`}
                           value={t.status}
                           onChange={(e) => handleStatusChange(index, e.target.value)}
                           disabled={submitting}
@@ -639,7 +639,7 @@ const handleAllTeachersReport = async (type, customDate = null) => {
       </div>
 
       {/* Report Modal */}
-      <ReportModal
+      <TeacherReportModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={modalTitle}
@@ -661,14 +661,14 @@ const handleAllTeachersReport = async (type, customDate = null) => {
                 <FaTimes />
               </button>
             </div>
-            
+
             {selectedTeacher && (
               <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                 <p className="font-medium text-gray-700">{selectedTeacher.name}</p>
                 <p className="text-sm text-gray-500">{selectedTeacher.designation}</p>
               </div>
             )}
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
@@ -682,7 +682,7 @@ const handleAllTeachersReport = async (type, customDate = null) => {
                   <option value="yearly">Yearly Report</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
                 <select
@@ -696,7 +696,7 @@ const handleAllTeachersReport = async (type, customDate = null) => {
                   ))}
                 </select>
               </div>
-              
+
               {customReportType === 'monthly' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
@@ -713,7 +713,7 @@ const handleAllTeachersReport = async (type, customDate = null) => {
                 </div>
               )}
             </div>
-            
+
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCustomReportModal(false)}
@@ -760,11 +760,11 @@ const handleAllTeachersReport = async (type, customDate = null) => {
                   </svg>
                 </div>
               )}
-              
+
               <h2 className="text-xl font-bold text-gray-800 mt-4">
                 {submitting ? "Submitting Attendance..." : "Confirm Attendance Submission"}
               </h2>
-              
+
               {!submitting && (
                 <p className="text-sm text-gray-600 mt-2">
                   Are you sure you want to submit attendance for {filteredTeachers.length} staff members?
