@@ -52,40 +52,41 @@ const TeacherAttendence = () => {
   }, []);
 
   const fetchTeachers = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${BaseURL}/addaccount`);
+  try {
+    setLoading(true);
+    const res = await axios.get(`${BaseURL}/addaccount`);
 
-      if (!res.data || res.data.length === 0) {
-        setTeachers([]);
-        setFilteredTeachers([]);
-        setLoading(false);
-        return;
-      }
-
-      // Filter for all allowed designations and format the data
-      const teacherData = res.data
-        .filter(item => allowedDesignations.includes(item.designation))
-        .map((t) => ({
-          teacherId: t._id,
-          class: t.Class || "N/A",
-          profilePic: t.profilePic || "",
-          name: t.name,
-          email: t.email,
-          section: t.section || "General",
-          designation: t.designation,
-          status: "present",
-        }));
-
-      setTeachers(teacherData);
-      setFilteredTeachers(teacherData);
+    if (!res.data || res.data.length === 0) {
+      setTeachers([]);
+      setFilteredTeachers([]);
       setLoading(false);
-    } catch (err) {
-      console.error("Error fetching teachers:", err);
-      showError("Failed to fetch staff members");
-      setLoading(false);
+      return;
     }
-  };
+
+    // Filter for all allowed designations and format the data
+    const teacherData = res.data
+      .filter(item => allowedDesignations.includes(item.designation))
+      .map((t) => ({
+        teacherId: t._id,
+        class: t.Class || "N/A",
+        profilePic: t.profilePic || "",
+        name: t.name,
+        fatherName: t.fatherName || "", // FIXED: This line was incorrectly setting name instead of fatherName
+        email: t.email,
+        section: t.section || "General",
+        designation: t.designation,
+        status: "present",
+      }));
+
+    setTeachers(teacherData);
+    setFilteredTeachers(teacherData);
+    setLoading(false);
+  } catch (err) {
+    console.error("Error fetching teachers:", err);
+    showError("Failed to fetch staff members");
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     let filtered = teachers;
@@ -95,6 +96,7 @@ const TeacherAttendence = () => {
       const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter((t) =>
         t.name.toLowerCase().includes(lowerSearch) ||
+        t.fatherName.toLowerCase().includes(lowerSearch) ||
         (t.class && t.class.toLowerCase().includes(lowerSearch)) ||
         (t.email && t.email.toLowerCase().includes(lowerSearch)) ||
         (t.section && t.section.toLowerCase().includes(lowerSearch)) ||
@@ -176,6 +178,7 @@ const TeacherAttendence = () => {
         modalData = [{
           staffId: teacherId,
           name: responseData.staff?.name || '',
+          fatherName: responseData.staff?.fatherName || '',
           designation: responseData.staff?.designation || '',
           class: responseData.staff?.class || '',
           section: responseData.staff?.section || '',
@@ -593,10 +596,10 @@ const TeacherAttendence = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
                           className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-600 ${t.status === 'absent'
-                              ? 'bg-red-100 text-red-800'
-                              : t.status === 'leave'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-green-100 text-green-800'
+                            ? 'bg-red-100 text-red-800'
+                            : t.status === 'leave'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-green-100 text-green-800'
                             }`}
                           value={t.status}
                           onChange={(e) => handleStatusChange(index, e.target.value)}

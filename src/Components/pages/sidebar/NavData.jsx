@@ -19,7 +19,7 @@ export const navItem = [
     path: "",
     icon: <PiStudentFill />,
     children: [
-      { id: 2.1, label: "Students Attendence", path: "/students/attendence" },
+      { id: 2.1, label: "Students Attendance", path: "/students/attendence" },
       { id: 2.2, label: "Students Details", path: "/students/details" },
     ],
   },
@@ -30,7 +30,7 @@ export const navItem = [
     icon: <LiaChalkboardTeacherSolid />,
     children: [
       { id: 3.1, label: "Teacher Details", path: "/teacher/details" },
-      { id: 3.2, label: "Teacher Attendance", path: "/teacher/attendenace" },
+      { id: 3.2, label: "Staff Attendance", path: "/teacher/attendenace" },
     ],
   },
   {

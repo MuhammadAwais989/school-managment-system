@@ -31,7 +31,7 @@ const TeacherReportModal = ({ isOpen, onClose, title, data, mode }) => {
       data.forEach((teacher) => {
         const row = [
           teacher.name || '-',
-          teacher.fatherName || '-', // Handle different field names
+          teacher.fatherName || '-', 
           teacher.designation || '-',
           teacher.class || '-',
           teacher.section || '-',

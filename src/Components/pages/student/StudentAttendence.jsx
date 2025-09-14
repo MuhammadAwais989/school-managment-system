@@ -46,10 +46,10 @@ const StudentAttendence = () => {
         }
       }
 
-      const queryString = Object.keys(params).map(key => 
+      const queryString = Object.keys(params).map(key =>
         `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
       ).join('&');
-      
+
       if (queryString) {
         url += `?${queryString}`;
       }
@@ -76,15 +76,15 @@ const StudentAttendence = () => {
 
       setStudents(formatted);
       setFilteredStudents(formatted);
-      
+
       if (role === "Teacher") {
         const assignedClass = localStorage.getItem("classAssigned");
         const assignedSection = localStorage.getItem("classSection");
-        
+
         if (assignedClass) setClassFilter(assignedClass);
         if (assignedSection) setSectionFilter(assignedSection);
       }
-      
+
       setLoading(false);
     } catch (err) {
       console.error("Error fetching students:", err);
@@ -95,28 +95,28 @@ const StudentAttendence = () => {
 
   useEffect(() => {
     let filtered = students;
-    
+
     // Apply search filter
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
-      filtered = filtered.filter((s) => 
+      filtered = filtered.filter((s) =>
         s.name.toLowerCase().includes(lowerSearch) ||
         (s.rollNo && s.rollNo.toLowerCase().includes(lowerSearch))
       );
     }
-    
+
     // Apply class filter
     if (classFilter) {
       filtered = filtered.filter((s) => s.class === classFilter);
     }
-    
+
     // Apply section filter - FIXED: Added trim() to handle whitespace issues
     if (sectionFilter) {
-      filtered = filtered.filter((s) => 
+      filtered = filtered.filter((s) =>
         s.section && s.section.trim() === sectionFilter.trim()
       );
     }
-    
+
     setFilteredStudents(filtered);
   }, [searchTerm, students, classFilter, sectionFilter]);
 
@@ -164,27 +164,32 @@ const StudentAttendence = () => {
   const handleClassReport = async (type) => {
     try {
       let params = { type: type };
-      
-      if (userRole === "Teacher") {
-        const assignedClass = localStorage.getItem("classAssigned");
-        if (assignedClass) params.class = assignedClass;
-      } else if (classFilter) {
-        params.class = classFilter;
-        if (sectionFilter) params.section = sectionFilter;
-      }
-
-      const response = await axios.get(`${BaseURL}/students/class/report`, { params });
-
       let title = '';
+
+      // For Teachers, use their assigned class/section
       if (userRole === "Teacher") {
         const assignedClass = localStorage.getItem("classAssigned");
         const assignedSection = localStorage.getItem("classSection");
+
+        if (assignedClass) params.class = assignedClass;
+        if (assignedSection) params.section = assignedSection;
+
         title = `${assignedClass}${assignedSection ? `-${assignedSection}` : ''} - ${type} Report`;
-      } else if (classFilter) {
-        title = `${classFilter}${sectionFilter ? `-${sectionFilter}` : ''} - ${type} Report`;
-      } else {
-        title = `All Classes - ${type} Report`;
       }
+      // For Admin/Principal, use filters if selected
+      else {
+        if (classFilter) {
+          params.class = classFilter;
+          if (sectionFilter) params.section = sectionFilter;
+          title = `${classFilter}${sectionFilter ? `-${sectionFilter}` : ''} - ${type} Report`;
+        } else {
+          // If no class filter selected, show error
+          showError("Please select a class to generate the report");
+          return;
+        }
+      }
+
+      const response = await axios.get(`${BaseURL}/students/class/report`, { params });
 
       setModalTitle(title);
       setModalData(response.data);
@@ -229,16 +234,16 @@ const StudentAttendence = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-2 flex-wrap">
-                <button 
+                <button
                   onClick={() => setShowFilters(!showFilters)}
                   className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm hover:bg-gray-50"
                 >
                   <FaFilter className="text-gray-500" />
                   Filters
                 </button>
-                
+
                 <select
                   onChange={(e) => handleClassReport(e.target.value)}
                   className="border cursor-pointer border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
@@ -277,9 +282,16 @@ const StudentAttendence = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+
               <div className="text-sm text-gray-500">
-                Showing {filteredStudents.length} of {students.length} students
+                Showing {filteredStudents.length} of {
+                  userRole === "Teacher"
+                    ? students.filter(s =>
+                      s.class === localStorage.getItem("classAssigned") &&
+                      s.section === localStorage.getItem("classSection")
+                    ).length
+                    : students.length
+                } students
               </div>
             </div>
 
@@ -315,7 +327,7 @@ const StudentAttendence = () => {
                     ))}
                   </select>
                 </div>
-                
+
                 {(searchTerm || classFilter || sectionFilter) && (
                   <button
                     onClick={clearFilters}
@@ -338,8 +350,8 @@ const StudentAttendence = () => {
               <FaUserGraduate className="text-6xl mb-4 opacity-50" />
               <p className="text-lg font-medium">No students found</p>
               <p className="text-sm mt-2">
-                {searchTerm || classFilter || sectionFilter 
-                  ? "Try adjusting your search or filters" 
+                {searchTerm || classFilter || sectionFilter
+                  ? "Try adjusting your search or filters"
                   : "No students available for attendance"}
               </p>
             </div>
@@ -388,13 +400,12 @@ const StudentAttendence = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
-                          className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-600 ${
-                            s.status === 'absent' 
-                              ? 'bg-red-100 text-red-800' 
-                              : s.status === 'leave' 
-                                ? 'bg-amber-100 text-amber-800' 
+                          className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-600 ${s.status === 'absent'
+                              ? 'bg-red-100 text-red-800'
+                              : s.status === 'leave'
+                                ? 'bg-amber-100 text-amber-800'
                                 : 'bg-green-100 text-green-800'
-                          }`}
+                            }`}
                           value={s.status}
                           onChange={(e) => handleStatusChange(index, e.target.value)}
                         >
