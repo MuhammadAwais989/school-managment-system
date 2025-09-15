@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { RxAvatar } from "react-icons/rx";
-import bg from "../../assets/images/loginBG.jpg";
+import bg from "../../assets/images/steptodown.com229552.jpg";
 import axios from "axios";
 import { BaseURL } from "../helper/helper";
 import { useNavigate } from "react-router-dom";
@@ -52,7 +52,7 @@ const LoginPage = () => {
 
   return (
     <div
-      className="flex items-center justify-center min-h-screen bg-cover bg-center"
+      className="flex items-center justify-center min-h-screen bg-cover bg-center "
       style={{ backgroundImage: `url(${bg})` }}
     >
       <div className="relative pt-16 backdrop-blur-sm bg-white/30 p-8 rounded-2xl shadow-lg w-full max-w-sm max-[500px]:w-[95%] ">

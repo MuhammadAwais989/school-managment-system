@@ -4,8 +4,8 @@ import StudentCard from '../student/StudentCard'
 const TeacherDashboard = () => {
   return (
     <>
-    <Sidebar />
-     <StudentCard />
+      <Sidebar />
+      <StudentCard />
     </>
   )
 }
