@@ -9,13 +9,14 @@ import StudentDetails from '../pages/student/StudentDetails';
 import Unauthorized from '../pages/Unauthorized';
 import { ProtectedRoute, AdminRoute, TeacherRoute } from './AuthRoutes';
 import Loading from '../pages/Loading';
-
 import { useEffect, useState } from 'react';
 import Profile from '../pages/Profile';
 import Income from '../pages/accounts/Income';
 import Expense from '../pages/accounts/Expense';
 import BalanceSheet from '../pages/accounts/BalanceSheet';
 import TeacherAttendence from '../pages/teacher/TeacherAttendence';
+import FeesManagement from '../pages/Fees/Fees';
+
 
 const AppRoutes = () => {
   const [role, setRole] = useState(null);
@@ -55,6 +56,7 @@ const AppRoutes = () => {
             <Route path='/accounts/income' element={<AdminRoute><Income /></AdminRoute>} />
             <Route path='/accounts/expenses' element={<AdminRoute><Expense /></AdminRoute>} />
             <Route path='/accounts/balancesheet' element={<AdminRoute><BalanceSheet /></AdminRoute>} />
+            <Route path='/fees/register' element={<AdminRoute> <FeesManagement /> </AdminRoute>} />
 
           </>
         )}

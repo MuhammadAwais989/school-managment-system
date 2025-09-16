@@ -35,17 +35,27 @@ export const navItem = [
   },
   {
     id: 4,
-    label: "Accounts",
+    label: "FeesManagement",
     path: "",
     icon: <MdAccountBalance />,
     children: [
-      { id: 4.1, label: "Income", path: "/accounts/income" },
-      { id: 4.2, label: "Expenses", path: "/accounts/expenses" },
-      { id: 4.3, label: "Balance Sheet", path: "/accounts/balancesheet" },
+      { id: 4.1, label: "Fees Register", path: "/fees/register" },
+
     ],
   },
   {
     id: 5,
+    label: "Accounts",
+    path: "",
+    icon: <MdAccountBalance />,
+    children: [
+      { id: 5.1, label: "Income", path: "/accounts/income" },
+      { id: 5.2, label: "Expenses", path: "/accounts/expenses" },
+      { id: 5.3, label: "Balance Sheet", path: "/accounts/balancesheet" },
+    ],
+  },
+  {
+    id: 6,
     label: "Add Account",
     path: "/addaccount",
     icon: <MdGroupAdd />,
