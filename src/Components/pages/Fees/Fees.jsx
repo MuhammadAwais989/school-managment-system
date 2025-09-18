@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Sidebar from "../sidebar/SideBar"
 import { 
   Search, 
   Download, 
@@ -24,7 +25,8 @@ import {
   FileText,
   Edit,
   Plus,
-  Minus
+  Minus,
+  Info
 } from 'react-feather';
 
 const FeesManagement = () => {
@@ -177,6 +179,8 @@ const FeesManagement = () => {
   const [otherFees, setOtherFees] = useState([]);
   const [newFeeDescription, setNewFeeDescription] = useState('');
   const [newFeeAmount, setNewFeeAmount] = useState('');
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailsStudent, setDetailsStudent] = useState(null);
 
   // Filter students based on search and filters
   const filteredStudents = students.filter(student => {
@@ -301,71 +305,81 @@ const FeesManagement = () => {
   };
 
   // Export data to Excel (XLS format)
-  const exportToExcel = () => {
-    // Create HTML table content
-    let tableContent = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          td { mso-number-format: "\\@"; }
-        </style>
-      </head>
-      <body>
-      <table>
-        <thead>
-          <tr>
-            <th>Roll No</th>
-            <th>Name</th>
-            <th>Father Name</th>
-            <th>Class</th>
-            <th>Section</th>
-            <th>Total Fees</th>
-            <th>Paid Fees</th>
-            <th>Dues</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-    
-    filteredStudents.forEach(student => {
-      tableContent += `
+  // Export data to Excel (XLS format) with due months
+const exportToExcel = () => {
+  // Create HTML table content
+  let tableContent = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        td { mso-number-format: "\\@"; }
+        th { background-color: #E3F2FD; font-weight: bold; }
+        .due-months { background-color: #FFECB3; }
+      </style>
+    </head>
+    <body>
+    <h2>Fees Management Report - ${new Date().toLocaleDateString()}</h2>
+    <table>
+      <thead>
         <tr>
-          <td>${student.rollNo}</td>
-          <td>${student.name}</td>
-          <td>${student.fatherName}</td>
-          <td>${student.class}</td>
-          <td>${student.section}</td>
-          <td>${student.totalFees}</td>
-          <td>${student.paidFees}</td>
-          <td>${student.dues}</td>
-          <td>${student.status}</td>
+          <th>Roll No</th>
+          <th>Name</th>
+          <th>Father Name</th>
+          <th>Class</th>
+          <th>Section</th>
+          <th>Total Fees</th>
+          <th>Dues</th>
+          <th>Status</th>
+          <th>Due Months</th>
         </tr>
-      `;
-    });
+      </thead>
+      <tbody>
+  `;
+  
+  filteredStudents.forEach(student => {
+    // Get due months for this student
+    const dueMonths = student.duesByMonth
+      .filter(month => !month.paid)
+      .map(month => month.month)
+      .join(', ');
     
     tableContent += `
-        </tbody>
-      </table>
-      </body>
-      </html>
+      <tr>
+        <td>${student.rollNo}</td>
+        <td>${student.name}</td>
+        <td>${student.fatherName}</td>
+        <td>${student.class}</td>
+        <td>${student.section}</td>
+        <td>${student.totalFees}</td>
+        <td>${student.dues}</td>
+        <td>${student.status}</td>
+        <td class="due-months">${dueMonths || 'None'}</td>
+      </tr>
     `;
-    
-    // Create download link
-    const blob = new Blob([tableContent], { type: 'application/vnd.ms-excel' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const date = new Date().toISOString().split('T')[0];
-    
-    link.setAttribute("href", url);
-    link.setAttribute("download", `fees_data_${date}.xls`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  });
+  
+  tableContent += `
+      </tbody>
+    </table>
+    </body>
+    </html>
+  `;
+  
+  // Create download link
+  const blob = new Blob([tableContent], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const date = new Date().toISOString().split('T')[0];
+  
+  link.setAttribute("href", url);
+  link.setAttribute("download", `fees_report_${date}.xls`);
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
   // Get status icon and color
   const getStatusIcon = (status) => {
@@ -378,13 +392,10 @@ const FeesManagement = () => {
     }
   };
 
-  // Toggle student details expansion
-  const toggleStudentExpansion = (studentId) => {
-    if (expandedStudent === studentId) {
-      setExpandedStudent(null);
-    } else {
-      setExpandedStudent(studentId);
-    }
+  // Show student details
+  const showStudentDetails = (student) => {
+    setDetailsStudent(student);
+    setShowDetailsModal(true);
   };
 
   // Sidebar navigation items
@@ -404,74 +415,16 @@ const FeesManagement = () => {
   const fullyPaidStudents = students.filter(student => student.status === 'Fully Paid').length;
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex w-full h-screen bg-gray-0">
       {/* Sidebar */}
-      <div className={`bg-blue-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition duration-200 ease-in-out z-10`}>
-        <div className="text-white flex items-center space-x-2 px-4">
-          <BookOpen className="h-8 w-8" />
-          <span className="text-2xl font-extrabold">EduManage</span>
-        </div>
-        
-        <nav>
-          {navItems.map(item => (
-            <a
-              key={item.id}
-              href="#"
-              className={`py-2.5 px-4 rounded flex items-center space-x-2 transition duration-200 ${activeView === item.id ? 'bg-blue-700' : 'hover:bg-blue-700'}`}
-              onClick={() => setActiveView(item.id)}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </a>
-          ))}
-          
-          <a
-            href="#"
-            className="py-2.5 px-4 rounded flex items-center space-x-2 transition duration-200 hover:bg-blue-700 mt-4"
-          >
-            <LogOut size={20} />
-            <span>Logout</span>
-          </a>
-        </nav>
-      </div>
+      <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top header */}
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center justify-between p-4">
-            <button 
-              className="md:hidden text-gray-500 focus:outline-none"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-            
-            <div className="flex-1 max-w-2xl mx-auto">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search size={18} className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search students..."
-                  className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center ml-4">
-              <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-                A
-              </div>
-            </div>
-          </div>
-        </header>
+      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+        <div className="bg-white w-full min-h-screen shadow-md rounded-md px-0 max-sm:px-4 overflow-hidden">
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
+        <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-800">Fees Management</h1>
             <p className="text-gray-600">Manage student fees, generate reports and challans</p>
@@ -608,13 +561,11 @@ const FeesManagement = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-blue-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider"></th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Roll No</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Student Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Father Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Class/Section</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Total Fees</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Paid</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Dues</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Actions</th>
@@ -622,106 +573,57 @@ const FeesManagement = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredStudents.map((student) => (
-                    <React.Fragment key={student.id}>
-                      <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => toggleStudentExpansion(student.id)}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {expandedStudent === student.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">{student.rollNo}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{student.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{student.fatherName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{student.class} - {student.section}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">Rs. {student.totalFees}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">Rs. {student.paidFees}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={student.dues > 0 ? "text-red-600 font-semibold" : "text-green-600"}>
-                            Rs. {student.dues}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            {getStatusIcon(student.status)}
-                            <span className="ml-1">{student.status}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedStudent(student);
-                              setShowPaymentModal(true);
-                            }}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md mr-2 text-xs"
-                            disabled={student.dues === 0}
-                          >
-                            <DollarSign size={14} className="inline mr-1" />
-                            Pay
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Get unpaid months for challan
-                              const unpaidMonths = student.duesByMonth
-                                .filter(month => !month.paid)
-                                .map(month => month.month);
-                              generateChallan(student, unpaidMonths);
-                            }}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md mr-2 text-xs"
-                          >
-                            <Printer size={14} className="inline mr-1" />
-                            Challan
-                          </button>
-                        </td>
-                      </tr>
-                      {expandedStudent === student.id && (
-                        <tr>
-                          <td colSpan="10" className="px-6 py-4 bg-gray-50">
-                            <div className="mb-4">
-                              <h3 className="font-semibold text-gray-700 mb-2">Month-wise Dues Status</h3>
-                              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                                {student.duesByMonth.map((monthData, index) => (
-                                  <div key={index} className={`p-2 rounded text-center ${monthData.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                    <div className="text-sm font-medium">{monthData.month.substring(0, 3)}</div>
-                                    <div className="text-xs">Rs. {monthData.due}</div>
-                                    <div className="text-xs">{monthData.paid ? 'Paid' : 'Due'}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <h3 className="font-semibold text-gray-700 mb-2">Payment History</h3>
-                              {student.paymentHistory.length > 0 ? (
-                                <div className="overflow-x-auto">
-                                  <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-100">
-                                      <tr>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Months Paid</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                      {student.paymentHistory.map((payment, index) => (
-                                        <tr key={index}>
-                                          <td className="px-4 py-2 whitespace-nowrap">{payment.date}</td>
-                                          <td className="px-4 py-2 whitespace-nowrap">{payment.months.join(', ')}</td>
-                                          <td className="px-4 py-2 whitespace-nowrap">Rs. {payment.amount}</td>
-                                          <td className="px-4 py-2 whitespace-nowrap">{payment.mode}</td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              ) : (
-                                <p className="text-gray-500">No payment history available</p>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
+                    <tr key={student.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">{student.rollNo}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{student.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{student.fatherName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{student.class} - {student.section}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">Rs. {student.totalFees}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={student.dues > 0 ? "text-red-600 font-semibold" : "text-green-600"}>
+                          Rs. {student.dues}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {getStatusIcon(student.status)}
+                          <span className="ml-1">{student.status}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => showStudentDetails(student)}
+                          className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-md mr-2 text-xs"
+                        >
+                          <Info size={14} className="inline mr-1" />
+                          Details
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedStudent(student);
+                            setShowPaymentModal(true);
+                          }}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md mr-2 text-xs"
+                          disabled={student.dues === 0}
+                        >
+                          <DollarSign size={14} className="inline mr-1" />
+                          Pay
+                        </button>
+                        <button
+                          onClick={() => {
+                            // Get unpaid months for challan
+                            const unpaidMonths = student.duesByMonth
+                              .filter(month => !month.paid)
+                              .map(month => month.month);
+                            generateChallan(student, unpaidMonths);
+                          }}
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-xs"
+                        >
+                          <Printer size={14} className="inline mr-1" />
+                          Challan
+                        </button>
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -737,7 +639,7 @@ const FeesManagement = () => {
         </main>
       </div>
       
-      {/* Payment Modal - Made Responsive */}
+      {/* Payment Modal */}
       {showPaymentModal && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-4 mx-auto my-4 md:p-6 md:my-8">
@@ -849,10 +751,99 @@ const FeesManagement = () => {
         </div>
       )}
       
-      {/* Challan Modal - Made Responsive */}
-      {showChallan && challanData && (
+      {/* Student Details Modal */}
+      {showDetailsModal && detailsStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-4 mx-auto my-4 md:p-6 md:my-8">
+            <div className="flex justify-between items-center mb-4 md:mb-6">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-800">Student Details</h2>
+              <button 
+                onClick={() => setShowDetailsModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="mb-4 md:mb-6 p-3 md:p-4 bg-blue-50 rounded-lg">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-xs md:text-sm text-blue-700 font-medium">Student</p>
+                  <p className="text-sm md:font-semibold">{detailsStudent.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs md:text-sm text-blue-700 font-medium">Roll No</p>
+                  <p className="text-sm md:font-semibold">{detailsStudent.rollNo}</p>
+                </div>
+                <div>
+                  <p className="text-xs md:text-sm text-blue-700 font-medium">Father Name</p>
+                  <p className="text-sm md:font-semibold">{detailsStudent.fatherName}</p>
+                </div>
+                <div>
+                  <p className="text-xs md:text-sm text-blue-700 font-medium">Class</p>
+                  <p className="text-sm md:font-semibold">{detailsStudent.class} - {detailsStudent.section}</p>
+                </div>
+                <div>
+                  <p className="text-xs md:text-sm text-blue-700 font-medium">Total Fees</p>
+                  <p className="text-sm md:font-semibold">Rs. {detailsStudent.totalFees}</p>
+                </div>
+                <div>
+                  <p className="text-xs md:text-sm text-blue-700 font-medium">Dues</p>
+                  <p className="text-sm md:font-semibold text-red-600">Rs. {detailsStudent.dues}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-700 mb-2">Month-wise Dues Status</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {detailsStudent.duesByMonth.map((monthData, index) => (
+                  <div key={index} className={`p-2 rounded text-center ${monthData.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <div className="text-sm font-medium">{monthData.month.substring(0, 3)}</div>
+                    <div className="text-xs">Rs. {monthData.due}</div>
+                    <div className="text-xs">{monthData.paid ? 'Paid' : 'Due'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold text-gray-700 mb-2">Payment History</h3>
+              {detailsStudent.paymentHistory.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Months Paid</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {detailsStudent.paymentHistory.map((payment, index) => (
+                        <tr key={index}>
+                          <td className="px-4 py-2 whitespace-nowrap">{payment.date}</td>
+                          <td className="px-4 py-2 whitespace-nowrap">{payment.months.join(', ')}</td>
+                          <td className="px-4 py-2 whitespace-nowrap">Rs. {payment.amount}</td>
+                          <td className="px-4 py-2 whitespace-nowrap">{payment.mode}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-gray-500">No payment history available</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Challan Modal */}
+      {showChallan && challanData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center pt-48 p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-4 mx-auto  my-4 md:p-6 md:my-8">
             <div className="flex justify-between items-center mb-4 md:mb-6">
               <h2 className="text-xl md:text-2xl font-bold text-gray-800">Fee Challan</h2>
               <div className="flex space-x-2">
@@ -996,7 +987,7 @@ const FeesManagement = () => {
         </div>
       )}
     </div>
+    </div>
   );
 };
-
 export default FeesManagement;
