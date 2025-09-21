@@ -508,30 +508,30 @@ const FeesManagement = () => {
 
             {/* Main content */}
             <main className="flex-1 overflow-y-auto md:p-4 bg-gray-50">
-              <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between">
-                <div className="flex items-center mb-4 md:mb-0">
+              <div className=" flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 md:p-0">
+                <div className="flex items-center">
                   <DollarSign className="text-blue-600 mr-2" size={24} />
                   <h1 className="text-2xl font-bold text-gray-800">Fees Management</h1>
                 </div>
                 
-                {/* Search Bar */}
-                <div className="relative w-full md:w-64">
+                {/* Search Bar - Now positioned next to the heading */}
+                <div className="relative w-full md:w-[70%]">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search size={18} className="text-gray-400" />
                   </div>
                   <input
                     type="text"
-                    placeholder="Search students..."
+                    placeholder="Search by name, roll no, father name..."
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
-              <p className="text-gray-600 mb-6">Manage student fees, generate reports and challans</p>
+              <p className="text-gray-600 mb-6 ml-8 px-4 md:px-0">Manage student fees</p>
 
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 px-4 md:px-0">
                 <div className="bg-white rounded-lg shadow p-4">
                   <div className="flex items-center">
                     <div className="p-2 rounded-full bg-blue-100 text-blue-500">
@@ -582,7 +582,7 @@ const FeesManagement = () => {
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+              <div className="bg-white rounded-lg shadow-md p-4 mb-6 mx-4 md:mx-0">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
@@ -631,7 +631,7 @@ const FeesManagement = () => {
                     >
                       <option value="All">All Status</option>
                       <option value="Fully Paid">Fully Paid</option>
-                      <option value="Partially Paid">Partially Paid</option>
+                      <option value='Partially Paid'>Partially Paid</option>
                       <option value="Not Paid">Not Paid</option>
                     </select>
                   </div>
@@ -659,7 +659,7 @@ const FeesManagement = () => {
               </div>
 
               {/* Students Table */}
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="bg-white rounded-lg shadow-md overflow-hidden mx-4 md:mx-0">
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-blue-50">
@@ -744,8 +744,10 @@ const FeesManagement = () => {
 
           {/* Payment Modal */}
           {showPaymentModal && selectedStudent && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-4 mx-auto my-4 md:p-6 md:my-8">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto h-full">
+              <div className='h-screen w-full '>
+
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-4 mx-auto my-4  md:my-8 ">
                 <div className="flex justify-between items-center mb-4 md:mb-6">
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800">Record Fee Payment</h2>
                   <button
@@ -851,6 +853,8 @@ const FeesManagement = () => {
                   </button>
                 </div>
               </div>
+              </div>
+
             </div>
           )}
 
@@ -1081,6 +1085,10 @@ const FeesManagement = () => {
                     </div>
                   </div>
 
+                  <div className="text-center text-xs md:text-sm text-gray-500">
+                    <p>Please pay this amount at any branch of ABC Bank or at the school fee counter</p>
+                    <p>This challan is computer generated and does not require signature</p>
+                  </div>
                 </div>
               </div>
             </div>
