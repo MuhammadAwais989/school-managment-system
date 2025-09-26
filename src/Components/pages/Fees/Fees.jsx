@@ -17,7 +17,10 @@ import {
   X,
   Plus,
   Minus,
-  Info
+  Info,
+  ChevronLeft,
+  ChevronRight,
+  Hash
 } from 'react-feather';
 import Loading from '../Loading';
 
@@ -82,6 +85,10 @@ const FeesManagement = () => {
   const [detailsStudent, setDetailsStudent] = useState(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   // Fetch students data from API using axios
   useEffect(() => {
     const fetchStudents = async () => {
@@ -141,59 +148,18 @@ const FeesManagement = () => {
 
       } catch (err) {
         console.error('Error fetching students:', err);
-        
-        const errorMessage = err.response 
+
+        const errorMessage = err.response
           ? `Server Error: ${err.response.status}`
           : err.request
-          ? 'Network Error: Unable to reach the server'
-          : err.message || 'An unexpected error occurred';
+            ? 'Network Error: Unable to reach the server'
+            : err.message || 'An unexpected error occurred';
 
         setError(errorMessage);
         setLoading(false);
 
         // Fallback to sample data
-        setStudents([
-          {
-            id: 1,
-            rollNo: 'S001',
-            name: 'Ali Ahmed',
-            fatherName: 'Ahmed Khan',
-            class: 'Ten A',
-            section: 'A',
-            monthlyFee: 1700,
-            totalFees: 17000,
-            paidFees: 17000,
-            status: 'Fully Paid',
-            dues: 0,
-            paymentHistory: [
-              { date: '2023-09-15', amount: 8500, months: ['May', 'June', 'July', 'August', 'September'], mode: 'Cash' },
-              { date: '2023-04-03', amount: 8500, months: ['January', 'February', 'March', 'April'], mode: 'Cash' }
-            ],
-            duesByMonth: allMonths.map(month => ({ month, due: 1700, paid: true }))
-          },
-          {
-            id: 2,
-            rollNo: 'S002',
-            name: 'Sara Khan',
-            fatherName: 'Khalid Khan',
-            class: 'Nine B',
-            section: 'B',
-            monthlyFee: 1600,
-            totalFees: 16000,
-            paidFees: 12000,
-            status: 'Partially Paid',
-            dues: 4000,
-            paymentHistory: [
-              { date: '2023-09-05', amount: 8000, months: ['May', 'June', 'July', 'August', 'September'], mode: 'Cash' },
-              { date: '2023-04-03', amount: 4000, months: ['January', 'February', 'March'], mode: 'Cash' }
-            ],
-            duesByMonth: allMonths.map((month, i) => ({ 
-              month, 
-              due: 1600, 
-              paid: i < 9
-            }))
-          }
-        ]);
+
       }
     };
 
@@ -212,6 +178,64 @@ const FeesManagement = () => {
 
     return matchesSearch && matchesClass && matchesStatus;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentStudents = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Generate page numbers for pagination with better logic
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    const halfVisible = Math.floor(maxVisiblePages / 2);
+
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total pages are less than max visible
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Always show first page
+      pageNumbers.push(1);
+
+      let startPage = Math.max(2, currentPage - halfVisible);
+      let endPage = Math.min(totalPages - 1, currentPage + halfVisible);
+
+      // Adjust if we're near the beginning
+      if (currentPage <= halfVisible + 1) {
+        endPage = maxVisiblePages - 1;
+      }
+
+      // Adjust if we're near the end
+      if (currentPage >= totalPages - halfVisible) {
+        startPage = totalPages - maxVisiblePages + 2;
+      }
+
+      // Add ellipsis after first page if needed
+      if (startPage > 2) {
+        pageNumbers.push('...');
+      }
+
+      // Add middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+
+      // Add ellipsis before last page if needed
+      if (endPage < totalPages - 1) {
+        pageNumbers.push('...');
+      }
+
+      // Always show last page
+      if (totalPages > 1) {
+        pageNumbers.push(totalPages);
+      }
+    }
+
+    return pageNumbers;
+  };
 
   // Handle fee payment
   const handlePayment = (student) => {
@@ -318,7 +342,7 @@ const FeesManagement = () => {
   // Generate PDF for due list
   const generateDueListPDF = () => {
     const dueStudents = filteredStudents.filter(s => s.dues > 0);
-    
+
     let content = `
       <html>
         <head>
@@ -372,7 +396,7 @@ const FeesManagement = () => {
     const printWindow = window.open('', '_blank');
     printWindow.document.write(content);
     printWindow.document.close();
-    
+
     setTimeout(() => {
       printWindow.print();
     }, 250);
@@ -463,7 +487,7 @@ const FeesManagement = () => {
   const fullyPaidStudents = students.filter(student => student.status === 'Fully Paid').length;
 
   if (loading) {
-    return <Loading text='Loading Student Fees Record'/>;
+    return <Loading text='Loading Student Fees Record' />;
   }
 
   return (
@@ -473,13 +497,6 @@ const FeesManagement = () => {
       <div className="flex w-full h-screen bg-gray-0">
         <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
           <div className="bg-white w-full min-h-screen shadow-md rounded-md px-0 overflow-hidden">
-            {error && (
-              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
-                <p className="font-bold">API Connection Issue</p>
-                <p>{error}</p>
-                <p className="text-sm mt-1">Using sample data for demonstration.</p>
-              </div>
-            )}
 
             <main className="flex-1 overflow-y-auto md:p-4 bg-gray-50">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 md:p-0">
@@ -583,71 +600,130 @@ const FeesManagement = () => {
               <div className="bg-white rounded-lg shadow-md overflow-hidden mx-2 md:mx-0">
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-blue-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Roll No</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Student Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Father Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Class/Section</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Total Fees</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Dues</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredStudents.map((student) => (
-                        <tr key={student.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">{student.rollNo}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{student.name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{student.fatherName}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{student.class + " - " + student.section}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">Rs. {student.Fees}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={student.dues > 0 ? "text-red-600 font-semibold" : "text-green-600"}>
-                              Rs. {student.dues}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              {getStatusIcon(student.status)}
-                              <span className="ml-1">{student.status}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button
-                              onClick={() => showStudentDetails(student)}
-                              className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-md mr-2 text-xs"
-                            >
-                              <Info size={14} className="inline mr-1" />
-                              Details
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedStudent(student);
-                                setShowPaymentModal(true);
-                              }}
-                              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md mr-2 text-xs"
-                              disabled={student.dues === 0}
-                            >
-                              <DollarSign size={14} className="inline mr-1" />
-                              Pay
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedStudent(student);
-                                generateChallan(student, allMonths.slice(0, 5));
-                              }}
-                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-xs"
-                            >
-                              <Printer size={14} className="inline mr-1" />
-                              Challan
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+  <thead className="bg-blue-50">
+    <tr>
+      <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Roll No</th>
+      <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Student Name</th>
+      <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Father Name</th>
+      <th className="px-4 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider">Class/Section</th>
+      <th className="px-4 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider">Total Fees</th>
+      <th className="px-4 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider">Dues</th>
+      <th className="px-4 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider">Status</th>
+      <th className="px-4 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider">Actions</th>
+    </tr>
+  </thead>
+  <tbody className="bg-white divide-y divide-gray-200">
+    {currentStudents.map((student) => (
+      <tr key={student.id} className="hover:bg-gray-50">
+        {/* Roll Number */}
+        <td className="px-4 py-3 align-middle">
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                <Hash size={12} className="text-blue-600" />
+              </div>
+            </div>
+            <div>
+              <div className="font-mono font-semibold text-gray-900 text-sm">{student.rollNo}</div>
+            </div>
+          </div>
+        </td>
+
+        {/* Student Info */}
+        <td className="px-4 py-3 align-middle">
+          <div>
+            <div className="font-semibold text-gray-900 text-sm">{student.name}</div>
+          </div>
+        </td>
+        
+        <td className="px-4 py-3 align-middle">
+          <div>
+            <div className="font-semibold text-gray-900 text-sm">{student.fatherName}</div>
+          </div>
+        </td>
+
+        {/* Class/Section */}
+        <td className="px-4 py-3 align-middle text-center">
+          <div className="inline-flex flex-col items-center justify-center">
+            <span className="font-bold text-gray-900 text-sm">{student.class}</span>
+            <span className="text-xs text-gray-500">Section {student.section}</span>
+          </div>
+        </td>
+
+        {/* Financial */}
+        <td className="px-4 py-3 align-middle text-right">
+          <div className="space-y-1">
+            <div className="font-bold text-gray-900 text-sm">Rs. {student.Fees.toLocaleString()}</div>
+            <div className="text-xs text-gray-500">Total</div>
+          </div>
+        </td>
+
+        {/* Dues */}
+        <td className="px-4 py-3 align-middle text-right">
+          <div className={`space-y-1 ${student.dues > 0 ? 'text-red-600' : 'text-green-600'}`}>
+            <div className="font-bold text-sm">Rs. {student.dues.toLocaleString()}</div>
+            <div className="text-xs font-medium">
+              {student.dues > 0 ? 'Due' : 'Clear'}
+            </div>
+          </div>
+        </td>
+
+        {/* Status */}
+        <td className="px-4 py-3 align-middle text-center">
+          <div className="flex justify-center">
+            <div className={`inline-flex items-center px-3 py-1 rounded-full ${student.status === 'Fully Paid' ? 'bg-green-100 text-green-800' :
+                student.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+              <div className={`w-1.5 h-1.5 rounded-full mr-2 ${student.status === 'Fully Paid' ? 'bg-green-500' :
+                  student.status === 'Partially Paid' ? 'bg-yellow-500' :
+                  'bg-red-500'
+                }`} />
+              <span className="text-xs font-semibold">{student.status}</span>
+            </div>
+          </div>
+        </td>
+
+        {/* Actions */}
+        <td className="px-4 py-3 align-middle">
+          <div className="flex justify-center space-x-2">
+            <button
+              onClick={() => showStudentDetails(student)}
+              className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Info size={14} className="mr-1" />
+              Details
+            </button>
+            <button
+              onClick={() => {
+                setSelectedStudent(student);
+                setShowPaymentModal(true);
+              }}
+              disabled={student.dues === 0}
+              className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white transition-colors ${student.dues === 0
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+            >
+              <DollarSign size={14} className="mr-1" />
+              Pay
+            </button>
+            <button
+              onClick={() => {
+                setSelectedStudent(student);
+                generateChallan(student, allMonths.slice(0, 5));
+              }}
+              className="inline-flex items-center px-3 py-1.5 border border-green-300 rounded-md text-sm font-medium text-green-700 hover:bg-green-50 transition-colors"
+            >
+              <Printer size={14} className="mr-1" />
+              Challan
+            </button>
+          </div>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
                 </div>
 
                 {filteredStudents.length === 0 && (
@@ -656,7 +732,88 @@ const FeesManagement = () => {
                     <p className="mt-2">No students found matching your criteria</p>
                   </div>
                 )}
-              </div>
+
+                {filteredStudents.length > 0 && !loading && (
+                  <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-200 bg-white">
+                    {/* Showing entries info */}
+                    <div className="text-sm text-gray-700">
+                      Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
+                      <span className="font-medium">
+                        {Math.min(currentPage * itemsPerPage, filteredStudents.length)}
+                      </span>{' '}
+                      of <span className="font-medium">{filteredStudents.length}</span> students
+                    </div>
+
+                    {/* Items Per Page Selector */}
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-700">Show</span>
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                          setItemsPerPage(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                      </select>
+                      <span className="text-sm text-gray-700">entries per page</span>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <div className="flex items-center space-x-2">
+                      {/* Previous Button */}
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className={`p-2 rounded-lg border transition-colors ${currentPage === 1
+                          ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                          }`}
+                        title="Previous page"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+
+                      {/* Page Numbers */}
+                      <div className="flex items-center space-x-1">
+                        {getPageNumbers().map((pageNumber, index) => (
+                          <button
+                            key={index}
+                            onClick={() => typeof pageNumber === 'number' && setCurrentPage(pageNumber)}
+                            className={`min-w-[40px] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${currentPage === pageNumber
+                              ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                              : pageNumber === '...'
+                                ? 'border-gray-300 bg-white text-gray-500 cursor-default'
+                                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                              }`}
+                            disabled={pageNumber === '...'}
+                            title={typeof pageNumber === 'number' ? `Go to page ${pageNumber}` : ''}
+                          >
+                            {pageNumber}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Next Button */}
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className={`p-2 rounded-lg border transition-colors ${currentPage === totalPages
+                          ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                          }`}
+                        title="Next page"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}              </div>
             </main>
           </div>
 

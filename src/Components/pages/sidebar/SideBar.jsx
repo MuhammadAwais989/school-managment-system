@@ -44,7 +44,7 @@ const Sidebar = () => {
         }`}
       >
         <SidebarHeader sideBar={sideBar} toggleSidebar={toggleSidebar} />
-        <ul className="mt-2 px-3 overflow-y-scroll scrollbar-hide h-[70%]">
+        <ul className={`mt-2 px-3 overflow-y-scroll scrollbar-hide h-[70%]  ${ sideBar ? "w-[272px]" : "w-20" }`}>
           {navItem.map((item) => (
             <SidebarNavItem
               key={item.id}

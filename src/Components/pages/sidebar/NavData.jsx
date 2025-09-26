@@ -35,7 +35,7 @@ export const navItem = [
   },
   {
     id: 4,
-    label: "FeesManagement",
+    label: "Fees Management",
     path: "",
     icon: <MdAccountBalance />,
     children: [
