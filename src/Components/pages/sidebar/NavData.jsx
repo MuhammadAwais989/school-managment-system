@@ -39,7 +39,7 @@ export const navItem = [
     path: "",
     icon: <MdAccountBalance />,
     children: [
-      { id: 4.1, label: "Fees Register", path: "/fees/register" },
+      { id: 4.1, label: "Fees Record", path: "/fees/record" },
 
     ],
   },
