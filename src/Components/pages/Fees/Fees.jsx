@@ -31,35 +31,6 @@ const FeesManagement = () => {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  // Monthly fee structure for different classes
-  const monthlyFees = {
-    'Nursery': 800,
-    'KG-I A': 900,
-    'KG-I B': 900,
-    'KG-II A': 950,
-    'KG-II B': 950,
-    'One A': 1000,
-    'One B': 1000,
-    'Two A': 1050,
-    'Two B': 1050,
-    'Three A': 1100,
-    'Three B': 1100,
-    'Four A': 1150,
-    'Four B': 1150,
-    'Five A': 1200,
-    'Five B': 1200,
-    'Six A': 1300,
-    'Six B': 1300,
-    'Seven A': 1400,
-    'Seven B': 1400,
-    'Eight A': 1500,
-    'Eight B': 1500,
-    'Nine A': 1600,
-    'Nine B': 1600,
-    'Matric A': 1800,
-    'Matric B': 1800
-  };
-
   // State for students data
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +45,7 @@ const FeesManagement = () => {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMonths, setPaymentMonths] = useState([]);
+  const [paymentMode, setPaymentMode] = useState('Cash');
   const [showChallan, setShowChallan] = useState(false);
   const [challanData, setChallanData] = useState(null);
   const [challanMonths, setChallanMonths] = useState([]);
@@ -88,157 +60,63 @@ const FeesManagement = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalStudents, setTotalStudents] = useState(0);
 
-  // Fetch students data from API using axios
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`${BaseURL}/students/details`);
-        const data = response.data;
+  // Fetch students data from backend API
+  const fetchStudents = async (page = 1, limit = 10) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        ...(searchTerm && { search: searchTerm }),
+        ...(selectedClass !== 'All' && { class: selectedClass }),
+        ...(selectedStatus !== 'All' && { status: selectedStatus })
+      });
 
-        if (!Array.isArray(data)) {
-          throw new Error('API response is not an array of students');
-        }
+      const response = await axios.get(`${BaseURL}/api/students?${params}`);
+      const data = response.data;
 
-        // Transform API data
-        const transformedStudents = data.map((student, index) => {
-          const monthlyFee = monthlyFees[student.class] || 1000;
-          const totalFees = monthlyFee * 10;
-          const paidFees = Math.floor(Math.random() * totalFees);
-          const dues = totalFees - paidFees;
-          const status = dues === 0 ? 'Fully Paid' : dues === totalFees ? 'Not Paid' : 'Partially Paid';
+      setStudents(data.students || []);
+      setTotalPages(data.totalPages || 1);
+      setTotalStudents(data.total || 0);
+      setError(null);
 
-          const duesByMonth = allMonths.map(month => ({
-            month,
-            due: monthlyFee,
-            paid: Math.random() > 0.3
-          }));
-
-          const paymentHistory = duesByMonth
-            .filter(month => month.paid)
-            .map(month => ({
-              date: new Date().toISOString().split('T')[0],
-              amount: monthlyFee,
-              months: [month.month],
-              mode: 'Cash'
-            }));
-
-          return {
-            id: student._id || student.id || index + 1,
-            rollNo: student.rollNumber || student.rollNo || `S${(index + 1).toString().padStart(3, '0')}`,
-            name: student.name || 'Unknown Student',
-            fatherName: student.fatherName || 'Unknown Father',
-            class: student.Class || 'Not Assigned',
-            section: student.section || 'Not Assigned',
-            Fees: student.Fees || 'Not Assigned',
-            monthlyFee,
-            totalFees,
-            paidFees,
-            status,
-            dues,
-            paymentHistory,
-            duesByMonth
-          };
-        });
-
-        setStudents(transformedStudents);
-        setLoading(false);
-        setError(null);
-
-      } catch (err) {
-        console.error('Error fetching students:', err);
-
-        const errorMessage = err.response
-          ? `Server Error: ${err.response.status}`
-          : err.request
-            ? 'Network Error: Unable to reach the server'
-            : err.message || 'An unexpected error occurred';
-
-        setError(errorMessage);
-        setLoading(false);
-
-        // Fallback to sample data
-
-      }
-    };
-
-    fetchStudents();
-  }, []);
-
-  // Filter students based on search and filters
-  const filteredStudents = students.filter(student => {
-    const matchesSearch =
-      student.rollNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.fatherName.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesClass = selectedClass === 'All' || student.class === selectedClass;
-    const matchesStatus = selectedStatus === 'All' || student.status === selectedStatus;
-
-    return matchesSearch && matchesClass && matchesStatus;
-  });
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentStudents = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Generate page numbers for pagination with better logic
-  const getPageNumbers = () => {
-    const pageNumbers = [];
-    const maxVisiblePages = 5;
-    const halfVisible = Math.floor(maxVisiblePages / 2);
-
-    if (totalPages <= maxVisiblePages) {
-      // Show all pages if total pages are less than max visible
-      for (let i = 1; i <= totalPages; i++) {
-        pageNumbers.push(i);
-      }
-    } else {
-      // Always show first page
-      pageNumbers.push(1);
-
-      let startPage = Math.max(2, currentPage - halfVisible);
-      let endPage = Math.min(totalPages - 1, currentPage + halfVisible);
-
-      // Adjust if we're near the beginning
-      if (currentPage <= halfVisible + 1) {
-        endPage = maxVisiblePages - 1;
-      }
-
-      // Adjust if we're near the end
-      if (currentPage >= totalPages - halfVisible) {
-        startPage = totalPages - maxVisiblePages + 2;
-      }
-
-      // Add ellipsis after first page if needed
-      if (startPage > 2) {
-        pageNumbers.push('...');
-      }
-
-      // Add middle pages
-      for (let i = startPage; i <= endPage; i++) {
-        pageNumbers.push(i);
-      }
-
-      // Add ellipsis before last page if needed
-      if (endPage < totalPages - 1) {
-        pageNumbers.push('...');
-      }
-
-      // Always show last page
-      if (totalPages > 1) {
-        pageNumbers.push(totalPages);
-      }
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to fetch students';
+      setError(errorMessage);
+      setStudents([]);
+    } finally {
+      setLoading(false);
     }
-
-    return pageNumbers;
   };
 
+  // Fetch student details
+  const fetchStudentDetails = async (studentId) => {
+    try {
+      const response = await axios.get(`${BaseURL}/api/students/${studentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching student details:', error);
+      throw error;
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchStudents(currentPage, itemsPerPage);
+  }, [currentPage, itemsPerPage]);
+
+  // Fetch data when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchStudents(1, itemsPerPage);
+  }, [searchTerm, selectedClass, selectedStatus]);
+
   // Handle fee payment
-  const handlePayment = (student) => {
+  const handlePayment = async (student) => {
     if (!paymentAmount || paymentAmount <= 0 || paymentAmount > student.dues) {
       alert('Please enter a valid payment amount');
       return;
@@ -249,43 +127,209 @@ const FeesManagement = () => {
       return;
     }
 
-    const updatedStudents = students.map(s => {
-      if (s.id === student.id) {
-        const newPaidFees = s.paidFees + parseInt(paymentAmount);
-        const newDues = s.totalFees - newPaidFees;
-        const newStatus = newDues === 0 ? 'Fully Paid' : 'Partially Paid';
+    try {
+      const response = await axios.post(`${BaseURL}/api/students/payment`, {
+        studentId: student._id,
+        amount: parseInt(paymentAmount),
+        months: paymentMonths,
+        paymentDate: paymentDate,
+        mode: paymentMode
+      });
 
-        const updatedDuesByMonth = s.duesByMonth.map(monthData => {
-          if (paymentMonths.includes(monthData.month)) {
-            return { ...monthData, paid: true };
-          }
-          return monthData;
-        });
-
-        return {
-          ...s,
-          paidFees: newPaidFees,
-          dues: newDues,
-          status: newStatus,
-          duesByMonth: updatedDuesByMonth,
-          paymentHistory: [
-            ...s.paymentHistory,
-            {
-              date: paymentDate,
-              amount: parseInt(paymentAmount),
-              months: [...paymentMonths],
-              mode: 'Cash'
-            }
-          ]
-        };
+      if (response.data.message) {
+        alert('Payment recorded successfully!');
+        // Refresh the student data
+        fetchStudents(currentPage, itemsPerPage);
+        setShowPaymentModal(false);
+        setPaymentAmount('');
+        setPaymentMonths([]);
+        setPaymentMode('Cash');
       }
-      return s;
-    });
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      alert(error.response?.data?.message || 'Failed to record payment');
+    }
+  };
 
-    setStudents(updatedStudents);
-    setShowPaymentModal(false);
-    setPaymentAmount('');
-    setPaymentMonths([]);
+  // Generate challan
+  const generateChallan = async (student, months = []) => {
+    try {
+      const response = await axios.post(`${BaseURL}/api/students/challan`, {
+        studentId: student._id,
+        months: months,
+        examinationFee: examinationFee,
+        otherFees: otherFees
+      });
+
+      setChallanData(response.data);
+      setChallanMonths(months);
+      setShowChallan(true);
+    } catch (error) {
+      console.error('Error generating challan:', error);
+      alert(error.response?.data?.message || 'Failed to generate challan');
+    }
+  };
+
+  // Get due list
+  const getDueList = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (selectedClass !== 'All') {
+        params.append('class', selectedClass);
+      }
+
+      const response = await axios.get(`${BaseURL}/api/students/dues/list?${params}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching due list:', error);
+      throw error;
+    }
+  };
+
+  // Generate PDF for due list
+  const generateDueListPDF = async () => {
+    try {
+      const dueData = await getDueList();
+      
+      let content = `
+        <html>
+          <head>
+            <title>Due List Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              h1 { text-align: center; color: #2c5282; }
+              table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+              .due { color: #e53e3e; font-weight: bold; }
+              .summary { margin: 20px 0; padding: 15px; background-color: #f8fafc; }
+            </style>
+          </head>
+          <body>
+            <h1>Due List Report</h1>
+            <div class="summary">
+              <p><strong>Total Students with Dues:</strong> ${dueData.dueStudents?.length || 0}</p>
+              <p><strong>Total Dues Amount:</strong> Rs. ${dueData.totalDues || 0}</p>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Roll No</th>
+                  <th>Student Name</th>
+                  <th>Class</th>
+                  <th>Due Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      (dueData.dueStudents || []).forEach(student => {
+        content += `
+          <tr>
+            <td>${student.rollNumber}</td>
+            <td>${student.name}</td>
+            <td>${student.class}</td>
+            <td class="due">Rs. ${student.dues}</td>
+          </tr>
+        `;
+      });
+
+      content += `
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(content);
+      printWindow.document.close();
+
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate due list PDF');
+    }
+  };
+
+  // Export data to Excel
+  const exportToExcel = async () => {
+    try {
+      const response = await axios.get(`${BaseURL}/api/students`, {
+        params: {
+          page: 1,
+          limit: 1000, // Export all records
+          ...(searchTerm && { search: searchTerm }),
+          ...(selectedClass !== 'All' && { class: selectedClass }),
+          ...(selectedStatus !== 'All' && { status: selectedStatus })
+        }
+      });
+
+      const studentsData = response.data.students || [];
+
+      let tableContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          td { mso-number-format: "\\@"; }
+          th { background-color: #E3F2FD; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+      <h2>Fees Management Report - ${new Date().toLocaleDateString()}</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Roll No</th>
+            <th>Name</th>
+            <th>Father Name</th>
+            <th>Class</th>
+            <th>Total Fees</th>
+            <th>Paid Fees</th>
+            <th>Dues</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
+
+      studentsData.forEach(student => {
+        tableContent += `
+          <tr>
+            <td>${student.rollNumber}</td>
+            <td>${student.name}</td>
+            <td>${student.fatherName}</td>
+            <td>${student.class}</td>
+            <td>${student.totalFees}</td>
+            <td>${student.paidFees}</td>
+            <td>${student.dues}</td>
+            <td>${student.status}</td>
+          </tr>
+        `;
+      });
+
+      tableContent += `
+        </tbody>
+      </table>
+      </body>
+      </html>
+      `;
+
+      const blob = new Blob([tableContent], { type: 'application/vnd.ms-excel' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `fees_report_${new Date().toISOString().split('T')[0]}.xls`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('Failed to export data to Excel');
+    }
   };
 
   // Toggle month selection for payment
@@ -295,25 +339,19 @@ const FeesManagement = () => {
     } else {
       setPaymentMonths([...paymentMonths, month]);
       if (selectedStudent) {
-        const monthlyFee = selectedStudent.monthlyFee;
+        const monthlyFee = selectedStudent.monthlyFee || 0;
         setPaymentAmount((paymentMonths.length + 1) * monthlyFee);
       }
     }
   };
 
-  // Generate challan
-  const generateChallan = (student, months = []) => {
-    setChallanData(student);
-    setChallanMonths(months);
-    setExaminationFee(0);
-    setOtherFees([]);
-    setShowChallan(true);
-  };
-
   // Add a new fee to the challan
   const addNewFee = () => {
     if (newFeeDescription && newFeeAmount) {
-      setOtherFees([...otherFees, { description: newFeeDescription, amount: parseInt(newFeeAmount) }]);
+      setOtherFees([...otherFees, { 
+        description: newFeeDescription, 
+        amount: parseInt(newFeeAmount) 
+      }]);
       setNewFeeDescription('');
       setNewFeeAmount('');
     }
@@ -328,7 +366,8 @@ const FeesManagement = () => {
 
   // Calculate total challan amount
   const calculateChallanTotal = () => {
-    const tuitionFee = challanData ? challanData.monthlyFee * challanMonths.length : 0;
+    const tuitionFee = challanData?.feeBreakdown?.tuitionFee || 
+                     (challanData?.student?.monthlyFee || 0) * challanMonths.length;
     const examFee = examinationFee || 0;
     const otherFeesTotal = otherFees.reduce((sum, fee) => sum + fee.amount, 0);
     return tuitionFee + examFee + otherFeesTotal;
@@ -337,130 +376,6 @@ const FeesManagement = () => {
   // Print challan
   const printChallan = () => {
     window.print();
-  };
-
-  // Generate PDF for due list
-  const generateDueListPDF = () => {
-    const dueStudents = filteredStudents.filter(s => s.dues > 0);
-
-    let content = `
-      <html>
-        <head>
-          <title>Due List Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { text-align: center; color: #2c5282; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            .due { color: #e53e3e; font-weight: bold; }
-            .summary { margin: 20px 0; padding: 15px; background-color: #f8fafc; }
-          </style>
-        </head>
-        <body>
-          <h1>Due List Report</h1>
-          <div class="summary">
-            <p><strong>Total Students with Dues:</strong> ${dueStudents.length}</p>
-            <p><strong>Total Dues Amount:</strong> Rs. ${dueStudents.reduce((sum, student) => sum + student.dues, 0)}</p>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Roll No</th>
-                <th>Student Name</th>
-                <th>Class</th>
-                <th>Due Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-    `;
-
-    dueStudents.forEach(student => {
-      content += `
-        <tr>
-          <td>${student.rollNo}</td>
-          <td>${student.name}</td>
-          <td>${student.class}</td>
-          <td class="due">Rs. ${student.dues}</td>
-        </tr>
-      `;
-    });
-
-    content += `
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(content);
-    printWindow.document.close();
-
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
-  };
-
-  // Export data to Excel
-  const exportToExcel = () => {
-    let tableContent = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        td { mso-number-format: "\\@"; }
-        th { background-color: #E3F2FD; font-weight: bold; }
-      </style>
-    </head>
-    <body>
-    <h2>Fees Management Report - ${new Date().toLocaleDateString()}</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Roll No</th>
-          <th>Name</th>
-          <th>Father Name</th>
-          <th>Class</th>
-          <th>Total Fees</th>
-          <th>Paid Fees</th>
-          <th>Dues</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-    filteredStudents.forEach(student => {
-      tableContent += `
-        <tr>
-          <td>${student.rollNo}</td>
-          <td>${student.name}</td>
-          <td>${student.fatherName}</td>
-          <td>${student.class}</td>
-          <td>${student.totalFees}</td>
-          <td>${student.paidFees}</td>
-          <td>${student.dues}</td>
-          <td>${student.status}</td>
-        </tr>
-      `;
-    });
-
-    tableContent += `
-      </tbody>
-    </table>
-    </body>
-    </html>
-  `;
-
-    const blob = new Blob([tableContent], { type: 'application/vnd.ms-excel' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `fees_report_${new Date().toISOString().split('T')[0]}.xls`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   // Get status icon
@@ -475,16 +390,58 @@ const FeesManagement = () => {
   };
 
   // Show student details
-  const showStudentDetails = (student) => {
-    setDetailsStudent(student);
-    setShowDetailsModal(true);
+  const showStudentDetails = async (student) => {
+    try {
+      const studentDetails = await fetchStudentDetails(student._id);
+      setDetailsStudent(studentDetails);
+      setShowDetailsModal(true);
+    } catch (error) {
+      alert('Failed to load student details');
+    }
   };
 
   // Calculate summary data
-  const totalStudents = students.length;
-  const totalFeesCollection = students.reduce((sum, student) => sum + student.paidFees, 0);
-  const totalDues = students.reduce((sum, student) => sum + student.dues, 0);
+  const totalFeesCollection = students.reduce((sum, student) => sum + (student.paidFees || 0), 0);
+  const totalDues = students.reduce((sum, student) => sum + (student.dues || 0), 0);
   const fullyPaidStudents = students.filter(student => student.status === 'Fully Paid').length;
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    const halfVisible = Math.floor(maxVisiblePages / 2);
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      pageNumbers.push(1);
+      let startPage = Math.max(2, currentPage - halfVisible);
+      let endPage = Math.min(totalPages - 1, currentPage + halfVisible);
+
+      if (currentPage <= halfVisible + 1) {
+        endPage = maxVisiblePages - 1;
+      }
+      if (currentPage >= totalPages - halfVisible) {
+        startPage = totalPages - maxVisiblePages + 2;
+      }
+      if (startPage > 2) {
+        pageNumbers.push('...');
+      }
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+      if (endPage < totalPages - 1) {
+        pageNumbers.push('...');
+      }
+      if (totalPages > 1) {
+        pageNumbers.push(totalPages);
+      }
+    }
+
+    return pageNumbers;
+  };
 
   if (loading) {
     return <Loading text='Loading Student Fees Record' />;
@@ -514,13 +471,9 @@ const FeesManagement = () => {
                       </div>
                     </div>
                     <div>
-                      <h1 className=" text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-800 bg-clip-text text-transparent ">
+                      <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-800 bg-clip-text text-transparent">
                         Fees Management
                       </h1>
-                      {/* <p className="text-gray-400 text-lg mt-2 flex items-center">
-          <span className="w-2 h-2 bg-green-400 rounded-full mr-3 animate-pulse"></span>
-          Streamlined fee collection and tracking system
-        </p> */}
                     </div>
                   </div>
 
@@ -539,9 +492,6 @@ const FeesManagement = () => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
-                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                        <kbd className="hidden lg:inline-flex items-center px-3 py-1 text-sm font-mono text-gray-500 bg-gray-100/80 rounded-lg border">⌘K</kbd>
-                      </div>
                     </div>
 
                     {/* Action Buttons */}
@@ -577,28 +527,27 @@ const FeesManagement = () => {
                 </div>
               </div>
 
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center">
+                    <AlertCircle className="text-red-500 mr-2" size={20} />
+                    <span className="text-red-700">{error}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Summary Cards Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-
                 {/* Total Students Card */}
                 <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 shadow-lg border border-blue-100/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-blue-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Total Students</p>
                       <h3 className="text-3xl font-bold text-gray-900 mb-1">{totalStudents.toLocaleString()}</h3>
-                      <p className="text-green-600 text-sm font-medium flex items-center">
-                        <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                        Active records
-                      </p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <Users className="text-white" size={28} />
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-blue-100/50">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Enrolled</span>
-                      <span className="font-semibold text-blue-600">{totalStudents}</span>
                     </div>
                   </div>
                 </div>
@@ -609,19 +558,9 @@ const FeesManagement = () => {
                     <div>
                       <p className="text-green-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Fees Collected</p>
                       <h3 className="text-3xl font-bold text-gray-900 mb-1">Rs. {totalFeesCollection.toLocaleString()}</h3>
-                      <p className="text-green-600 text-sm font-medium flex items-center">
-                        <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                        Total revenue
-                      </p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <DollarSign className="text-white" size={28} />
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-green-100/50">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>This month</span>
-                      <span className="font-semibold text-green-600">+12.5%</span>
                     </div>
                   </div>
                 </div>
@@ -632,19 +571,9 @@ const FeesManagement = () => {
                     <div>
                       <p className="text-orange-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Total Dues</p>
                       <h3 className="text-3xl font-bold text-gray-900 mb-1">Rs. {totalDues.toLocaleString()}</h3>
-                      <p className="text-orange-600 text-sm font-medium flex items-center">
-                        <span className="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
-                        Pending collection
-                      </p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <AlertCircle className="text-white" size={28} />
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-orange-100/50">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Overdue</span>
-                      <span className="font-semibold text-orange-600">{Math.round((totalDues / totalFeesCollection) * 100)}%</span>
                     </div>
                   </div>
                 </div>
@@ -655,21 +584,9 @@ const FeesManagement = () => {
                     <div>
                       <p className="text-purple-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Fully Paid</p>
                       <h3 className="text-3xl font-bold text-gray-900 mb-1">{fullyPaidStudents.toLocaleString()}</h3>
-                      <p className="text-purple-600 text-sm font-medium flex items-center">
-                        <span className="w-2 h-2 bg-purple-400 rounded-full mr-2"></span>
-                        Completed payments
-                      </p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <CheckCircle className="text-white" size={28} />
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-purple-100/50">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Completion rate</span>
-                      <span className="font-semibold text-purple-600">
-                        {totalStudents > 0 ? Math.round((fullyPaidStudents / totalStudents) * 100) : 0}%
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -692,9 +609,8 @@ const FeesManagement = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {currentStudents.map((student) => (
-                        <tr key={student.id} className="hover:bg-gray-50">
-                          {/* Roll Number */}
+                      {students.map((student) => (
+                        <tr key={student._id} className="hover:bg-gray-50">
                           <td className="px-4 py-3 align-middle">
                             <div className="flex items-center space-x-3">
                               <div className="flex-shrink-0">
@@ -703,25 +619,19 @@ const FeesManagement = () => {
                                 </div>
                               </div>
                               <div>
-                                <div className="font-mono font-semibold text-gray-900 text-sm">{student.rollNo}</div>
+                                <div className="font-mono font-semibold text-gray-900 text-sm">{student.rollNumber}</div>
                               </div>
                             </div>
                           </td>
 
-                          {/* Student Info */}
                           <td className="px-4 py-3 align-middle">
-                            <div>
-                              <div className="font-semibold text-gray-900 text-sm">{student.name}</div>
-                            </div>
+                            <div className="font-semibold text-gray-900 text-sm">{student.name}</div>
                           </td>
 
                           <td className="px-4 py-3 align-middle">
-                            <div>
-                              <div className="font-semibold text-gray-900 text-sm">{student.fatherName}</div>
-                            </div>
+                            <div className="font-semibold text-gray-900 text-sm">{student.fatherName}</div>
                           </td>
 
-                          {/* Class/Section */}
                           <td className="px-4 py-3 align-middle text-center">
                             <div className="inline-flex flex-col items-center justify-center">
                               <span className="font-bold text-gray-900 text-sm">{student.class}</span>
@@ -729,41 +639,38 @@ const FeesManagement = () => {
                             </div>
                           </td>
 
-                          {/* Financial */}
                           <td className="px-4 py-3 align-middle text-right">
                             <div className="space-y-1">
-                              <div className="font-bold text-gray-900 text-sm">Rs. {student.Fees.toLocaleString()}</div>
-                              <div className="text-xs text-gray-500">Total</div>
+                              <div className="font-bold text-gray-900 text-sm">Rs. {student.totalFees?.toLocaleString()}</div>
                             </div>
                           </td>
 
-                          {/* Dues */}
                           <td className="px-4 py-3 align-middle text-right">
                             <div className={`space-y-1 ${student.dues > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                              <div className="font-bold text-sm">Rs. {student.dues.toLocaleString()}</div>
+                              <div className="font-bold text-sm">Rs. {student.dues?.toLocaleString()}</div>
                               <div className="text-xs font-medium">
                                 {student.dues > 0 ? 'Due' : 'Clear'}
                               </div>
                             </div>
                           </td>
 
-                          {/* Status */}
                           <td className="px-4 py-3 align-middle text-center">
                             <div className="flex justify-center">
-                              <div className={`inline-flex items-center px-3 py-1 rounded-full ${student.status === 'Fully Paid' ? 'bg-green-100 text-green-800' :
+                              <div className={`inline-flex items-center px-3 py-1 rounded-full ${
+                                student.status === 'Fully Paid' ? 'bg-green-100 text-green-800' :
                                 student.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                <div className={`w-1.5 h-1.5 rounded-full mr-2 ${student.status === 'Fully Paid' ? 'bg-green-500' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                <div className={`w-1.5 h-1.5 rounded-full mr-2 ${
+                                  student.status === 'Fully Paid' ? 'bg-green-500' :
                                   student.status === 'Partially Paid' ? 'bg-yellow-500' :
-                                    'bg-red-500'
-                                  }`} />
+                                  'bg-red-500'
+                                }`} />
                                 <span className="text-xs font-semibold">{student.status}</span>
                               </div>
                             </div>
                           </td>
 
-                          {/* Actions */}
                           <td className="px-4 py-3 align-middle">
                             <div className="flex justify-center space-x-2">
                               <button
@@ -779,10 +686,11 @@ const FeesManagement = () => {
                                   setShowPaymentModal(true);
                                 }}
                                 disabled={student.dues === 0}
-                                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white transition-colors ${student.dues === 0
-                                  ? 'bg-gray-400 cursor-not-allowed'
-                                  : 'bg-blue-600 hover:bg-blue-700'
-                                  }`}
+                                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white transition-colors ${
+                                  student.dues === 0
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                                }`}
                               >
                                 <DollarSign size={14} className="mr-1" />
                                 Pay
@@ -805,25 +713,23 @@ const FeesManagement = () => {
                   </table>
                 </div>
 
-                {filteredStudents.length === 0 && (
+                {students.length === 0 && !loading && (
                   <div className="text-center py-8 text-gray-500">
                     <User size={48} className="mx-auto text-gray-400" />
                     <p className="mt-2">No students found matching your criteria</p>
                   </div>
                 )}
 
-                {filteredStudents.length > 0 && !loading && (
+                {students.length > 0 && (
                   <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-200 bg-white">
-                    {/* Showing entries info */}
                     <div className="text-sm text-gray-700">
                       Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
                       <span className="font-medium">
-                        {Math.min(currentPage * itemsPerPage, filteredStudents.length)}
+                        {Math.min(currentPage * itemsPerPage, totalStudents)}
                       </span>{' '}
-                      of <span className="font-medium">{filteredStudents.length}</span> students
+                      of <span className="font-medium">{totalStudents}</span> students
                     </div>
 
-                    {/* Items Per Page Selector */}
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-700">Show</span>
                       <select
@@ -832,7 +738,7 @@ const FeesManagement = () => {
                           setItemsPerPage(Number(e.target.value));
                           setCurrentPage(1);
                         }}
-                        className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="5">5</option>
                         <option value="10">10</option>
@@ -840,59 +746,54 @@ const FeesManagement = () => {
                         <option value="50">50</option>
                         <option value="100">100</option>
                       </select>
-                      <span className="text-sm text-gray-700">entries per page</span>
+                      <span className="text-sm text-gray-700">entries</span>
                     </div>
 
-                    {/* Pagination Controls */}
                     <div className="flex items-center space-x-2">
-                      {/* Previous Button */}
                       <button
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className={`p-2 rounded-lg border transition-colors ${currentPage === 1
-                          ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
-                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                          }`}
-                        title="Previous page"
+                        className={`p-2 rounded-lg border transition-colors ${
+                          currentPage === 1
+                            ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
                       >
                         <ChevronLeft size={16} />
                       </button>
 
-                      {/* Page Numbers */}
-                      <div className="flex items-center space-x-1">
-                        {getPageNumbers().map((pageNumber, index) => (
-                          <button
-                            key={index}
-                            onClick={() => typeof pageNumber === 'number' && setCurrentPage(pageNumber)}
-                            className={`min-w-[40px] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${currentPage === pageNumber
+                      {getPageNumbers().map((pageNumber, index) => (
+                        <button
+                          key={index}
+                          onClick={() => typeof pageNumber === 'number' && setCurrentPage(pageNumber)}
+                          disabled={pageNumber === '...'}
+                          className={`min-w-[40px] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                            currentPage === pageNumber
                               ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
                               : pageNumber === '...'
-                                ? 'border-gray-300 bg-white text-gray-500 cursor-default'
-                                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                              }`}
-                            disabled={pageNumber === '...'}
-                            title={typeof pageNumber === 'number' ? `Go to page ${pageNumber}` : ''}
-                          >
-                            {pageNumber}
-                          </button>
-                        ))}
-                      </div>
+                              ? 'border-gray-300 bg-white text-gray-500 cursor-default'
+                              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      ))}
 
-                      {/* Next Button */}
                       <button
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className={`p-2 rounded-lg border transition-colors ${currentPage === totalPages
-                          ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
-                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                          }`}
-                        title="Next page"
+                        className={`p-2 rounded-lg border transition-colors ${
+                          currentPage === totalPages
+                            ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
                       >
                         <ChevronRight size={16} />
                       </button>
                     </div>
                   </div>
-                )}              </div>
+                )}
+              </div>
             </main>
           </div>
 
@@ -921,7 +822,7 @@ const FeesManagement = () => {
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Roll No</p>
-                      <p className="font-semibold">{selectedStudent.rollNo}</p>
+                      <p className="font-semibold">{selectedStudent.rollNumber}</p>
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Class</p>
@@ -949,18 +850,34 @@ const FeesManagement = () => {
                 </div>
 
                 <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Payment Mode</label>
+                  <select
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={paymentMode}
+                    onChange={(e) => setPaymentMode(e.target.value)}
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Card">Card</option>
+                    <option value="Online">Online</option>
+                  </select>
+                </div>
+
+                <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Select Months to Pay</label>
                   <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-lg">
                     {selectedStudent.duesByMonth
-                      .filter(month => !month.paid)
+                      ?.filter(month => !month.paid)
                       .map((monthData, index) => (
                         <div
                           key={index}
-                          className={`p-2 rounded text-center cursor-pointer transition-all ${paymentMonths.includes(monthData.month) ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                          className={`p-2 rounded text-center cursor-pointer transition-all ${
+                            paymentMonths.includes(monthData.month) ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                          }`}
                           onClick={() => toggleMonthSelection(monthData.month)}
                         >
-                          <div className="text-sm font-medium">{monthData.month.substring(0, 3)}</div>
-                          <div className="text-xs">Rs. {monthData.due}</div>
+                          <div className="text-sm font-medium">{monthData.month}</div>
+                          <div className="text-xs">Rs. {monthData.dueAmount}</div>
                         </div>
                       ))}
                   </div>
@@ -1021,7 +938,7 @@ const FeesManagement = () => {
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Roll No</p>
-                      <p className="font-semibold">{detailsStudent.rollNo}</p>
+                      <p className="font-semibold">{detailsStudent.rollNumber}</p>
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Father Name</p>
@@ -1033,7 +950,7 @@ const FeesManagement = () => {
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Total Fees</p>
-                      <p className="font-semibold">Rs. {detailsStudent.Fees}</p>
+                      <p className="font-semibold">Rs. {detailsStudent.totalFees}</p>
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Dues</p>
@@ -1045,10 +962,12 @@ const FeesManagement = () => {
                 <div className="mb-4">
                   <h3 className="font-semibold text-gray-700 mb-2">Month-wise Dues Status</h3>
                   <div className="grid grid-cols-4 lg:grid-cols-6 gap-2">
-                    {detailsStudent.duesByMonth.map((monthData, index) => (
-                      <div key={index} className={`p-2 rounded text-center ${monthData.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        <div className="text-sm font-medium">{monthData.month.substring(0, 3)}</div>
-                        <div className="text-xs">Rs. {monthData.due}</div>
+                    {detailsStudent.duesByMonth?.map((monthData, index) => (
+                      <div key={index} className={`p-2 rounded text-center ${
+                        monthData.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        <div className="text-sm font-medium">{monthData.month}</div>
+                        <div className="text-xs">Rs. {monthData.dueAmount}</div>
                         <div className="text-xs">{monthData.paid ? 'Paid' : 'Due'}</div>
                       </div>
                     ))}
@@ -1057,7 +976,7 @@ const FeesManagement = () => {
 
                 <div>
                   <h3 className="font-semibold text-gray-700 mb-2">Payment History</h3>
-                  {detailsStudent.paymentHistory.length > 0 ? (
+                  {detailsStudent.paymentHistory?.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-100">
@@ -1066,15 +985,19 @@ const FeesManagement = () => {
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Months Paid</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Receipt No</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {detailsStudent.paymentHistory.map((payment, index) => (
                             <tr key={index}>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.date}</td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                {new Date(payment.date).toLocaleDateString()}
+                              </td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.months.join(', ')}</td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm">Rs. {payment.amount}</td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.mode}</td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.receiptNo}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1104,6 +1027,7 @@ const FeesManagement = () => {
                     </button>
                     <button
                       onClick={() => setShowChallan(false)}
+                      className="text-gray-400 hover:text-gray-600"
                     >
                       <X size={24} />
                     </button>
@@ -1119,17 +1043,17 @@ const FeesManagement = () => {
                   <div className="grid grid-cols-2 gap-6 mb-6">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Student Information</h3>
-                      <p className="text-sm"><span className="font-medium">Name:</span> {challanData.name}</p>
-                      <p className="text-sm"><span className="font-medium">Father Name:</span> {challanData.fatherName}</p>
-                      <p className="text-sm"><span className="font-medium">Roll No:</span> {challanData.rollNo}</p>
-                      <p className="text-sm"><span className="font-medium">Class:</span> {challanData.class}</p>
+                      <p className="text-sm"><span className="font-medium">Name:</span> {challanData.student?.name}</p>
+                      <p className="text-sm"><span className="font-medium">Father Name:</span> {challanData.student?.fatherName}</p>
+                      <p className="text-sm"><span className="font-medium">Roll No:</span> {challanData.student?.rollNumber}</p>
+                      <p className="text-sm"><span className="font-medium">Class:</span> {challanData.student?.class}</p>
                     </div>
 
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Challan Information</h3>
-                      <p className="text-sm"><span className="font-medium">Challan No:</span> CH-{challanData.rollNo}-2023</p>
-                      <p className="text-sm"><span className="font-medium">Issue Date:</span> {new Date().toLocaleDateString()}</p>
-                      <p className="text-sm"><span className="font-medium">Due Date:</span> {new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
+                      <p className="text-sm"><span className="font-medium">Challan No:</span> {challanData.challanNo}</p>
+                      <p className="text-sm"><span className="font-medium">Issue Date:</span> {new Date(challanData.issueDate).toLocaleDateString()}</p>
+                      <p className="text-sm"><span className="font-medium">Due Date:</span> {new Date(challanData.dueDate).toLocaleDateString()}</p>
                     </div>
                   </div>
 
@@ -1145,28 +1069,16 @@ const FeesManagement = () => {
                       <tbody>
                         <tr>
                           <td className="border border-gray-300 p-2 text-sm">Tuition Fee ({challanMonths.join(', ')})</td>
-                          <td className="border border-gray-300 p-2 text-sm text-right">{challanData.monthlyFee * challanMonths.length}</td>
-                        </tr>
-                        <tr>
-                          <td className="border border-gray-300 p-2 text-sm">
-                            <input
-                              type="text"
-                              placeholder="Examination Fee"
-                              className="w-full p-1 border-none focus:outline-none"
-                              value={examinationFee > 0 ? "Examination Fee" : ""}
-                              onChange={(e) => setExaminationFee(e.target.value ? parseInt(e.target.value) : 0)}
-                            />
-                          </td>
                           <td className="border border-gray-300 p-2 text-sm text-right">
-                            <input
-                              type="number"
-                              placeholder="0"
-                              className="w-16 p-1 border-none text-right focus:outline-none"
-                              value={examinationFee || ""}
-                              onChange={(e) => setExaminationFee(e.target.value ? parseInt(e.target.value) : 0)}
-                            />
+                            {challanData.feeBreakdown?.tuitionFee || calculateChallanTotal()}
                           </td>
                         </tr>
+                        {examinationFee > 0 && (
+                          <tr>
+                            <td className="border border-gray-300 p-2 text-sm">Examination Fee</td>
+                            <td className="border border-gray-300 p-2 text-sm text-right">{examinationFee}</td>
+                          </tr>
+                        )}
                         {otherFees.map((fee, index) => (
                           <tr key={index}>
                             <td className="border border-gray-300 p-2 text-sm">
@@ -1189,7 +1101,7 @@ const FeesManagement = () => {
                               <input
                                 type="text"
                                 placeholder="Fee Description"
-                                className="flex-1 p-1 border-none focus:outline-none"
+                                className="flex-1 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 value={newFeeDescription}
                                 onChange={(e) => setNewFeeDescription(e.target.value)}
                               />
@@ -1200,7 +1112,7 @@ const FeesManagement = () => {
                               <input
                                 type="number"
                                 placeholder="Amount"
-                                className="w-16 p-1 border-none text-right focus:outline-none"
+                                className="w-16 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 value={newFeeAmount}
                                 onChange={(e) => setNewFeeAmount(e.target.value)}
                               />
@@ -1215,7 +1127,9 @@ const FeesManagement = () => {
                         </tr>
                         <tr className="bg-blue-50">
                           <td className="border border-gray-300 p-2 text-sm font-semibold">Total Amount</td>
-                          <td className="border border-gray-300 p-2 text-sm text-right font-semibold">{calculateChallanTotal()}</td>
+                          <td className="border border-gray-300 p-2 text-sm text-right font-semibold">
+                            {challanData.feeBreakdown?.totalAmount || calculateChallanTotal()}
+                          </td>
                         </tr>
                       </tbody>
                     </table>
