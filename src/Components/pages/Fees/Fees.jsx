@@ -63,40 +63,148 @@ const FeesManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalStudents, setTotalStudents] = useState(0);
 
-  // Fetch students data from backend API
-  const fetchStudents = async (page = 1, limit = 10) => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        ...(searchTerm && { search: searchTerm }),
-        ...(selectedClass !== 'All' && { class: selectedClass }),
-        ...(selectedStatus !== 'All' && { status: selectedStatus })
-      });
+const fetchStudents = async (page = 1, limit = 10) => {
+  try {
+    setLoading(true);
+    
+    // Simple API call without complex params
+    const response = await axios.get(`${BaseURL}/students/details`);
+    const data = response.data;
 
-      const response = await axios.get(`${BaseURL}/api/students?${params}`);
-      const data = response.data;
+    // Role-based filtering (reference code ke according)
+    const role = localStorage.getItem("role");
+    let filteredStudents = data;
 
-      setStudents(data.students || []);
-      setTotalPages(data.totalPages || 1);
-      setTotalStudents(data.total || 0);
-      setError(null);
+    if (role === "Teacher") {
+      const assignedClass = localStorage.getItem("classAssigned");
+      const assignedSection = localStorage.getItem("classSection");
 
-    } catch (err) {
-      console.error('Error fetching students:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to fetch students';
-      setError(errorMessage);
-      setStudents([]);
-    } finally {
-      setLoading(false);
+      filteredStudents = data.filter(student =>
+        student.Class === assignedClass &&
+        student.section === assignedSection
+      );
     }
-  };
+
+    // Client-side pagination and filtering
+    let resultStudents = filteredStudents;
+
+    // Search filter
+    if (searchTerm) {
+      resultStudents = resultStudents.filter(student =>
+        student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Class filter
+    if (selectedClass !== 'All') {
+      resultStudents = resultStudents.filter(student => 
+        student.class === selectedClass
+      );
+    }
+
+    // Status filter
+    if (selectedStatus !== 'All') {
+      resultStudents = resultStudents.filter(student => 
+      
+        student.status === selectedStatus
+      );
+    }
+
+    // August se dues calculate karna - UPDATED LOGIC
+    resultStudents = resultStudents.map(student => {
+      // August se current month tak ke months
+      const currentMonthIndex = new Date().getMonth();
+      const augustIndex = 7; // August is index 7 (0-based)
+      
+      let dues = 0;
+      let paidFees = 0;
+      let duesByMonth = [];
+      
+      // Monthly fee determine karna
+      const monthlyFee = student.Fees ;
+      
+      
+      // August se lekar current month tak ke months
+      for (let i = augustIndex; i <= currentMonthIndex; i++) {
+        const monthName = allMonths[i];
+        
+        // Check if this month is paid
+        let isPaid = false;
+        if (student.paymentHistory && student.paymentHistory.length > 0) {
+          isPaid = student.paymentHistory.some(payment => 
+            payment.months && payment.months.includes(monthName)
+          );
+        }
+        
+        // Due amount calculate karna - har due month ke liye monthly fee add karna
+        const dueAmount = isPaid ? 0 : monthlyFee;
+        
+        duesByMonth.push({
+          month: monthName,
+          dueAmount: dueAmount,
+          paid: isPaid
+        });
+        
+        // Total dues mein add karna
+        dues += dueAmount;
+        
+        // Paid fees calculate karna
+        if (isPaid) {
+          paidFees += monthlyFee;
+        }
+      }
+      
+      // Student status determine karna
+      let status = 'Not Paid';
+      if (dues === 0 && duesByMonth.length > 0) {
+        status = 'Fully Paid';
+      } else if (paidFees > 0) {
+        status = 'Partially Paid';
+      }
+      
+      // Total fees calculate karna (August se current month tak ke saare months ka total)
+      const totalMonths = (currentMonthIndex - augustIndex + 1);
+      const totalFees = totalMonths * monthlyFee;
+      
+      return {
+        ...student,
+        dues: dues,
+        paidFees: paidFees,
+        totalFees: totalFees,
+        status: status,
+        duesByMonth: duesByMonth,
+        monthlyFee: monthlyFee // Ensure monthlyFee is set
+      };
+    });
+
+    // Pagination calculation
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedStudents = resultStudents.slice(startIndex, endIndex);
+
+    setStudents(paginatedStudents);
+    setTotalPages(Math.ceil(resultStudents.length / limit));
+    setTotalStudents(resultStudents.length);
+    setError(null);
+
+  } catch (err) {
+    console.error('Error fetching students:', err);
+    const errorMessage = err.response?.data?.message || 'Failed to fetch students';
+    setError(errorMessage);
+    setStudents([]);
+    setTotalPages(1);
+    setTotalStudents(0);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Fetch student details
   const fetchStudentDetails = async (studentId) => {
     try {
-      const response = await axios.get(`${BaseURL}/api/students/${studentId}`);
+      const response = await axios.get(`${BaseURL}/students/details/${studentId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching student details:', error);
@@ -128,7 +236,7 @@ const FeesManagement = () => {
     }
 
     try {
-      const response = await axios.post(`${BaseURL}/api/students/payment`, {
+      const response = await axios.post(`${BaseURL}/students/payment`, {
         studentId: student._id,
         amount: parseInt(paymentAmount),
         months: paymentMonths,
@@ -154,7 +262,7 @@ const FeesManagement = () => {
   // Generate challan
   const generateChallan = async (student, months = []) => {
     try {
-      const response = await axios.post(`${BaseURL}/api/students/challan`, {
+      const response = await axios.post(`${BaseURL}/students/challan`, {
         studentId: student._id,
         months: months,
         examinationFee: examinationFee,
@@ -178,7 +286,7 @@ const FeesManagement = () => {
         params.append('class', selectedClass);
       }
 
-      const response = await axios.get(`${BaseURL}/api/students/dues/list?${params}`);
+      const response = await axios.get(`${BaseURL}/students/dues/list?${params}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching due list:', error);
@@ -226,7 +334,7 @@ const FeesManagement = () => {
       (dueData.dueStudents || []).forEach(student => {
         content += `
           <tr>
-            <td>${student.rollNumber}</td>
+            <td>${student.rollNo}</td>
             <td>${student.name}</td>
             <td>${student.class}</td>
             <td class="due">Rs. ${student.dues}</td>
@@ -254,83 +362,203 @@ const FeesManagement = () => {
     }
   };
 
-  // Export data to Excel
-  const exportToExcel = async () => {
-    try {
-      const response = await axios.get(`${BaseURL}/api/students`, {
-        params: {
-          page: 1,
-          limit: 1000, // Export all records
-          ...(searchTerm && { search: searchTerm }),
-          ...(selectedClass !== 'All' && { class: selectedClass }),
-          ...(selectedStatus !== 'All' && { status: selectedStatus })
-        }
-      });
+ // Export data to Excel
+const exportToExcel = async () => {
+  try {
+    const response = await axios.get(`${BaseURL}/students/details`);
+    let studentsData = response.data;
 
-      const studentsData = response.data.students || [];
+    // Role-based filtering for export
+    const role = localStorage.getItem("role");
+    if (role === "Teacher") {
+      const assignedClass = localStorage.getItem("classAssigned");
+      const assignedSection = localStorage.getItem("classSection");
 
-      let tableContent = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          td { mso-number-format: "\\@"; }
-          th { background-color: #E3F2FD; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-      <h2>Fees Management Report - ${new Date().toLocaleDateString()}</h2>
+      studentsData = studentsData.filter(student =>
+        student.Class === assignedClass &&
+        student.section === assignedSection
+      );
+    }
+
+    // Apply filters for export
+    if (searchTerm) {
+      studentsData = studentsData.filter(student =>
+        student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedClass !== 'All') {
+      studentsData = studentsData.filter(student => 
+        student.class === selectedClass
+      );
+    }
+
+    if (selectedStatus !== 'All') {
+      studentsData = studentsData.filter(student => 
+        student.status === selectedStatus
+      );
+    }
+
+    // Calculate summary data for export
+    const totalFeesCollection = studentsData.reduce((sum, student) => sum + (student.paidFees || 0), 0);
+    const totalDues = studentsData.reduce((sum, student) => sum + (student.dues || 0), 0);
+    const fullyPaidCount = studentsData.filter(student => student.status === 'Fully Paid').length;
+    const partiallyPaidCount = studentsData.filter(student => student.status === 'Partially Paid').length;
+    const notPaidCount = studentsData.filter(student => student.status === 'Not Paid').length;
+
+    let tableContent = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+    <head>
+      <meta charset="UTF-8">
+      <title>Fees Management Report</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .summary { margin: 20px 0; padding: 15px; background-color: #f8fafc; border: 1px solid #e2e8f0; }
+        .summary h3 { margin-top: 0; color: #2d3748; }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
+        .summary-item { padding: 10px; background: white; border-radius: 5px; border: 1px solid #e2e8f0; }
+        .summary-value { font-size: 18px; font-weight: bold; color: #2d3748; }
+        .summary-label { font-size: 12px; color: #718096; text-transform: uppercase; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background-color: #E3F2FD; font-weight: bold; text-align: left; padding: 10px; border: 1px solid #ddd; }
+        td { padding: 8px 10px; border: 1px solid #ddd; mso-number-format: "\\@"; }
+        .fully-paid { color: #059669; }
+        .partially-paid { color: #d97706; }
+        .not-paid { color: #dc2626; }
+        .footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 12px; color: #718096; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>Fees Management Report</h1>
+        <p>Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+      </div>
+
+      <div class="summary">
+        <h3>Summary</h3>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-value">${studentsData.length}</div>
+            <div class="summary-label">Total Students</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">Rs. ${totalFeesCollection.toLocaleString()}</div>
+            <div class="summary-label">Total Collected</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">Rs. ${totalDues.toLocaleString()}</div>
+            <div class="summary-label">Total Dues</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">${fullyPaidCount}</div>
+            <div class="summary-label">Fully Paid</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">${partiallyPaidCount}</div>
+            <div class="summary-label">Partially Paid</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">${notPaidCount}</div>
+            <div class="summary-label">Not Paid</div>
+          </div>
+        </div>
+      </div>
+
       <table>
         <thead>
           <tr>
             <th>Roll No</th>
-            <th>Name</th>
+            <th>Student Name</th>
             <th>Father Name</th>
             <th>Class</th>
+            <th>Section</th>
+            <th>Monthly Fee</th>
             <th>Total Fees</th>
             <th>Paid Fees</th>
             <th>Dues</th>
             <th>Status</th>
+            <th>Last Payment Date</th>
           </tr>
         </thead>
         <tbody>
-      `;
+    `;
 
-      studentsData.forEach(student => {
-        tableContent += `
-          <tr>
-            <td>${student.rollNumber}</td>
-            <td>${student.name}</td>
-            <td>${student.fatherName}</td>
-            <td>${student.class}</td>
-            <td>${student.totalFees}</td>
-            <td>${student.paidFees}</td>
-            <td>${student.dues}</td>
-            <td>${student.status}</td>
-          </tr>
-        `;
-      });
+    studentsData.forEach(student => {
+      const statusClass = 
+        student.status === 'Fully Paid' ? 'fully-paid' :
+        student.status === 'Partially Paid' ? 'partially-paid' : 'not-paid';
+      
+      // Find last payment date
+      let lastPaymentDate = 'N/A';
+      if (student.paymentHistory && student.paymentHistory.length > 0) {
+        const lastPayment = student.paymentHistory[student.paymentHistory.length - 1];
+        lastPaymentDate = new Date(lastPayment.date).toLocaleDateString();
+      }
 
       tableContent += `
+          <tr>
+            <td>${student.rollNo || 'N/A'}</td>
+            <td>${student.name || 'N/A'}</td>
+            <td>${student.fatherName || 'N/A'}</td>
+            <td>${student.class || 'N/A'}</td>
+            <td>${student.section || 'N/A'}</td>
+            <td>${student.monthlyFee ? 'Rs. ' + student.monthlyFee.toLocaleString() : 'N/A'}</td>
+            <td>${student.Fees ? 'Rs. ' + student.Fees.toLocaleString() : 'N/A'}</td>
+            <td>${student.paidFees ? 'Rs. ' + student.paidFees.toLocaleString() : 'Rs. 0'}</td>
+            <td>${student.dues ? 'Rs. ' + student.dues.toLocaleString() : 'Rs. 0'}</td>
+            <td class="${statusClass}">${student.status || 'Not Paid'}</td>
+            <td>${lastPaymentDate}</td>
+          </tr>
+      `;
+    });
+
+    tableContent += `
         </tbody>
       </table>
-      </body>
-      </html>
-      `;
 
-      const blob = new Blob([tableContent], { type: 'application/vnd.ms-excel' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `fees_report_${new Date().toISOString().split('T')[0]}.xls`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error('Error exporting to Excel:', error);
-      alert('Failed to export data to Excel');
-    }
-  };
+      <div class="footer">
+        <p>Generated by School Management System | ${studentsData.length} records exported</p>
+        <p>Filters Applied: 
+          ${searchTerm ? 'Search: ' + searchTerm + ' | ' : ''}
+          ${selectedClass !== 'All' ? 'Class: ' + selectedClass + ' | ' : ''}
+          ${selectedStatus !== 'All' ? 'Status: ' + selectedStatus : 'All Statuses'}
+        </p>
+      </div>
+    </body>
+    </html>
+    `;
+
+    // Create and download Excel file
+    const blob = new Blob([tableContent], { 
+      type: 'application/vnd.ms-excel;charset=utf-8' 
+    });
+    
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    
+    // Create filename with timestamp
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `fees_report_${timestamp}.xls`;
+    link.setAttribute("download", filename);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up URL object
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 100);
+
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    alert('Failed to export data to Excel. Please try again.');
+  }
+};
 
   // Toggle month selection for payment
   const toggleMonthSelection = (month) => {
@@ -619,7 +847,7 @@ const FeesManagement = () => {
                                 </div>
                               </div>
                               <div>
-                                <div className="font-mono font-semibold text-gray-900 text-sm">{student.rollNumber}</div>
+                                <div className="font-mono font-semibold text-gray-900 text-sm">{student.rollNo}</div>
                               </div>
                             </div>
                           </td>
@@ -641,7 +869,7 @@ const FeesManagement = () => {
 
                           <td className="px-4 py-3 align-middle text-right">
                             <div className="space-y-1">
-                              <div className="font-bold text-gray-900 text-sm">Rs. {student.totalFees?.toLocaleString()}</div>
+                              <div className="font-bold text-gray-900 text-sm">Rs. {student.Fees?.toLocaleString()}</div>
                             </div>
                           </td>
 
@@ -822,7 +1050,7 @@ const FeesManagement = () => {
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Roll No</p>
-                      <p className="font-semibold">{selectedStudent.rollNumber}</p>
+                      <p className="font-semibold">{selectedStudent.rollNo}</p>
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Class</p>
@@ -863,25 +1091,25 @@ const FeesManagement = () => {
                   </select>
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Months to Pay</label>
-                  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-lg">
-                    {selectedStudent.duesByMonth
-                      ?.filter(month => !month.paid)
-                      .map((monthData, index) => (
-                        <div
-                          key={index}
-                          className={`p-2 rounded text-center cursor-pointer transition-all ${
-                            paymentMonths.includes(monthData.month) ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                          }`}
-                          onClick={() => toggleMonthSelection(monthData.month)}
-                        >
-                          <div className="text-sm font-medium">{monthData.month}</div>
-                          <div className="text-xs">Rs. {monthData.dueAmount}</div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
+<div className="mb-4">
+  <label className="block text-sm font-medium text-gray-700 mb-2">Select Months to Pay</label>
+  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-lg">
+    {selectedStudent.duesByMonth
+      ?.filter(month => !month.paid && month.dueAmount > 0)
+      .map((monthData, index) => (
+        <div
+          key={index}
+          className={`p-2 rounded text-center cursor-pointer transition-all ${
+            paymentMonths.includes(monthData.month) ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
+          }`}
+          onClick={() => toggleMonthSelection(monthData.month)}
+        >
+          <div className="text-sm font-medium">{monthData.month}</div>
+          <div className="text-xs">Rs. {monthData.dueAmount}</div>
+        </div>
+      ))}
+  </div>
+</div>
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Amount (Rs.)</label>
@@ -938,7 +1166,7 @@ const FeesManagement = () => {
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Roll No</p>
-                      <p className="font-semibold">{detailsStudent.rollNumber}</p>
+                      <p className="font-semibold">{detailsStudent.rollNo}</p>
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Father Name</p>
@@ -950,7 +1178,7 @@ const FeesManagement = () => {
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Total Fees</p>
-                      <p className="font-semibold">Rs. {detailsStudent.totalFees}</p>
+                      <p className="font-semibold">Rs. {detailsStudent.Fees}</p>
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Dues</p>
@@ -1045,7 +1273,7 @@ const FeesManagement = () => {
                       <h3 className="text-lg font-semibold text-gray-800">Student Information</h3>
                       <p className="text-sm"><span className="font-medium">Name:</span> {challanData.student?.name}</p>
                       <p className="text-sm"><span className="font-medium">Father Name:</span> {challanData.student?.fatherName}</p>
-                      <p className="text-sm"><span className="font-medium">Roll No:</span> {challanData.student?.rollNumber}</p>
+                      <p className="text-sm"><span className="font-medium">Roll No:</span> {challanData.student?.rollNo}</p>
                       <p className="text-sm"><span className="font-medium">Class:</span> {challanData.student?.class}</p>
                     </div>
 
