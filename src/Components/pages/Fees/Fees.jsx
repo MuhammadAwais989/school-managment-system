@@ -63,15 +63,16 @@ const FeesManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalStudents, setTotalStudents] = useState(0);
 
+// Fetch students data from backend API
 const fetchStudents = async (page = 1, limit = 10) => {
   try {
     setLoading(true);
     
-    // Simple API call without complex params
     const response = await axios.get(`${BaseURL}/students/details`);
     const data = response.data;
-
-    // Role-based filtering (reference code ke according)
+    console.log('Raw student data:', data[0]); // Check first student data
+    
+    // Role-based filtering
     const role = localStorage.getItem("role");
     let filteredStudents = data;
 
@@ -107,12 +108,11 @@ const fetchStudents = async (page = 1, limit = 10) => {
     // Status filter
     if (selectedStatus !== 'All') {
       resultStudents = resultStudents.filter(student => 
-      
         student.status === selectedStatus
       );
     }
 
-    // August se dues calculate karna - UPDATED LOGIC
+    // August se dues calculate karna - UPDATED to use actual payment history
     resultStudents = resultStudents.map(student => {
       // August se current month tak ke months
       const currentMonthIndex = new Date().getMonth();
@@ -123,14 +123,13 @@ const fetchStudents = async (page = 1, limit = 10) => {
       let duesByMonth = [];
       
       // Monthly fee determine karna
-      const monthlyFee = student.Fees ;
-      
+      const monthlyFee = Number(student.Fees) || 0;
       
       // August se lekar current month tak ke months
       for (let i = augustIndex; i <= currentMonthIndex; i++) {
         const monthName = allMonths[i];
         
-        // Check if this month is paid
+        // Check if this month is paid - USE ACTUAL PAYMENT HISTORY
         let isPaid = false;
         if (student.paymentHistory && student.paymentHistory.length > 0) {
           isPaid = student.paymentHistory.some(payment => 
@@ -138,8 +137,7 @@ const fetchStudents = async (page = 1, limit = 10) => {
           );
         }
         
-        // Due amount calculate karna - har due month ke liye monthly fee add karna
-        const dueAmount = isPaid ? 0 : monthlyFee;
+        const dueAmount = isPaid ? 0 : Number(monthlyFee);
         
         duesByMonth.push({
           month: monthName,
@@ -147,12 +145,10 @@ const fetchStudents = async (page = 1, limit = 10) => {
           paid: isPaid
         });
         
-        // Total dues mein add karna
-        dues += dueAmount;
+        dues = Number(dues) + Number(dueAmount);
         
-        // Paid fees calculate karna
         if (isPaid) {
-          paidFees += monthlyFee;
+          paidFees = Number(paidFees) + Number(monthlyFee);
         }
       }
       
@@ -164,18 +160,19 @@ const fetchStudents = async (page = 1, limit = 10) => {
         status = 'Partially Paid';
       }
       
-      // Total fees calculate karna (August se current month tak ke saare months ka total)
       const totalMonths = (currentMonthIndex - augustIndex + 1);
-      const totalFees = totalMonths * monthlyFee;
+      const totalFees = Number(totalMonths) * Number(monthlyFee);
       
       return {
         ...student,
-        dues: dues,
-        paidFees: paidFees,
-        totalFees: totalFees,
+        dues: Number(dues),
+        paidFees: Number(paidFees),
+        totalFees: Number(totalFees),
         status: status,
         duesByMonth: duesByMonth,
-        monthlyFee: monthlyFee // Ensure monthlyFee is set
+        monthlyFee: Number(monthlyFee),
+        // Ensure paymentHistory exists
+        paymentHistory: student.paymentHistory || []
       };
     });
 
@@ -201,16 +198,52 @@ const fetchStudents = async (page = 1, limit = 10) => {
   }
 };
 
-  // Fetch student details
-  const fetchStudentDetails = async (studentId) => {
-    try {
-      const response = await axios.get(`${BaseURL}/students/details/${studentId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching student details:', error);
-      throw error;
+  
+// Fetch student details
+const fetchStudentDetails = async (studentId) => {
+  try {
+    const response = await axios.get(`${BaseURL}/students/${studentId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching student details:', error);
+    
+    // Check if it's a 404 error (endpoint not found)
+    if (error.response?.status === 404) {
+      console.log('Student details endpoint not found, using fallback data');
+      // Return null to indicate we should use fallback data
+      return null;
     }
-  };
+    
+    throw error;
+  }
+};
+
+// Show student details 
+const showStudentDetails = async (student) => {
+  try {
+    console.log('Student payment history:', student.paymentHistory);
+    
+    // Use the student data with actual payment history
+    const studentDetails = {
+      ...student,
+      // Use actual payment history if available, otherwise empty array
+      paymentHistory: student.paymentHistory || []
+    };
+
+    setDetailsStudent(studentDetails);
+    setShowDetailsModal(true);
+
+  } catch (error) {
+    console.error('Error in showStudentDetails:', error);
+    
+    // Fallback with empty payment history
+    setDetailsStudent({
+      ...student,
+      paymentHistory: []
+    });
+    setShowDetailsModal(true);
+  }
+};
 
   // Initial data fetch
   useEffect(() => {
@@ -224,40 +257,78 @@ const fetchStudents = async (page = 1, limit = 10) => {
   }, [searchTerm, selectedClass, selectedStatus]);
 
   // Handle fee payment
-  const handlePayment = async (student) => {
-    if (!paymentAmount || paymentAmount <= 0 || paymentAmount > student.dues) {
-      alert('Please enter a valid payment amount');
-      return;
+// Handle fee payment - UPDATED WITH CORRECT API CALL
+const handlePayment = async (student) => {
+  if (!paymentAmount || paymentAmount <= 0 || paymentAmount > student.dues) {
+    alert('Please enter a valid payment amount');
+    return;
+  }
+
+  if (paymentMonths.length === 0) {
+    alert('Please select at least one month for payment');
+    return;
+  }
+
+  try {
+    console.log('Processing payment for:', {
+      studentId: student._id,
+      amount: paymentAmount,
+      months: paymentMonths,
+      paymentDate: paymentDate,
+      mode: paymentMode
+    });
+
+    // Prepare payment data
+    const paymentData = {
+      studentId: student._id,
+      amount: parseInt(paymentAmount),
+      months: paymentMonths,
+      paymentDate: paymentDate,
+      mode: paymentMode
+    };
+
+    // Make API call to backend
+    const response = await axios.post(`${BaseURL}/students/payment`, paymentData);
+    
+    if (response.data.message) {
+      console.log('✅ Payment successful:', response.data);
+      
+      // Show success message
+      alert(`✅ Payment Recorded Successfully!\n\nStudent: ${student.name}\nAmount: Rs. ${paymentAmount}\nMonths: ${paymentMonths.join(', ')}\nMode: ${paymentMode}`);
+      
+      // Refresh student data
+      await fetchStudents(currentPage, itemsPerPage);
+      
+      // Close modal and reset
+      setShowPaymentModal(false);
+      setPaymentAmount('');
+      setPaymentMonths([]);
+      setPaymentMode('Cash');
+    } else {
+      throw new Error('Payment failed');
     }
 
-    if (paymentMonths.length === 0) {
-      alert('Please select at least one month for payment');
-      return;
+  } catch (error) {
+    console.error('Payment error:', error);
+    
+    // Detailed error message
+    let errorMessage = 'Payment failed. Please try again.';
+    
+    if (error.response) {
+      // Server responded with error status
+      errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
+      console.error('Server response:', error.response.data);
+    } else if (error.request) {
+      // Request was made but no response received
+      errorMessage = 'No response from server. Please check your connection.';
+    } else {
+      // Something else happened
+      errorMessage = error.message;
     }
-
-    try {
-      const response = await axios.post(`${BaseURL}/students/payment`, {
-        studentId: student._id,
-        amount: parseInt(paymentAmount),
-        months: paymentMonths,
-        paymentDate: paymentDate,
-        mode: paymentMode
-      });
-
-      if (response.data.message) {
-        alert('Payment recorded successfully!');
-        // Refresh the student data
-        fetchStudents(currentPage, itemsPerPage);
-        setShowPaymentModal(false);
-        setPaymentAmount('');
-        setPaymentMonths([]);
-        setPaymentMode('Cash');
-      }
-    } catch (error) {
-      console.error('Error recording payment:', error);
-      alert(error.response?.data?.message || 'Failed to record payment');
-    }
-  };
+    
+    alert(`❌ ${errorMessage}`);
+  }
+};
 
   // Generate challan
   const generateChallan = async (student, months = []) => {
@@ -617,16 +688,6 @@ const exportToExcel = async () => {
     }
   };
 
-  // Show student details
-  const showStudentDetails = async (student) => {
-    try {
-      const studentDetails = await fetchStudentDetails(student._id);
-      setDetailsStudent(studentDetails);
-      setShowDetailsModal(true);
-    } catch (error) {
-      alert('Failed to load student details');
-    }
-  };
 
   // Calculate summary data
   const totalFeesCollection = students.reduce((sum, student) => sum + (student.paidFees || 0), 0);
@@ -1173,8 +1234,8 @@ const exportToExcel = async () => {
                       <p className="font-semibold">{detailsStudent.fatherName}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Class</p>
-                      <p className="font-semibold">{detailsStudent.class}</p>
+                      <p className="text-sm text-blue-700 font-medium">Class & Section</p>
+                      <p className="font-semibold">{detailsStudent.Class} - {detailsStudent.section}</p>
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Total Fees</p>
@@ -1202,39 +1263,45 @@ const exportToExcel = async () => {
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Payment History</h3>
-                  {detailsStudent.paymentHistory?.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-100">
-                          <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Months Paid</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Receipt No</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {detailsStudent.paymentHistory.map((payment, index) => (
-                            <tr key={index}>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">
-                                {new Date(payment.date).toLocaleDateString()}
-                              </td>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.months.join(', ')}</td>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">Rs. {payment.amount}</td>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.mode}</td>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.receiptNo}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No payment history available</p>
-                  )}
-                </div>
+<div>
+  <h3 className="font-semibold text-gray-700 mb-2">Payment History</h3>
+  {detailsStudent.paymentHistory && detailsStudent.paymentHistory.length > 0 ? (
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Months Paid</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Receipt No</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {detailsStudent.paymentHistory.map((payment, index) => (
+            <tr key={index}>
+              <td className="px-4 py-2 whitespace-nowrap text-sm">
+                {new Date(payment.date).toLocaleDateString()}
+              </td>
+              <td className="px-4 py-2 whitespace-nowrap text-sm">
+                {payment.months ? payment.months.join(', ') : 'N/A'}
+              </td>
+              <td className="px-4 py-2 whitespace-nowrap text-sm">Rs. {payment.amount}</td>
+              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.mode || 'Cash'}</td>
+              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.receiptNo || 'N/A'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <div className="text-center py-8 bg-gray-50 rounded-lg">
+      <DollarSign size={48} className="mx-auto text-gray-400 mb-2" />
+      <p className="text-gray-500 text-lg">No Payment History</p>
+      <p className="text-gray-400 text-sm">This student hasn't made any payments yet.</p>
+    </div>
+  )}
+</div>
               </div>
             </div>
           )}
