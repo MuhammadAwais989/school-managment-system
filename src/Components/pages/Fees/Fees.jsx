@@ -63,187 +63,187 @@ const FeesManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalStudents, setTotalStudents] = useState(0);
 
-// Fetch students data from backend API
-const fetchStudents = async (page = 1, limit = 10) => {
-  try {
-    setLoading(true);
-    
-    const response = await axios.get(`${BaseURL}/students/details`);
-    const data = response.data;
-    console.log('Raw student data:', data[0]); // Check first student data
-    
-    // Role-based filtering
-    const role = localStorage.getItem("role");
-    let filteredStudents = data;
+  // Fetch students data from backend API
+  const fetchStudents = async (page = 1, limit = 10) => {
+    try {
+      setLoading(true);
 
-    if (role === "Teacher") {
-      const assignedClass = localStorage.getItem("classAssigned");
-      const assignedSection = localStorage.getItem("classSection");
+      const response = await axios.get(`${BaseURL}/students/details`);
+      const data = response.data;
+      console.log('Raw student data:', data[0]); // Check first student data
 
-      filteredStudents = data.filter(student =>
-        student.Class === assignedClass &&
-        student.section === assignedSection
-      );
-    }
+      // Role-based filtering
+      const role = localStorage.getItem("role");
+      let filteredStudents = data;
 
-    // Client-side pagination and filtering
-    let resultStudents = filteredStudents;
+      if (role === "Teacher") {
+        const assignedClass = localStorage.getItem("classAssigned");
+        const assignedSection = localStorage.getItem("classSection");
 
-    // Search filter
-    if (searchTerm) {
-      resultStudents = resultStudents.filter(student =>
-        student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Class filter
-    if (selectedClass !== 'All') {
-      resultStudents = resultStudents.filter(student => 
-        student.class === selectedClass
-      );
-    }
-
-    // Status filter
-    if (selectedStatus !== 'All') {
-      resultStudents = resultStudents.filter(student => 
-        student.status === selectedStatus
-      );
-    }
-
-    // August se dues calculate karna - UPDATED to use actual payment history
-    resultStudents = resultStudents.map(student => {
-      // August se current month tak ke months
-      const currentMonthIndex = new Date().getMonth();
-      const augustIndex = 7; // August is index 7 (0-based)
-      
-      let dues = 0;
-      let paidFees = 0;
-      let duesByMonth = [];
-      
-      // Monthly fee determine karna
-      const monthlyFee = Number(student.Fees) || 0;
-      
-      // August se lekar current month tak ke months
-      for (let i = augustIndex; i <= currentMonthIndex; i++) {
-        const monthName = allMonths[i];
-        
-        // Check if this month is paid - USE ACTUAL PAYMENT HISTORY
-        let isPaid = false;
-        if (student.paymentHistory && student.paymentHistory.length > 0) {
-          isPaid = student.paymentHistory.some(payment => 
-            payment.months && payment.months.includes(monthName)
-          );
-        }
-        
-        const dueAmount = isPaid ? 0 : Number(monthlyFee);
-        
-        duesByMonth.push({
-          month: monthName,
-          dueAmount: dueAmount,
-          paid: isPaid
-        });
-        
-        dues = Number(dues) + Number(dueAmount);
-        
-        if (isPaid) {
-          paidFees = Number(paidFees) + Number(monthlyFee);
-        }
+        filteredStudents = data.filter(student =>
+          student.Class === assignedClass &&
+          student.section === assignedSection
+        );
       }
-      
-      // Student status determine karna
-      let status = 'Not Paid';
-      if (dues === 0 && duesByMonth.length > 0) {
-        status = 'Fully Paid';
-      } else if (paidFees > 0) {
-        status = 'Partially Paid';
+
+      // Client-side pagination and filtering
+      let resultStudents = filteredStudents;
+
+      // Search filter
+      if (searchTerm) {
+        resultStudents = resultStudents.filter(student =>
+          student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
       }
-      
-      const totalMonths = (currentMonthIndex - augustIndex + 1);
-      const totalFees = Number(totalMonths) * Number(monthlyFee);
-      
-      return {
+
+      // Class filter
+      if (selectedClass !== 'All') {
+        resultStudents = resultStudents.filter(student =>
+          student.class === selectedClass
+        );
+      }
+
+      // Status filter
+      if (selectedStatus !== 'All') {
+        resultStudents = resultStudents.filter(student =>
+          student.status === selectedStatus
+        );
+      }
+
+      // August se dues calculate karna - UPDATED to use actual payment history
+      resultStudents = resultStudents.map(student => {
+        // August se current month tak ke months
+        const currentMonthIndex = new Date().getMonth();
+        const augustIndex = 7; // August is index 7 (0-based)
+
+        let dues = 0;
+        let paidFees = 0;
+        let duesByMonth = [];
+
+        // Monthly fee determine karna
+        const monthlyFee = Number(student.Fees) || 0;
+
+        // August se lekar current month tak ke months
+        for (let i = augustIndex; i <= currentMonthIndex; i++) {
+          const monthName = allMonths[i];
+
+          // Check if this month is paid - USE ACTUAL PAYMENT HISTORY
+          let isPaid = false;
+          if (student.paymentHistory && student.paymentHistory.length > 0) {
+            isPaid = student.paymentHistory.some(payment =>
+              payment.months && payment.months.includes(monthName)
+            );
+          }
+
+          const dueAmount = isPaid ? 0 : Number(monthlyFee);
+
+          duesByMonth.push({
+            month: monthName,
+            dueAmount: dueAmount,
+            paid: isPaid
+          });
+
+          dues = Number(dues) + Number(dueAmount);
+
+          if (isPaid) {
+            paidFees = Number(paidFees) + Number(monthlyFee);
+          }
+        }
+
+        // Student status determine karna
+        let status = 'Not Paid';
+        if (dues === 0 && duesByMonth.length > 0) {
+          status = 'Fully Paid';
+        } else if (paidFees > 0) {
+          status = 'Partially Paid';
+        }
+
+        const totalMonths = (currentMonthIndex - augustIndex + 1);
+        const totalFees = Number(totalMonths) * Number(monthlyFee);
+
+        return {
+          ...student,
+          dues: Number(dues),
+          paidFees: Number(paidFees),
+          totalFees: Number(totalFees),
+          status: status,
+          duesByMonth: duesByMonth,
+          monthlyFee: Number(monthlyFee),
+          // Ensure paymentHistory exists
+          paymentHistory: student.paymentHistory || []
+        };
+      });
+
+      // Pagination calculation
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedStudents = resultStudents.slice(startIndex, endIndex);
+
+      setStudents(paginatedStudents);
+      setTotalPages(Math.ceil(resultStudents.length / limit));
+      setTotalStudents(resultStudents.length);
+      setError(null);
+
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to fetch students';
+      setError(errorMessage);
+      setStudents([]);
+      setTotalPages(1);
+      setTotalStudents(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  // Fetch student details
+  const fetchStudentDetails = async (studentId) => {
+    try {
+      const response = await axios.get(`${BaseURL}/students/${studentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching student details:', error);
+
+      // Check if it's a 404 error (endpoint not found)
+      if (error.response?.status === 404) {
+        console.log('Student details endpoint not found, using fallback data');
+        // Return null to indicate we should use fallback data
+        return null;
+      }
+
+      throw error;
+    }
+  };
+
+  // Show student details 
+  const showStudentDetails = async (student) => {
+    try {
+      console.log('Student payment history:', student.paymentHistory);
+
+      // Use the student data with actual payment history
+      const studentDetails = {
         ...student,
-        dues: Number(dues),
-        paidFees: Number(paidFees),
-        totalFees: Number(totalFees),
-        status: status,
-        duesByMonth: duesByMonth,
-        monthlyFee: Number(monthlyFee),
-        // Ensure paymentHistory exists
+        // Use actual payment history if available, otherwise empty array
         paymentHistory: student.paymentHistory || []
       };
-    });
 
-    // Pagination calculation
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedStudents = resultStudents.slice(startIndex, endIndex);
+      setDetailsStudent(studentDetails);
+      setShowDetailsModal(true);
 
-    setStudents(paginatedStudents);
-    setTotalPages(Math.ceil(resultStudents.length / limit));
-    setTotalStudents(resultStudents.length);
-    setError(null);
+    } catch (error) {
+      console.error('Error in showStudentDetails:', error);
 
-  } catch (err) {
-    console.error('Error fetching students:', err);
-    const errorMessage = err.response?.data?.message || 'Failed to fetch students';
-    setError(errorMessage);
-    setStudents([]);
-    setTotalPages(1);
-    setTotalStudents(0);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  
-// Fetch student details
-const fetchStudentDetails = async (studentId) => {
-  try {
-    const response = await axios.get(`${BaseURL}/students/${studentId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching student details:', error);
-    
-    // Check if it's a 404 error (endpoint not found)
-    if (error.response?.status === 404) {
-      console.log('Student details endpoint not found, using fallback data');
-      // Return null to indicate we should use fallback data
-      return null;
+      // Fallback with empty payment history
+      setDetailsStudent({
+        ...student,
+        paymentHistory: []
+      });
+      setShowDetailsModal(true);
     }
-    
-    throw error;
-  }
-};
-
-// Show student details 
-const showStudentDetails = async (student) => {
-  try {
-    console.log('Student payment history:', student.paymentHistory);
-    
-    // Use the student data with actual payment history
-    const studentDetails = {
-      ...student,
-      // Use actual payment history if available, otherwise empty array
-      paymentHistory: student.paymentHistory || []
-    };
-
-    setDetailsStudent(studentDetails);
-    setShowDetailsModal(true);
-
-  } catch (error) {
-    console.error('Error in showStudentDetails:', error);
-    
-    // Fallback with empty payment history
-    setDetailsStudent({
-      ...student,
-      paymentHistory: []
-    });
-    setShowDetailsModal(true);
-  }
-};
+  };
 
   // Initial data fetch
   useEffect(() => {
@@ -257,7 +257,6 @@ const showStudentDetails = async (student) => {
   }, [searchTerm, selectedClass, selectedStatus]);
 
   // Handle fee payment
-// Handle fee payment - UPDATED WITH CORRECT API CALL
 const handlePayment = async (student) => {
   if (!paymentAmount || paymentAmount <= 0 || paymentAmount > student.dues) {
     alert('Please enter a valid payment amount');
@@ -270,8 +269,17 @@ const handlePayment = async (student) => {
   }
 
   try {
+    // Use _id field for student ID
+    const studentId = student._id;
+    
+    if (!studentId) {
+      alert('❌ Student ID not found. Please refresh the page and try again.');
+      return;
+    }
+
     console.log('Processing payment for:', {
-      studentId: student._id,
+      studentId: studentId,
+      studentName: student.name,
       amount: paymentAmount,
       months: paymentMonths,
       paymentDate: paymentDate,
@@ -280,18 +288,20 @@ const handlePayment = async (student) => {
 
     // Prepare payment data
     const paymentData = {
-      studentId: student._id,
+      studentId: studentId, // Use _id field
       amount: parseInt(paymentAmount),
       months: paymentMonths,
       paymentDate: paymentDate,
       mode: paymentMode
     };
 
+    console.log('Sending payment data:', paymentData);
+
     // Make API call to backend
-    const response = await axios.post(`${BaseURL}/students/payment`, paymentData);
+    const response = await axios.post(`${BaseURL}/payment`, paymentData);
     
     if (response.data.message) {
-      console.log('✅ Payment successful:', response.data);
+      console.log('✅ Payment Recorded Successfully!');
       
       // Show success message
       alert(`✅ Payment Recorded Successfully!\n\nStudent: ${student.name}\nAmount: Rs. ${paymentAmount}\nMonths: ${paymentMonths.join(', ')}\nMode: ${paymentMode}`);
@@ -318,6 +328,11 @@ const handlePayment = async (student) => {
       // Server responded with error status
       errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
       console.error('Server response:', error.response.data);
+      
+      // Specific handling for "Student not found" error
+      if (error.response.data?.message === 'Student not found') {
+        errorMessage = 'Student not found in database. Please check if student exists.';
+      }
     } else if (error.request) {
       // Request was made but no response received
       errorMessage = 'No response from server. Please check your connection.';
@@ -369,7 +384,7 @@ const handlePayment = async (student) => {
   const generateDueListPDF = async () => {
     try {
       const dueData = await getDueList();
-      
+
       let content = `
         <html>
           <head>
@@ -433,53 +448,53 @@ const handlePayment = async (student) => {
     }
   };
 
- // Export data to Excel
-const exportToExcel = async () => {
-  try {
-    const response = await axios.get(`${BaseURL}/students/details`);
-    let studentsData = response.data;
+  // Export data to Excel
+  const exportToExcel = async () => {
+    try {
+      const response = await axios.get(`${BaseURL}/students/details`);
+      let studentsData = response.data;
 
-    // Role-based filtering for export
-    const role = localStorage.getItem("role");
-    if (role === "Teacher") {
-      const assignedClass = localStorage.getItem("classAssigned");
-      const assignedSection = localStorage.getItem("classSection");
+      // Role-based filtering for export
+      const role = localStorage.getItem("role");
+      if (role === "Teacher") {
+        const assignedClass = localStorage.getItem("classAssigned");
+        const assignedSection = localStorage.getItem("classSection");
 
-      studentsData = studentsData.filter(student =>
-        student.Class === assignedClass &&
-        student.section === assignedSection
-      );
-    }
+        studentsData = studentsData.filter(student =>
+          student.Class === assignedClass &&
+          student.section === assignedSection
+        );
+      }
 
-    // Apply filters for export
-    if (searchTerm) {
-      studentsData = studentsData.filter(student =>
-        student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+      // Apply filters for export
+      if (searchTerm) {
+        studentsData = studentsData.filter(student =>
+          student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
 
-    if (selectedClass !== 'All') {
-      studentsData = studentsData.filter(student => 
-        student.class === selectedClass
-      );
-    }
+      if (selectedClass !== 'All') {
+        studentsData = studentsData.filter(student =>
+          student.class === selectedClass
+        );
+      }
 
-    if (selectedStatus !== 'All') {
-      studentsData = studentsData.filter(student => 
-        student.status === selectedStatus
-      );
-    }
+      if (selectedStatus !== 'All') {
+        studentsData = studentsData.filter(student =>
+          student.status === selectedStatus
+        );
+      }
 
-    // Calculate summary data for export
-    const totalFeesCollection = studentsData.reduce((sum, student) => sum + (student.paidFees || 0), 0);
-    const totalDues = studentsData.reduce((sum, student) => sum + (student.dues || 0), 0);
-    const fullyPaidCount = studentsData.filter(student => student.status === 'Fully Paid').length;
-    const partiallyPaidCount = studentsData.filter(student => student.status === 'Partially Paid').length;
-    const notPaidCount = studentsData.filter(student => student.status === 'Not Paid').length;
+      // Calculate summary data for export
+      const totalFeesCollection = studentsData.reduce((sum, student) => sum + (student.paidFees || 0), 0);
+      const totalDues = studentsData.reduce((sum, student) => sum + (student.dues || 0), 0);
+      const fullyPaidCount = studentsData.filter(student => student.status === 'Fully Paid').length;
+      const partiallyPaidCount = studentsData.filter(student => student.status === 'Partially Paid').length;
+      const notPaidCount = studentsData.filter(student => student.status === 'Not Paid').length;
 
-    let tableContent = `
+      let tableContent = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
     <head>
       <meta charset="UTF-8">
@@ -557,19 +572,19 @@ const exportToExcel = async () => {
         <tbody>
     `;
 
-    studentsData.forEach(student => {
-      const statusClass = 
-        student.status === 'Fully Paid' ? 'fully-paid' :
-        student.status === 'Partially Paid' ? 'partially-paid' : 'not-paid';
-      
-      // Find last payment date
-      let lastPaymentDate = 'N/A';
-      if (student.paymentHistory && student.paymentHistory.length > 0) {
-        const lastPayment = student.paymentHistory[student.paymentHistory.length - 1];
-        lastPaymentDate = new Date(lastPayment.date).toLocaleDateString();
-      }
+      studentsData.forEach(student => {
+        const statusClass =
+          student.status === 'Fully Paid' ? 'fully-paid' :
+            student.status === 'Partially Paid' ? 'partially-paid' : 'not-paid';
 
-      tableContent += `
+        // Find last payment date
+        let lastPaymentDate = 'N/A';
+        if (student.paymentHistory && student.paymentHistory.length > 0) {
+          const lastPayment = student.paymentHistory[student.paymentHistory.length - 1];
+          lastPaymentDate = new Date(lastPayment.date).toLocaleDateString();
+        }
+
+        tableContent += `
           <tr>
             <td>${student.rollNo || 'N/A'}</td>
             <td>${student.name || 'N/A'}</td>
@@ -584,9 +599,9 @@ const exportToExcel = async () => {
             <td>${lastPaymentDate}</td>
           </tr>
       `;
-    });
+      });
 
-    tableContent += `
+      tableContent += `
         </tbody>
       </table>
 
@@ -602,34 +617,34 @@ const exportToExcel = async () => {
     </html>
     `;
 
-    // Create and download Excel file
-    const blob = new Blob([tableContent], { 
-      type: 'application/vnd.ms-excel;charset=utf-8' 
-    });
-    
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    
-    // Create filename with timestamp
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `fees_report_${timestamp}.xls`;
-    link.setAttribute("download", filename);
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Clean up URL object
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 100);
+      // Create and download Excel file
+      const blob = new Blob([tableContent], {
+        type: 'application/vnd.ms-excel;charset=utf-8'
+      });
 
-  } catch (error) {
-    console.error('Error exporting to Excel:', error);
-    alert('Failed to export data to Excel. Please try again.');
-  }
-};
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+
+      // Create filename with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `fees_report_${timestamp}.xls`;
+      link.setAttribute("download", filename);
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up URL object
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 100);
+
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('Failed to export data to Excel. Please try again.');
+    }
+  };
 
   // Toggle month selection for payment
   const toggleMonthSelection = (month) => {
@@ -647,9 +662,9 @@ const exportToExcel = async () => {
   // Add a new fee to the challan
   const addNewFee = () => {
     if (newFeeDescription && newFeeAmount) {
-      setOtherFees([...otherFees, { 
-        description: newFeeDescription, 
-        amount: parseInt(newFeeAmount) 
+      setOtherFees([...otherFees, {
+        description: newFeeDescription,
+        amount: parseInt(newFeeAmount)
       }]);
       setNewFeeDescription('');
       setNewFeeAmount('');
@@ -665,8 +680,8 @@ const exportToExcel = async () => {
 
   // Calculate total challan amount
   const calculateChallanTotal = () => {
-    const tuitionFee = challanData?.feeBreakdown?.tuitionFee || 
-                     (challanData?.student?.monthlyFee || 0) * challanMonths.length;
+    const tuitionFee = challanData?.feeBreakdown?.tuitionFee ||
+      (challanData?.student?.monthlyFee || 0) * challanMonths.length;
     const examFee = examinationFee || 0;
     const otherFeesTotal = otherFees.reduce((sum, fee) => sum + fee.amount, 0);
     return tuitionFee + examFee + otherFeesTotal;
@@ -945,16 +960,14 @@ const exportToExcel = async () => {
 
                           <td className="px-4 py-3 align-middle text-center">
                             <div className="flex justify-center">
-                              <div className={`inline-flex items-center px-3 py-1 rounded-full ${
-                                student.status === 'Fully Paid' ? 'bg-green-100 text-green-800' :
-                                student.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                <div className={`w-1.5 h-1.5 rounded-full mr-2 ${
-                                  student.status === 'Fully Paid' ? 'bg-green-500' :
-                                  student.status === 'Partially Paid' ? 'bg-yellow-500' :
-                                  'bg-red-500'
-                                }`} />
+                              <div className={`inline-flex items-center px-3 py-1 rounded-full ${student.status === 'Fully Paid' ? 'bg-green-100 text-green-800' :
+                                  student.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                }`}>
+                                <div className={`w-1.5 h-1.5 rounded-full mr-2 ${student.status === 'Fully Paid' ? 'bg-green-500' :
+                                    student.status === 'Partially Paid' ? 'bg-yellow-500' :
+                                      'bg-red-500'
+                                  }`} />
                                 <span className="text-xs font-semibold">{student.status}</span>
                               </div>
                             </div>
@@ -975,11 +988,10 @@ const exportToExcel = async () => {
                                   setShowPaymentModal(true);
                                 }}
                                 disabled={student.dues === 0}
-                                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white transition-colors ${
-                                  student.dues === 0
+                                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white transition-colors ${student.dues === 0
                                     ? 'bg-gray-400 cursor-not-allowed'
                                     : 'bg-blue-600 hover:bg-blue-700'
-                                }`}
+                                  }`}
                               >
                                 <DollarSign size={14} className="mr-1" />
                                 Pay
@@ -1042,11 +1054,10 @@ const exportToExcel = async () => {
                       <button
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className={`p-2 rounded-lg border transition-colors ${
-                          currentPage === 1
+                        className={`p-2 rounded-lg border transition-colors ${currentPage === 1
                             ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
                             : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         <ChevronLeft size={16} />
                       </button>
@@ -1056,13 +1067,12 @@ const exportToExcel = async () => {
                           key={index}
                           onClick={() => typeof pageNumber === 'number' && setCurrentPage(pageNumber)}
                           disabled={pageNumber === '...'}
-                          className={`min-w-[40px] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                            currentPage === pageNumber
+                          className={`min-w-[40px] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${currentPage === pageNumber
                               ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
                               : pageNumber === '...'
-                              ? 'border-gray-300 bg-white text-gray-500 cursor-default'
-                              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                          }`}
+                                ? 'border-gray-300 bg-white text-gray-500 cursor-default'
+                                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                            }`}
                         >
                           {pageNumber}
                         </button>
@@ -1071,11 +1081,10 @@ const exportToExcel = async () => {
                       <button
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className={`p-2 rounded-lg border transition-colors ${
-                          currentPage === totalPages
+                        className={`p-2 rounded-lg border transition-colors ${currentPage === totalPages
                             ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
                             : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         <ChevronRight size={16} />
                       </button>
@@ -1152,25 +1161,24 @@ const exportToExcel = async () => {
                   </select>
                 </div>
 
-<div className="mb-4">
-  <label className="block text-sm font-medium text-gray-700 mb-2">Select Months to Pay</label>
-  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-lg">
-    {selectedStudent.duesByMonth
-      ?.filter(month => !month.paid && month.dueAmount > 0)
-      .map((monthData, index) => (
-        <div
-          key={index}
-          className={`p-2 rounded text-center cursor-pointer transition-all ${
-            paymentMonths.includes(monthData.month) ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
-          }`}
-          onClick={() => toggleMonthSelection(monthData.month)}
-        >
-          <div className="text-sm font-medium">{monthData.month}</div>
-          <div className="text-xs">Rs. {monthData.dueAmount}</div>
-        </div>
-      ))}
-  </div>
-</div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Months to Pay</label>
+                  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-lg">
+                    {selectedStudent.duesByMonth
+                      ?.filter(month => !month.paid && month.dueAmount > 0)
+                      .map((monthData, index) => (
+                        <div
+                          key={index}
+                          className={`p-2 rounded text-center cursor-pointer transition-all ${paymentMonths.includes(monthData.month) ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                            }`}
+                          onClick={() => toggleMonthSelection(monthData.month)}
+                        >
+                          <div className="text-sm font-medium">{monthData.month}</div>
+                          <div className="text-xs">Rs. {monthData.dueAmount}</div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Amount (Rs.)</label>
@@ -1252,9 +1260,8 @@ const exportToExcel = async () => {
                   <h3 className="font-semibold text-gray-700 mb-2">Month-wise Dues Status</h3>
                   <div className="grid grid-cols-4 lg:grid-cols-6 gap-2">
                     {detailsStudent.duesByMonth?.map((monthData, index) => (
-                      <div key={index} className={`p-2 rounded text-center ${
-                        monthData.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
+                      <div key={index} className={`p-2 rounded text-center ${monthData.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
                         <div className="text-sm font-medium">{monthData.month}</div>
                         <div className="text-xs">Rs. {monthData.dueAmount}</div>
                         <div className="text-xs">{monthData.paid ? 'Paid' : 'Due'}</div>
@@ -1263,45 +1270,45 @@ const exportToExcel = async () => {
                   </div>
                 </div>
 
-<div>
-  <h3 className="font-semibold text-gray-700 mb-2">Payment History</h3>
-  {detailsStudent.paymentHistory && detailsStudent.paymentHistory.length > 0 ? (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Months Paid</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Receipt No</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {detailsStudent.paymentHistory.map((payment, index) => (
-            <tr key={index}>
-              <td className="px-4 py-2 whitespace-nowrap text-sm">
-                {new Date(payment.date).toLocaleDateString()}
-              </td>
-              <td className="px-4 py-2 whitespace-nowrap text-sm">
-                {payment.months ? payment.months.join(', ') : 'N/A'}
-              </td>
-              <td className="px-4 py-2 whitespace-nowrap text-sm">Rs. {payment.amount}</td>
-              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.mode || 'Cash'}</td>
-              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.receiptNo || 'N/A'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  ) : (
-    <div className="text-center py-8 bg-gray-50 rounded-lg">
-      <DollarSign size={48} className="mx-auto text-gray-400 mb-2" />
-      <p className="text-gray-500 text-lg">No Payment History</p>
-      <p className="text-gray-400 text-sm">This student hasn't made any payments yet.</p>
-    </div>
-  )}
-</div>
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">Payment History</h3>
+                  {detailsStudent.paymentHistory && detailsStudent.paymentHistory.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-100">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Months Paid</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Receipt No</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {detailsStudent.paymentHistory.map((payment, index) => (
+                            <tr key={index}>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                {new Date(payment.date).toLocaleDateString()}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                {payment.months ? payment.months.join(', ') : 'N/A'}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm">Rs. {payment.amount}</td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.mode || 'Cash'}</td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.receiptNo || 'N/A'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                      <DollarSign size={48} className="mx-auto text-gray-400 mb-2" />
+                      <p className="text-gray-500 text-lg">No Payment History</p>
+                      <p className="text-gray-400 text-sm">This student hasn't made any payments yet.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
