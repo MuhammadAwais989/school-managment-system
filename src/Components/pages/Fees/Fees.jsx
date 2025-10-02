@@ -64,139 +64,85 @@ const FeesManagement = () => {
   const [totalStudents, setTotalStudents] = useState(0);
 
   // Fetch students data from backend API
-  const fetchStudents = async (page = 1, limit = 10) => {
-    try {
-      setLoading(true);
+ // Fetch students data from COMBINED API
+const fetchStudents = async (page = 1, limit = 10) => {
+  try {
+    setLoading(true);
 
-      const response = await axios.get(`${BaseURL}/students/details`);
-      const data = response.data;
-      console.log('Raw student data:', data[0]); // Check first student data
+    // Use COMBINED API that gets students from main API + fees from separate system
+    const response = await axios.get(`${BaseURL}/fees/combined`);
+    const data = response.data;
+    console.log('Combined students + fees data:', data.students[0]);
 
-      // Role-based filtering
-      const role = localStorage.getItem("role");
-      let filteredStudents = data;
+    // Role-based filtering
+    const role = localStorage.getItem("role");
+    let filteredStudents = data.students;
 
-      if (role === "Teacher") {
-        const assignedClass = localStorage.getItem("classAssigned");
-        const assignedSection = localStorage.getItem("classSection");
+    if (role === "Teacher") {
+      const assignedClass = localStorage.getItem("classAssigned");
+      const assignedSection = localStorage.getItem("classSection");
 
-        filteredStudents = data.filter(student =>
-          student.Class === assignedClass &&
-          student.section === assignedSection
-        );
-      }
-
-      // Client-side pagination and filtering
-      let resultStudents = filteredStudents;
-
-      // Search filter
-      if (searchTerm) {
-        resultStudents = resultStudents.filter(student =>
-          student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
-
-      // Class filter
-      if (selectedClass !== 'All') {
-        resultStudents = resultStudents.filter(student =>
-          student.class === selectedClass
-        );
-      }
-
-      // Status filter
-      if (selectedStatus !== 'All') {
-        resultStudents = resultStudents.filter(student =>
-          student.status === selectedStatus
-        );
-      }
-
-      // August se dues calculate karna - UPDATED to use actual payment history
-      resultStudents = resultStudents.map(student => {
-        // August se current month tak ke months
-        const currentMonthIndex = new Date().getMonth();
-        const augustIndex = 7; // August is index 7 (0-based)
-
-        let dues = 0;
-        let paidFees = 0;
-        let duesByMonth = [];
-
-        // Monthly fee determine karna
-        const monthlyFee = Number(student.Fees) || 0;
-
-        // August se lekar current month tak ke months
-        for (let i = augustIndex; i <= currentMonthIndex; i++) {
-          const monthName = allMonths[i];
-
-          // Check if this month is paid - USE ACTUAL PAYMENT HISTORY
-          let isPaid = false;
-          if (student.paymentHistory && student.paymentHistory.length > 0) {
-            isPaid = student.paymentHistory.some(payment =>
-              payment.months && payment.months.includes(monthName)
-            );
-          }
-
-          const dueAmount = isPaid ? 0 : Number(monthlyFee);
-
-          duesByMonth.push({
-            month: monthName,
-            dueAmount: dueAmount,
-            paid: isPaid
-          });
-
-          dues = Number(dues) + Number(dueAmount);
-
-          if (isPaid) {
-            paidFees = Number(paidFees) + Number(monthlyFee);
-          }
-        }
-
-        // Student status determine karna
-        let status = 'Not Paid';
-        if (dues === 0 && duesByMonth.length > 0) {
-          status = 'Fully Paid';
-        } else if (paidFees > 0) {
-          status = 'Partially Paid';
-        }
-
-        const totalMonths = (currentMonthIndex - augustIndex + 1);
-        const totalFees = Number(totalMonths) * Number(monthlyFee);
-
-        return {
-          ...student,
-          dues: Number(dues),
-          paidFees: Number(paidFees),
-          totalFees: Number(totalFees),
-          status: status,
-          duesByMonth: duesByMonth,
-          monthlyFee: Number(monthlyFee),
-          // Ensure paymentHistory exists
-          paymentHistory: student.paymentHistory || []
-        };
-      });
-
-      // Pagination calculation
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedStudents = resultStudents.slice(startIndex, endIndex);
-
-      setStudents(paginatedStudents);
-      setTotalPages(Math.ceil(resultStudents.length / limit));
-      setTotalStudents(resultStudents.length);
-      setError(null);
-
-    } catch (err) {
-      console.error('Error fetching students:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to fetch students';
-      setError(errorMessage);
-      setStudents([]);
-      setTotalPages(1);
-      setTotalStudents(0);
-    } finally {
-      setLoading(false);
+      filteredStudents = data.students.filter(student =>
+        student.Class === assignedClass &&
+        student.section === assignedSection
+      );
     }
-  };
+
+    // Client-side pagination and filtering
+    let resultStudents = filteredStudents;
+
+    // Search filter
+    if (searchTerm) {
+      resultStudents = resultStudents.filter(student =>
+        student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Class filter - Use 'Class' (capital C) from main data
+    if (selectedClass !== 'All') {
+      resultStudents = resultStudents.filter(student =>
+        student.Class === selectedClass
+      );
+    }
+
+    // Status filter - Use actual status from fees system
+    if (selectedStatus !== 'All') {
+      resultStudents = resultStudents.filter(student =>
+        student.status === selectedStatus
+      );
+    }
+
+    // Use ACTUAL data from combined system - NO NEED FOR MANUAL CALCULATIONS
+    resultStudents = resultStudents.map(student => ({
+      ...student,
+      // Data already comes prepared from combined API
+      class: student.Class, // Use Class from main data
+      section: student.section
+    }));
+
+    // Pagination calculation
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedStudents = resultStudents.slice(startIndex, endIndex);
+
+    setStudents(paginatedStudents);
+    setTotalPages(Math.ceil(resultStudents.length / limit));
+    setTotalStudents(resultStudents.length);
+    setError(null);
+
+  } catch (err) {
+    console.error('Error fetching combined data:', err);
+    const errorMessage = err.response?.data?.message || 'Failed to fetch students data';
+    setError(errorMessage);
+    setStudents([]);
+    setTotalPages(1);
+    setTotalStudents(0);
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   // Fetch student details
@@ -268,45 +214,26 @@ const handlePayment = async (student) => {
     return;
   }
 
-  try {
-    // Use _id field for student ID
+   try {
     const studentId = student._id;
     
-    if (!studentId) {
-      alert('❌ Student ID not found. Please refresh the page and try again.');
-      return;
-    }
-
-    console.log('Processing payment for:', {
-      studentId: studentId,
-      studentName: student.name,
-      amount: paymentAmount,
-      months: paymentMonths,
-      paymentDate: paymentDate,
-      mode: paymentMode
-    });
-
     // Prepare payment data
     const paymentData = {
-      studentId: studentId, // Use _id field
       amount: parseInt(paymentAmount),
       months: paymentMonths,
       paymentDate: paymentDate,
       mode: paymentMode
     };
 
-    console.log('Sending payment data:', paymentData);
+    console.log('Sending payment to SEPARATE fees system...');
 
-    // Make API call to backend
-    const response = await axios.post(`${BaseURL}/payment`, paymentData);
+    // Use SEPARATE fees system API
+    const response = await axios.post(`${BaseURL}/fees/${studentId}/payment`, paymentData);
     
-    if (response.data.message) {
-      console.log('✅ Payment Recorded Successfully!');
+    if (response.data.success) {
+      console.log('✅ Payment Recorded in SEPARATE System!');
       
-      // Show success message
-      alert(`✅ Payment Recorded Successfully!\n\nStudent: ${student.name}\nAmount: Rs. ${paymentAmount}\nMonths: ${paymentMonths.join(', ')}\nMode: ${paymentMode}`);
-      
-      // Refresh student data
+      // Refresh data from combined API
       await fetchStudents(currentPage, itemsPerPage);
       
       // Close modal and reset
@@ -314,11 +241,9 @@ const handlePayment = async (student) => {
       setPaymentAmount('');
       setPaymentMonths([]);
       setPaymentMode('Cash');
-    } else {
-      throw new Error('Payment failed');
     }
 
-  } catch (error) {
+  }  catch (error) {
     console.error('Payment error:', error);
     
     // Detailed error message
