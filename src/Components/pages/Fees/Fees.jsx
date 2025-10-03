@@ -56,7 +56,10 @@ const FeesManagement = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsStudent, setDetailsStudent] = useState(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
-
+  // Existing states ke saath yeh add karein
+  const [totalFeesCollection, setTotalFeesCollection] = useState(0);
+  const [totalDues, setTotalDues] = useState(0);
+  const [fullyPaidStudents, setFullyPaidStudents] = useState(0);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -64,85 +67,99 @@ const FeesManagement = () => {
   const [totalStudents, setTotalStudents] = useState(0);
 
   // Fetch students data from backend API
- // Fetch students data from COMBINED API
-const fetchStudents = async (page = 1, limit = 10) => {
-  try {
-    setLoading(true);
+  const fetchStudents = async (page = 1, limit = 10) => {
+    try {
+      setLoading(true);
 
-    // Use COMBINED API that gets students from main API + fees from separate system
-    const response = await axios.get(`${BaseURL}/fees/combined`);
-    const data = response.data;
-    console.log('Combined students + fees data:', data.students[0]);
+      // Use COMBINED API that gets students from main API + fees from separate system
+      const response = await axios.get(`${BaseURL}/fees/combined`);
+      const data = response.data;
+      console.log('Combined students + fees data:', data.students[0]);
 
-    // Role-based filtering
-    const role = localStorage.getItem("role");
-    let filteredStudents = data.students;
+      // Role-based filtering
+      const role = localStorage.getItem("role");
+      let filteredStudents = data.students;
 
-    if (role === "Teacher") {
-      const assignedClass = localStorage.getItem("classAssigned");
-      const assignedSection = localStorage.getItem("classSection");
+      if (role === "Teacher") {
+        const assignedClass = localStorage.getItem("classAssigned");
+        const assignedSection = localStorage.getItem("classSection");
 
-      filteredStudents = data.students.filter(student =>
-        student.Class === assignedClass &&
-        student.section === assignedSection
-      );
+        filteredStudents = data.students.filter(student =>
+          student.Class === assignedClass &&
+          student.section === assignedSection
+        );
+      }
+
+      // Client-side pagination and filtering
+      let resultStudents = filteredStudents;
+
+      // Search filter
+      if (searchTerm) {
+        resultStudents = resultStudents.filter(student =>
+          student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      // Class filter - Use 'Class' (capital C) from main data
+      if (selectedClass !== 'All') {
+        resultStudents = resultStudents.filter(student =>
+          student.Class === selectedClass
+        );
+      }
+
+      // Status filter - Use actual status from fees system
+      if (selectedStatus !== 'All') {
+        resultStudents = resultStudents.filter(student =>
+          student.status === selectedStatus
+        );
+      }
+
+      // ✅ YEH NAYA CODE ADD KAREIN - TOTAL CALCULATIONS
+      // Sabhi filtered students ki total fees calculate karein
+      const allStudentsTotalFees = resultStudents.reduce((sum, student) => sum + (student.paidFees || 0), 0);
+      const allStudentsTotalDues = resultStudents.reduce((sum, student) => sum + (student.dues || 0), 0);
+      const allStudentsFullyPaid = resultStudents.filter(student => student.status === 'Fully Paid').length;
+
+      // Total values set karein
+      setTotalFeesCollection(allStudentsTotalFees);
+      setTotalDues(allStudentsTotalDues);
+      setFullyPaidStudents(allStudentsFullyPaid);
+
+      // Use ACTUAL data from combined system - NO NEED FOR MANUAL CALCULATIONS
+      resultStudents = resultStudents.map(student => ({
+        ...student,
+        // Data already comes prepared from combined API
+        class: student.Class, // Use Class from main data
+        section: student.section
+      }));
+
+      // Pagination calculation
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedStudents = resultStudents.slice(startIndex, endIndex);
+
+      setStudents(paginatedStudents);
+      setTotalPages(Math.ceil(resultStudents.length / limit));
+      setTotalStudents(resultStudents.length);
+      setError(null);
+
+    } catch (err) {
+      console.error('Error fetching combined data:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to fetch students data';
+      setError(errorMessage);
+      setStudents([]);
+      setTotalPages(1);
+      setTotalStudents(0);
+      // Error case mein bhi totals reset karein
+      setTotalFeesCollection(0);
+      setTotalDues(0);
+      setFullyPaidStudents(0);
+    } finally {
+      setLoading(false);
     }
-
-    // Client-side pagination and filtering
-    let resultStudents = filteredStudents;
-
-    // Search filter
-    if (searchTerm) {
-      resultStudents = resultStudents.filter(student =>
-        student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Class filter - Use 'Class' (capital C) from main data
-    if (selectedClass !== 'All') {
-      resultStudents = resultStudents.filter(student =>
-        student.Class === selectedClass
-      );
-    }
-
-    // Status filter - Use actual status from fees system
-    if (selectedStatus !== 'All') {
-      resultStudents = resultStudents.filter(student =>
-        student.status === selectedStatus
-      );
-    }
-
-    // Use ACTUAL data from combined system - NO NEED FOR MANUAL CALCULATIONS
-    resultStudents = resultStudents.map(student => ({
-      ...student,
-      // Data already comes prepared from combined API
-      class: student.Class, // Use Class from main data
-      section: student.section
-    }));
-
-    // Pagination calculation
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedStudents = resultStudents.slice(startIndex, endIndex);
-
-    setStudents(paginatedStudents);
-    setTotalPages(Math.ceil(resultStudents.length / limit));
-    setTotalStudents(resultStudents.length);
-    setError(null);
-
-  } catch (err) {
-    console.error('Error fetching combined data:', err);
-    const errorMessage = err.response?.data?.message || 'Failed to fetch students data';
-    setError(errorMessage);
-    setStudents([]);
-    setTotalPages(1);
-    setTotalStudents(0);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   // Fetch student details
@@ -203,91 +220,141 @@ const fetchStudents = async (page = 1, limit = 10) => {
   }, [searchTerm, selectedClass, selectedStatus]);
 
   // Handle fee payment
-const handlePayment = async (student) => {
-  if (!paymentAmount || paymentAmount <= 0 || paymentAmount > student.dues) {
-    alert('Please enter a valid payment amount');
-    return;
-  }
-
-  if (paymentMonths.length === 0) {
-    alert('Please select at least one month for payment');
-    return;
-  }
-
-   try {
-    const studentId = student._id;
-    
-    // Prepare payment data
-    const paymentData = {
-      amount: parseInt(paymentAmount),
-      months: paymentMonths,
-      paymentDate: paymentDate,
-      mode: paymentMode
-    };
-
-    console.log('Sending payment to SEPARATE fees system...');
-
-    // Use SEPARATE fees system API
-    const response = await axios.post(`${BaseURL}/fees/${studentId}/payment`, paymentData);
-    
-    if (response.data.success) {
-      console.log('✅ Payment Recorded in SEPARATE System!');
-      
-      // Refresh data from combined API
-      await fetchStudents(currentPage, itemsPerPage);
-      
-      // Close modal and reset
-      setShowPaymentModal(false);
-      setPaymentAmount('');
-      setPaymentMonths([]);
-      setPaymentMode('Cash');
+  const handlePayment = async (student) => {
+    if (!paymentAmount || paymentAmount <= 0 || paymentAmount > student.dues) {
+      alert('Please enter a valid payment amount');
+      return;
     }
 
-  }  catch (error) {
-    console.error('Payment error:', error);
-    
-    // Detailed error message
-    let errorMessage = 'Payment failed. Please try again.';
-    
-    if (error.response) {
-      // Server responded with error status
-      errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
-      console.error('Server response:', error.response.data);
-      
-      // Specific handling for "Student not found" error
-      if (error.response.data?.message === 'Student not found') {
-        errorMessage = 'Student not found in database. Please check if student exists.';
-      }
-    } else if (error.request) {
-      // Request was made but no response received
-      errorMessage = 'No response from server. Please check your connection.';
-    } else {
-      // Something else happened
-      errorMessage = error.message;
+    if (paymentMonths.length === 0) {
+      alert('Please select at least one month for payment');
+      return;
     }
-    
-    alert(`❌ ${errorMessage}`);
-  }
-};
 
-  // Generate challan
-  const generateChallan = async (student, months = []) => {
     try {
-      const response = await axios.post(`${BaseURL}/students/challan`, {
-        studentId: student._id,
-        months: months,
-        examinationFee: examinationFee,
-        otherFees: otherFees
-      });
+      const studentId = student._id;
 
-      setChallanData(response.data);
-      setChallanMonths(months);
-      setShowChallan(true);
+      // Prepare payment data
+      const paymentData = {
+        amount: parseInt(paymentAmount),
+        months: paymentMonths,
+        paymentDate: paymentDate,
+        mode: paymentMode
+      };
+
+      console.log('Sending payment to SEPARATE fees system...');
+
+      // Use SEPARATE fees system API
+      const response = await axios.post(`${BaseURL}/fees/${studentId}/payment`, paymentData);
+
+      if (response.data.success) {
+        console.log('✅ Payment Recorded in SEPARATE System!');
+
+        // Refresh data from combined API
+        await fetchStudents(currentPage, itemsPerPage);
+
+        // Close modal and reset
+        setShowPaymentModal(false);
+        setPaymentAmount('');
+        setPaymentMonths([]);
+        setPaymentMode('Cash');
+      }
+
     } catch (error) {
-      console.error('Error generating challan:', error);
-      alert(error.response?.data?.message || 'Failed to generate challan');
+      console.error('Payment error:', error);
+
+      // Detailed error message
+      let errorMessage = 'Payment failed. Please try again.';
+
+      if (error.response) {
+        // Server responded with error status
+        errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
+        console.error('Server response:', error.response.data);
+
+        // Specific handling for "Student not found" error
+        if (error.response.data?.message === 'Student not found') {
+          errorMessage = 'Student not found in database. Please check if student exists.';
+        }
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMessage = 'No response from server. Please check your connection.';
+      } else {
+        // Something else happened
+        errorMessage = error.message;
+      }
+
+      alert(`❌ ${errorMessage}`);
     }
   };
+
+  // Generate challan
+// Generate challan with last payment data
+const generateChallan = async (student, months = []) => {
+  try {
+    console.log('🔄 Generating challan with last payment data for:', student.name);
+    
+    // Get last payment details
+    const lastPayment = student.paymentHistory && student.paymentHistory.length > 0 
+      ? student.paymentHistory[student.paymentHistory.length - 1]
+      : null;
+
+    console.log('📋 Last payment:', lastPayment);
+
+    if (!lastPayment) {
+      alert('No payment history found for this student. Please make a payment first.');
+      return;
+    }
+
+    // Use last payment months and amount
+    const paymentMonths = lastPayment.months || [];
+    const paymentAmount = lastPayment.amount || 0;
+    const paymentDate = lastPayment.date ? new Date(lastPayment.date) : new Date();
+    const paymentMode = lastPayment.mode || 'Cash';
+
+    // Calculate fees breakdown based on last payment
+    const monthlyFee = student.monthlyFee || Number(student.Fees) || 0;
+    const tuitionFee = paymentAmount; // Use actual paid amount
+    
+    const totalAmount = tuitionFee + examinationFee + 
+      otherFees.reduce((sum, fee) => sum + fee.amount, 0);
+
+    // Create challan data based on last payment
+    const challanData = {
+      student: {
+        name: student.name,
+        fatherName: student.fatherName,
+        rollNo: student.rollNo,
+        class: student.class || student.Class,
+        section: student.section
+      },
+      challanNo: `CH-${student.rollNo}-${Date.now()}`,
+      issueDate: new Date().toISOString(),
+      dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+      months: paymentMonths, // Use months from last payment
+      paymentDate: paymentDate.toISOString(),
+      paymentMode: paymentMode,
+      academicYear: '2024-2025',
+      feeBreakdown: {
+        tuitionFee: tuitionFee,
+        examinationFee: examinationFee,
+        otherFees: otherFees,
+        totalAmount: totalAmount,
+        paidAmount: paymentAmount // Show paid amount
+      },
+      lastPayment: lastPayment // Include full last payment details
+    };
+
+    console.log('✅ Challan generated with last payment data:', challanData);
+    
+    setChallanData(challanData);
+    setChallanMonths(paymentMonths); // Set months from last payment
+    setShowChallan(true);
+    
+  } catch (error) {
+    console.error('❌ Error generating challan:', error);
+    alert('Failed to generate challan. Please try again.');
+  }
+};
 
   // Get due list
   const getDueList = async () => {
@@ -413,7 +480,7 @@ const handlePayment = async (student) => {
       }
 
       // Calculate summary data for export
-      const totalFeesCollection = studentsData.reduce((sum, student) => sum + (student.paidFees || 0), 0);
+      const totalFeesCollection = students.reduce((sum, student) => sum + (student.paidFees || 0), 0);
       const totalDues = studentsData.reduce((sum, student) => sum + (student.dues || 0), 0);
       const fullyPaidCount = studentsData.filter(student => student.status === 'Fully Paid').length;
       const partiallyPaidCount = studentsData.filter(student => student.status === 'Partially Paid').length;
@@ -629,10 +696,10 @@ const handlePayment = async (student) => {
   };
 
 
-  // Calculate summary data
-  const totalFeesCollection = students.reduce((sum, student) => sum + (student.paidFees || 0), 0);
-  const totalDues = students.reduce((sum, student) => sum + (student.dues || 0), 0);
-  const fullyPaidStudents = students.filter(student => student.status === 'Fully Paid').length;
+  // // Calculate summary data
+  // const totalFeesCollection = students.reduce((sum, student) => sum + (student.paidFees || 0), 0);
+  // const totalDues = students.reduce((sum, student) => sum + (student.dues || 0), 0);
+  // const fullyPaidStudents = students.filter(student => student.status === 'Fully Paid').length;
 
   // Generate page numbers for pagination
   const getPageNumbers = () => {
@@ -786,6 +853,7 @@ const handlePayment = async (student) => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-green-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Fees Collected</p>
+                      {/* ✅ YAHAN DIRECT STATE USE KAREIN */}
                       <h3 className="text-3xl font-bold text-gray-900 mb-1">Rs. {totalFeesCollection.toLocaleString()}</h3>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
@@ -799,6 +867,7 @@ const handlePayment = async (student) => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-orange-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Total Dues</p>
+                      {/* ✅ YAHAN DIRECT STATE USE KAREIN */}
                       <h3 className="text-3xl font-bold text-gray-900 mb-1">Rs. {totalDues.toLocaleString()}</h3>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
@@ -812,6 +881,7 @@ const handlePayment = async (student) => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-purple-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Fully Paid</p>
+                      {/* ✅ YAHAN DIRECT STATE USE KAREIN */}
                       <h3 className="text-3xl font-bold text-gray-900 mb-1">{fullyPaidStudents.toLocaleString()}</h3>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
@@ -886,12 +956,12 @@ const handlePayment = async (student) => {
                           <td className="px-4 py-3 align-middle text-center">
                             <div className="flex justify-center">
                               <div className={`inline-flex items-center px-3 py-1 rounded-full ${student.status === 'Fully Paid' ? 'bg-green-100 text-green-800' :
-                                  student.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-red-100 text-red-800'
+                                student.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-red-100 text-red-800'
                                 }`}>
                                 <div className={`w-1.5 h-1.5 rounded-full mr-2 ${student.status === 'Fully Paid' ? 'bg-green-500' :
-                                    student.status === 'Partially Paid' ? 'bg-yellow-500' :
-                                      'bg-red-500'
+                                  student.status === 'Partially Paid' ? 'bg-yellow-500' :
+                                    'bg-red-500'
                                   }`} />
                                 <span className="text-xs font-semibold">{student.status}</span>
                               </div>
@@ -914,8 +984,8 @@ const handlePayment = async (student) => {
                                 }}
                                 disabled={student.dues === 0}
                                 className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white transition-colors ${student.dues === 0
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700'
+                                  ? 'bg-gray-400 cursor-not-allowed'
+                                  : 'bg-blue-600 hover:bg-blue-700'
                                   }`}
                               >
                                 <DollarSign size={14} className="mr-1" />
@@ -980,8 +1050,8 @@ const handlePayment = async (student) => {
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
                         className={`p-2 rounded-lg border transition-colors ${currentPage === 1
-                            ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
-                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                           }`}
                       >
                         <ChevronLeft size={16} />
@@ -993,10 +1063,10 @@ const handlePayment = async (student) => {
                           onClick={() => typeof pageNumber === 'number' && setCurrentPage(pageNumber)}
                           disabled={pageNumber === '...'}
                           className={`min-w-[40px] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${currentPage === pageNumber
-                              ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
-                              : pageNumber === '...'
-                                ? 'border-gray-300 bg-white text-gray-500 cursor-default'
-                                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                            ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                            : pageNumber === '...'
+                              ? 'border-gray-300 bg-white text-gray-500 cursor-default'
+                              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                             }`}
                         >
                           {pageNumber}
@@ -1007,8 +1077,8 @@ const handlePayment = async (student) => {
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
                         className={`p-2 rounded-lg border transition-colors ${currentPage === totalPages
-                            ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
-                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                           }`}
                       >
                         <ChevronRight size={16} />
@@ -1239,132 +1309,182 @@ const handlePayment = async (student) => {
           )}
 
           {/* Challan Modal */}
-          {showChallan && challanData && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-gray-800">Fee Challan</h2>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={printChallan}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center"
-                    >
-                      <Printer size={14} className="mr-1" />
-                      Print
-                    </button>
-                    <button
-                      onClick={() => setShowChallan(false)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <X size={24} />
-                    </button>
-                  </div>
-                </div>
+{showChallan && challanData && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-gray-800">Fee Challan (Last Payment)</h2>
+        <div className="flex space-x-2">
+          <button
+            onClick={printChallan}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center"
+          >
+            <Printer size={14} className="mr-1" />
+            Print
+          </button>
+          <button
+            onClick={() => setShowChallan(false)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X size={24} />
+          </button>
+        </div>
+      </div>
 
-                <div className="p-6 border-2 border-dashed border-gray-300 rounded-lg">
-                  <div className="text-center mb-6">
-                    <h1 className="text-2xl font-bold text-blue-800">City School System</h1>
-                    <p className="text-sm text-gray-600">123 Education Street, Karachi, Pakistan</p>
-                  </div>
+      <div className="p-6 border-2 border-dashed border-gray-300 rounded-lg">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-blue-800">City School System</h1>
+          <p className="text-sm text-gray-600">123 Education Street, Karachi, Pakistan</p>
+        </div>
 
-                  <div className="grid grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">Student Information</h3>
-                      <p className="text-sm"><span className="font-medium">Name:</span> {challanData.student?.name}</p>
-                      <p className="text-sm"><span className="font-medium">Father Name:</span> {challanData.student?.fatherName}</p>
-                      <p className="text-sm"><span className="font-medium">Roll No:</span> {challanData.student?.rollNo}</p>
-                      <p className="text-sm"><span className="font-medium">Class:</span> {challanData.student?.class}</p>
-                    </div>
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">Student Information</h3>
+            <p className="text-sm"><span className="font-medium">Name:</span> {challanData.student?.name}</p>
+            <p className="text-sm"><span className="font-medium">Father Name:</span> {challanData.student?.fatherName}</p>
+            <p className="text-sm"><span className="font-medium">Roll No:</span> {challanData.student?.rollNo}</p>
+            <p className="text-sm"><span className="font-medium">Class:</span> {challanData.student?.class}</p>
+          </div>
 
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">Challan Information</h3>
-                      <p className="text-sm"><span className="font-medium">Challan No:</span> {challanData.challanNo}</p>
-                      <p className="text-sm"><span className="font-medium">Issue Date:</span> {new Date(challanData.issueDate).toLocaleDateString()}</p>
-                      <p className="text-sm"><span className="font-medium">Due Date:</span> {new Date(challanData.dueDate).toLocaleDateString()}</p>
-                    </div>
-                  </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">Payment Information</h3>
+            <p className="text-sm"><span className="font-medium">Challan No:</span> {challanData.challanNo}</p>
+            <p className="text-sm"><span className="font-medium">Issue Date:</span> {new Date(challanData.issueDate).toLocaleDateString()}</p>
+            <p className="text-sm"><span className="font-medium">Due Date:</span> {new Date(challanData.dueDate).toLocaleDateString()}</p>
+            <p className="text-sm"><span className="font-medium">Last Payment Date:</span> {new Date(challanData.paymentDate).toLocaleDateString()}</p>
+            <p className="text-sm"><span className="font-medium">Payment Mode:</span> {challanData.paymentMode}</p>
+          </div>
+        </div>
 
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Fee Details</h3>
-                    <table className="w-full border-collapse border border-gray-300">
-                      <thead>
-                        <tr className="bg-gray-100">
-                          <th className="border border-gray-300 p-2 text-left text-sm">Description</th>
-                          <th className="border border-gray-300 p-2 text-right text-sm">Amount (Rs.)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="border border-gray-300 p-2 text-sm">Tuition Fee ({challanMonths.join(', ')})</td>
-                          <td className="border border-gray-300 p-2 text-sm text-right">
-                            {challanData.feeBreakdown?.tuitionFee || calculateChallanTotal()}
-                          </td>
-                        </tr>
-                        {examinationFee > 0 && (
-                          <tr>
-                            <td className="border border-gray-300 p-2 text-sm">Examination Fee</td>
-                            <td className="border border-gray-300 p-2 text-sm text-right">{examinationFee}</td>
-                          </tr>
-                        )}
-                        {otherFees.map((fee, index) => (
-                          <tr key={index}>
-                            <td className="border border-gray-300 p-2 text-sm">
-                              <div className="flex items-center justify-between">
-                                <span>{fee.description}</span>
-                                <button
-                                  onClick={() => removeFee(index)}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  <Minus size={14} />
-                                </button>
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 p-2 text-sm text-right">{fee.amount}</td>
-                          </tr>
-                        ))}
-                        <tr>
-                          <td className="border border-gray-300 p-2 text-sm">
-                            <div className="flex items-center">
-                              <input
-                                type="text"
-                                placeholder="Fee Description"
-                                className="flex-1 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                value={newFeeDescription}
-                                onChange={(e) => setNewFeeDescription(e.target.value)}
-                              />
-                            </div>
-                          </td>
-                          <td className="border border-gray-300 p-2 text-sm text-right">
-                            <div className="flex items-center justify-end">
-                              <input
-                                type="number"
-                                placeholder="Amount"
-                                className="w-16 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                value={newFeeAmount}
-                                onChange={(e) => setNewFeeAmount(e.target.value)}
-                              />
-                              <button
-                                onClick={addNewFee}
-                                className="ml-2 text-green-500 hover:text-green-700"
-                              >
-                                <Plus size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                        <tr className="bg-blue-50">
-                          <td className="border border-gray-300 p-2 text-sm font-semibold">Total Amount</td>
-                          <td className="border border-gray-300 p-2 text-sm text-right font-semibold">
-                            {challanData.feeBreakdown?.totalAmount || calculateChallanTotal()}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+        {/* Last Payment Summary */}
+        {challanData.lastPayment && (
+          <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+            <h3 className="text-lg font-semibold text-green-800 mb-2">Last Payment Summary</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="font-medium">Amount Paid:</span> Rs. {challanData.lastPayment.amount}
+              </div>
+              <div>
+                <span className="font-medium">Months Paid:</span> {challanData.lastPayment.months?.join(', ') || 'N/A'}
+              </div>
+              <div>
+                <span className="font-medium">Payment Date:</span> {new Date(challanData.lastPayment.date).toLocaleDateString()}
+              </div>
+              <div>
+                <span className="font-medium">Payment Mode:</span> {challanData.lastPayment.mode || 'Cash'}
               </div>
             </div>
-          )}
+          </div>
+        )}
+
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Fee Details</h3>
+          <table className="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-300 p-2 text-left text-sm">Description</th>
+                <th className="border border-gray-300 p-2 text-right text-sm">Amount (Rs.)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-gray-300 p-2 text-sm">
+                  Tuition Fee ({challanData.months?.join(', ')})
+                </td>
+                <td className="border border-gray-300 p-2 text-sm text-right">
+                  {challanData.feeBreakdown?.tuitionFee?.toLocaleString()}
+                </td>
+              </tr>
+              
+              {examinationFee > 0 && (
+                <tr>
+                  <td className="border border-gray-300 p-2 text-sm">Examination Fee</td>
+                  <td className="border border-gray-300 p-2 text-sm text-right">{examinationFee.toLocaleString()}</td>
+                </tr>
+              )}
+              
+              {otherFees.map((fee, index) => (
+                <tr key={index}>
+                  <td className="border border-gray-300 p-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span>{fee.description}</span>
+                      <button
+                        onClick={() => removeFee(index)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Minus size={14} />
+                      </button>
+                    </div>
+                  </td>
+                  <td className="border border-gray-300 p-2 text-sm text-right">{fee.amount.toLocaleString()}</td>
+                </tr>
+              ))}
+              
+              <tr>
+                <td className="border border-gray-300 p-2 text-sm">
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      placeholder="Fee Description"
+                      className="flex-1 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      value={newFeeDescription}
+                      onChange={(e) => setNewFeeDescription(e.target.value)}
+                    />
+                  </div>
+                </td>
+                <td className="border border-gray-300 p-2 text-sm text-right">
+                  <div className="flex items-center justify-end">
+                    <input
+                      type="number"
+                      placeholder="Amount"
+                      className="w-16 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      value={newFeeAmount}
+                      onChange={(e) => setNewFeeAmount(e.target.value)}
+                    />
+                    <button
+                      onClick={addNewFee}
+                      className="ml-2 text-green-500 hover:text-green-700"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              
+              <tr className="bg-blue-50">
+                <td className="border border-gray-300 p-2 text-sm font-semibold">Total Amount</td>
+                <td className="border border-gray-300 p-2 text-sm text-right font-semibold">
+                  {challanData.feeBreakdown?.totalAmount?.toLocaleString()}
+                </td>
+              </tr>
+              
+              {/* Paid Amount Row */}
+              {challanData.feeBreakdown?.paidAmount && (
+                <tr className="bg-green-50">
+                  <td className="border border-gray-300 p-2 text-sm font-semibold text-green-700">Amount Paid</td>
+                  <td className="border border-gray-300 p-2 text-sm text-right font-semibold text-green-700">
+                    Rs. {challanData.feeBreakdown.paidAmount.toLocaleString()}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Payment Status */}
+        <div className="text-center p-4 bg-gray-50 rounded-lg">
+          <div className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-full">
+            <CheckCircle size={16} className="mr-2" />
+            <span className="font-semibold">Payment Verified</span>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            This challan is generated based on the last payment made on {challanData.paymentDate ? new Date(challanData.paymentDate).toLocaleDateString() : 'N/A'}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
           {/* Filter Modal */}
           {showFilterModal && (
