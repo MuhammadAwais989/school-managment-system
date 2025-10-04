@@ -12,32 +12,32 @@ const MobileHeader = ({ toggleSidebar }) => {
   const location = useLocation();
   const pathname = location.pathname;
 
-  const pageTitle = getTitleFromPath(pathname);
+  // const pageTitle = getTitleFromPath(pathname);
 
-  function getTitleFromPath(pathname) {
-    switch (pathname) {
-      case "/teacher-dashboard":
-        return "Dashboard";
-      case "/students/attendence":
-        return "Student Attendance";
-      case "/students/details":
-        return "Students Details";
-      case "/teacher/details":
-        return "Teachers Details";
-      case "/accounts/income":
-        return "Income";
-      case "/accounts/expenses":
-        return "Expense";
-      case "/accounts/balancesheet":
-        return "Balance Sheet";
-      case "/addaccount":
-        return "Add Accounts";
-      case "/profile":
-        return "Profile";
-      default:
-        return "Dashboard";
-    }
-  }
+  // function getTitleFromPath(pathname) {
+  //   switch (pathname) {
+  //     case "/teacher-dashboard":
+  //       return "Dashboard";
+  //     case "/students/attendence":
+  //       return "Student Attendance";
+  //     case "/students/details":
+  //       return "Students Details";
+  //     case "/teacher/details":
+  //       return "Teachers Details";
+  //     case "/accounts/income":
+  //       return "Income";
+  //     case "/accounts/expenses":
+  //       return "Expense";
+  //     case "/accounts/balancesheet":
+  //       return "Balance Sheet";
+  //     case "/addaccount":
+  //       return "Add Accounts";
+  //     case "/profile":
+  //       return "Profile";
+  //     default:
+  //       return "Dashboard";
+  //   }
+  // }
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -115,19 +115,19 @@ const MobileHeader = ({ toggleSidebar }) => {
           )}
         </div>
       </div>
-
+{/* 
       <div className="sm:absolute left-24 top-4 bg-gray-50">
         <div className="flex items-center space-x-3">
-  <div className="p-1.5 text-blue-600">
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
-    </svg>
-  </div>
-  <h1 className="max-sm:pl-4 font-bold text-gray-800 text-2xl">
-    {pageTitle}
-  </h1>
-</div>
-      </div>
+          <div className="p-1.5 text-blue-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+            </svg>
+          </div>
+          <h1 className="max-sm:pl-4 font-bold text-gray-800 text-2xl">
+            {pageTitle}
+          </h1>
+        </div>
+      </div> */}
     </>
   );
 };
