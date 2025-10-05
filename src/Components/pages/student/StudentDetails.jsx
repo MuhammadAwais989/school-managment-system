@@ -329,7 +329,7 @@ const StudentDetails = () => {
   return (
     <>
       <Sidebar />
-      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 min-h-screen">
+      <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
         <div className="bg-white w-full min-h-[calc(100vh-56px)] shadow-md rounded-lg px-6 py-4 max-sm:px-4">
           {/* Header Section */}
           <div className="flex flex-col mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">

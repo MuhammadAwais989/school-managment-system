@@ -28,8 +28,8 @@ const SidebarHeader = ({ sideBar, toggleSidebar }) => {
   }, []);
 
   return (
-    <div className="flex justify-between px-4 py-5 mt-3 relative h-24">
-      <div className={`flex rounded-full gap-x-4 ${sideBar ? "w-full" : "justify-center w-12"}`}>
+    <div className="flex justify-between px-4 py-5 mt-3 relative h-24 ">
+      <div className={`flex  rounded-full gap-x-4 ${sideBar ? "w-full" : "justify-center w-12"}`}>
         <img
           className={`${sideBar ? "w-[68px] h-12 rounded-full object-cover" : "w-12 h-12 rounded-full object-cover"}`}
           src={user.profilePic || avatar}

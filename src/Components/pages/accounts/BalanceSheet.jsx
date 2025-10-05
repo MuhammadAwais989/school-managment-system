@@ -4,7 +4,7 @@ import {BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Carte
 } from "recharts";
 import Sidebar from "../sidebar/SideBar";
 import { BaseURL } from "../../helper/helper";
-
+import Loading from "../Loading";
 
 const COLORS = ["#178C4B", "#D80808", "#2563eb", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6"];
 
@@ -254,13 +254,7 @@ export default function BalanceSheet() {
   if (loading) {
     return (
       <>
-        <Sidebar />
-        <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading financial data...</p>
-          </div>
-        </div>
+        <Loading text='Loading Balance Sheet' />
       </>
     );
   }
@@ -268,7 +262,7 @@ export default function BalanceSheet() {
   return (
     <>
       <Sidebar />
-      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full">
+      <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
         <div className="bg-white w-full h-full shadow-md rounded-md px-4 max-sm:px-4 pb-3">
           <div className="sticky top-0 z-20 bg-white border-b border-gray-200 py-4">
             <div className="flex flex-wrap items-center justify-between gap-4">

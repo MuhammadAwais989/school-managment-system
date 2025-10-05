@@ -166,7 +166,7 @@ const fetchChartData = async () => {
   return (
     <>
       <Sidebar />
-      <div className="lg:pl-[90px] pt-14 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full ">
+      <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
         <div className="bg-white w-full h-full shadow-md rounded-md px-4 max-sm:px-4 pb-3">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 pt-5">

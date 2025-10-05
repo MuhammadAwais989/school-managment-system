@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { RiMenuUnfoldFill } from "react-icons/ri";
 import axios from "axios";
 import { BaseURL } from "../../helper/helper";
-
+import { HiMenuAlt3 } from 'react-icons/hi';
+import { FiUser, FiLogOut } from 'react-icons/fi';
 const MobileHeader = ({ toggleSidebar }) => {
   const [user, setUser] = useState({});
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -83,38 +84,83 @@ const MobileHeader = ({ toggleSidebar }) => {
   return (
     <>
       <div
-        className={`h-10 max-sm:h-14 px-4 flex justify-between items-center bg-gray-50 transition-all duration-300 pt-4 sm:ml-20 lg:ml-24 xl:ml-24 absolute max-sm:static`}
-      >
-        <div onClick={toggleSidebar} className="sm:hidden">
-          <RiMenuUnfoldFill className="text-2xl" />
-        </div>
+  className={`
+    sm:hidden 
+    h-16 
+    mx-2 
+    my-2
+    flex 
+    justify-between 
+    items-center 
+    bg-white/30
+    backdrop-blur-md
+    rounded-2xl
+    border border-gray-200/50
+    shadow-sm
+    px-6
+    transition-all 
+    duration-300 
+  `}
+>
+  {/* Left Section - Menu Icon */}
+  <button 
+    onClick={toggleSidebar}
+    className="p-2 hover:bg-gray-100/70 rounded-xl transition-colors"
+    aria-label="Toggle navigation menu"
+  >
+    <HiMenuAlt3 className="text-xl text-gray-700" />
+  </button>
 
-        <div className="relative sm:hidden" ref={dropdownRef}>
-          <img
-            onClick={() => setDropdownOpen((prev) => !prev)}
-            className="w-12 h-12 rounded-full object-cover cursor-pointer"
-            src={user.profilePic}
-            alt="avatar"
-          />
+  {/* Center Section - School Title */}
+  <div className="flex flex-col items-center justify-center">
+    <h1 className="text-lg font-semibold text-gray-800 tracking-tight">
+      City School
+    </h1>
+    <p className="text-xs text-gray-600 mt-0.5 font-medium">
+      Excellence in Education
+    </p>
+  </div>
 
-          {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-40 bg-white border shadow-md rounded-md z-50">
-              <button
-                onClick={handleProfile}
-                className="w-full text-left px-4 py-2 hover:bg-gray-100"
-              >
-                View Profile
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
-              >
-                Logout
-              </button>
-            </div>
-          )}
+  {/* Right Section - User Profile */}
+  <div className="relative" ref={dropdownRef}>
+    <button
+      onClick={() => setDropdownOpen((prev) => !prev)}
+      className="flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-full transition-all"
+      aria-label="User menu"
+      aria-expanded={dropdownOpen}
+    >
+      <img
+        className="w-9 h-9 rounded-full object-cover border border-gray-300 hover:border-gray-400 transition-colors"
+        src={user.profilePic}
+        alt={`${user.name || 'User'} profile picture`}
+      />
+    </button>
+
+    {/* Dropdown Menu */}
+    {dropdownOpen && (
+      <div className="absolute right-0 mt-2 w-48 bg-white/95 backdrop-blur-md border border-gray-200/70 shadow-lg rounded-xl z-50 py-2">
+        <div className="px-4 py-2 border-b border-gray-100/50 bg-gray-50/30">
+          <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+          <p className="text-xs text-gray-500 truncate">{user.role || 'Student'}</p>
         </div>
+        <button
+          onClick={handleProfile}
+          className="w-full text-left px-4 py-2.5 hover:bg-gray-50/80 transition-colors flex items-center text-gray-700 text-sm"
+        >
+          <FiUser className="w-4 h-4 mr-3 text-gray-500" />
+          View Profile
+        </button>
+        <button
+          onClick={handleLogout}
+          className="w-full text-left px-4 py-2.5 hover:bg-gray-50/80 transition-colors flex items-center text-red-600 text-sm"
+        >
+          <FiLogOut className="w-4 h-4 mr-3" />
+          Logout
+        </button>
       </div>
+    )}
+  </div>
+</div>
 {/* 
       <div className="sm:absolute left-24 top-4 bg-gray-50">
         <div className="flex items-center space-x-3">

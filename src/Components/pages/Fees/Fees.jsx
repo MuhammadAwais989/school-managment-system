@@ -1023,13 +1023,15 @@ const formatDisplayDate = (dateString) => {
 
   // Add a new fee to the challan
   const addNewFee = () => {
-    if (newFeeDescription && newFeeAmount) {
+    if (newFeeDescription && newFeeAmount && parseInt(newFeeAmount) > 0) {
       setOtherFees([...otherFees, {
         description: newFeeDescription,
         amount: parseInt(newFeeAmount)
       }]);
       setNewFeeDescription('');
       setNewFeeAmount('');
+    } else {
+      alert('Please enter both description and a valid amount greater than 0');
     }
   };
 
@@ -1111,11 +1113,11 @@ const formatDisplayDate = (dateString) => {
     <>
       <Sidebar />
 
-      <div className="flex w-full h-screen bg-gray-0">
-        <div className="lg:pl-[90px] pr-2 pb-2 max-sm:pt-8 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+      <div className="flex w-full h-screen ">
+      <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
           <div className="bg-white w-full min-h-screen shadow-md rounded-md px-0 overflow-hidden">
 
-            <main className="flex-1 overflow-y-auto md:p-4 bg-gray-50">
+            <main className="flex-1 overflow-y-auto md:p-2 bg-gray-50">
               {/* Header Section */}
               <div className="bg-gradient-to-r from-white to-blue-50/30 rounded-3xl p-6 mb-3 border border-blue-100/50 shadow-sm">
                 <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
@@ -1455,8 +1457,8 @@ const formatDisplayDate = (dateString) => {
 
           {/* Payment Modal */}
           {showPaymentModal && selectedStudent && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-4 sm:p-6 max-h-[95vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-gray-800">Record Fee Payment</h2>
                   <button
@@ -1470,27 +1472,27 @@ const formatDisplayDate = (dateString) => {
                   </button>
                 </div>
 
-                <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="mb-4 p-3 sm:p-4 bg-blue-50 rounded-lg">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Student</p>
-                      <p className="font-semibold">{selectedStudent.name}</p>
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">Student</p>
+                      <p className="font-semibold text-sm sm:text-base">{selectedStudent.name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Roll No</p>
-                      <p className="font-semibold">{selectedStudent.rollNo}</p>
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">Roll No</p>
+                      <p className="font-semibold text-sm sm:text-base">{selectedStudent.rollNo}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Class</p>
-                      <p className="font-semibold">{selectedStudent.class}</p>
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">Class</p>
+                      <p className="font-semibold text-sm sm:text-base">{selectedStudent.class}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Monthly Fee</p>
-                      <p className="font-semibold">Rs. {selectedStudent.monthlyFee}</p>
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">Monthly Fee</p>
+                      <p className="font-semibold text-sm sm:text-base">Rs. {selectedStudent.monthlyFee}</p>
                     </div>
-                    <div className="col-span-2">
-                      <p className="text-sm text-blue-700 font-medium">Total Dues</p>
-                      <p className="font-semibold text-red-600">Rs. {selectedStudent.dues}</p>
+                    <div className="sm:col-span-2">
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">Total Dues</p>
+                      <p className="font-semibold text-sm sm:text-base text-red-600">Rs. {selectedStudent.dues}</p>
                     </div>
                   </div>
                 </div>
@@ -1499,7 +1501,7 @@ const formatDisplayDate = (dateString) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Payment Date</label>
                   <input
                     type="date"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     value={paymentDate}
                     onChange={(e) => setPaymentDate(e.target.value)}
                   />
@@ -1508,7 +1510,7 @@ const formatDisplayDate = (dateString) => {
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Payment Mode</label>
                   <select
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     value={paymentMode}
                     onChange={(e) => setPaymentMode(e.target.value)}
                   >
@@ -1521,7 +1523,7 @@ const formatDisplayDate = (dateString) => {
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Select Months to Pay</label>
-                  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-lg">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 sm:max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-lg">
                     {selectedStudent.duesByMonth
                       ?.filter(month => !month.paid && month.dueAmount > 0)
                       .map((monthData, index) => (
@@ -1531,7 +1533,7 @@ const formatDisplayDate = (dateString) => {
                             }`}
                           onClick={() => toggleMonthSelection(monthData.month)}
                         >
-                          <div className="text-sm font-medium">{monthData.month}</div>
+                          <div className="text-xs sm:text-sm font-medium">{monthData.month}</div>
                           <div className="text-xs">Rs. {monthData.dueAmount}</div>
                         </div>
                       ))}
@@ -1542,7 +1544,7 @@ const formatDisplayDate = (dateString) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Amount (Rs.)</label>
                   <input
                     type="number"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
                     max={selectedStudent.dues}
@@ -1550,19 +1552,19 @@ const formatDisplayDate = (dateString) => {
                   />
                 </div>
 
-                <div className="flex justify-end space-x-3">
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                   <button
                     onClick={() => {
                       setShowPaymentModal(false);
                       setPaymentMonths([]);
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+                    className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => handlePayment(selectedStudent)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
                   >
                     Confirm Payment
                   </button>
@@ -1686,7 +1688,13 @@ const formatDisplayDate = (dateString) => {
                       Print
                     </button>
                     <button
-                      onClick={() => setShowChallan(false)}
+                      onClick={() => {
+                        setShowChallan(false);
+                        setOtherFees([]);
+                        setNewFeeDescription('');
+                        setNewFeeAmount('');
+                        setExaminationFee(0);
+                      }}
                       className="text-gray-400 hover:text-gray-600"
                     >
                       <X size={24} />
@@ -1759,12 +1767,22 @@ const formatDisplayDate = (dateString) => {
                           </td>
                         </tr>
 
-                        {examinationFee > 0 && (
-                          <tr>
-                            <td className="border border-gray-300 p-2 text-sm">Examination Fee</td>
-                            <td className="border border-gray-300 p-2 text-sm text-right">{examinationFee.toLocaleString()}</td>
-                          </tr>
-                        )}
+                        {/* <tr>
+                          <td className="border border-gray-300 p-2 text-sm">
+                            <div className="flex items-center">
+                              <input
+                                type="text"
+                                placeholder="Examination Fee"
+                                className="flex-1 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                value={examinationFee > 0 ? examinationFee : ''}
+                                onChange={(e) => setExaminationFee(parseInt(e.target.value) || 0)}
+                              />
+                            </div>
+                          </td>
+                          <td className="border border-gray-300 p-2 text-sm text-right">
+                            {examinationFee > 0 ? examinationFee.toLocaleString() : '0'}
+                          </td>
+                        </tr> */}
 
                         {otherFees.map((fee, index) => (
                           <tr key={index}>
@@ -1788,8 +1806,8 @@ const formatDisplayDate = (dateString) => {
                             <div className="flex items-center">
                               <input
                                 type="text"
-                                placeholder="Fee Description"
-                                className="flex-1 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="Add custom fee description"
+                                className="flex-1 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                                 value={newFeeDescription}
                                 onChange={(e) => setNewFeeDescription(e.target.value)}
                               />
@@ -1800,13 +1818,14 @@ const formatDisplayDate = (dateString) => {
                               <input
                                 type="number"
                                 placeholder="Amount"
-                                className="w-16 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                className="w-20 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                                 value={newFeeAmount}
                                 onChange={(e) => setNewFeeAmount(e.target.value)}
                               />
                               <button
                                 onClick={addNewFee}
-                                className="ml-2 text-green-500 hover:text-green-700"
+                                className="ml-2 text-green-500 hover:text-green-700 p-1 rounded hover:bg-green-50"
+                                title="Add Fee"
                               >
                                 <Plus size={14} />
                               </button>
@@ -1817,7 +1836,7 @@ const formatDisplayDate = (dateString) => {
                         <tr className="bg-blue-50">
                           <td className="border border-gray-300 p-2 text-sm font-semibold">Total Amount</td>
                           <td className="border border-gray-300 p-2 text-sm text-right font-semibold">
-                            {challanData.feeBreakdown?.totalAmount?.toLocaleString()}
+                            Rs. {calculateChallanTotal().toLocaleString()}
                           </td>
                         </tr>
 
@@ -1826,7 +1845,7 @@ const formatDisplayDate = (dateString) => {
                           <tr className="bg-green-50">
                             <td className="border border-gray-300 p-2 text-sm font-semibold text-green-700">Amount Paid</td>
                             <td className="border border-gray-300 p-2 text-sm text-right font-semibold text-green-700">
-                              Rs. {challanData.feeBreakdown.paidAmount.toLocaleString()}
+                              Rs. {calculateChallanTotal().toLocaleString()}
                             </td>
                           </tr>
                         )}
