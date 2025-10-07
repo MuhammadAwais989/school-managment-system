@@ -1,32 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { BaseURL } from '../../helper/helper';
-import Sidebar from '../sidebar/SideBar';
-import ReportModal from '../student/AttendenceReport';
-import { showError, showSuccess } from '../../utils/Toast';
-import { FaSearch, FaFilter, FaChalkboardTeacher, FaCalendarCheck, FaCalendarAlt, FaUserTie, FaUserShield, FaUserCog, FaUser, FaShieldAlt, FaDoorOpen, FaTimes, FaSpinner } from 'react-icons/fa';
-import TeacherReportModal from './TeacherAttendenceReport';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { BaseURL } from "../../helper/helper";
+import Sidebar from "../sidebar/SideBar";
+import ReportModal from "../student/AttendenceReport";
+import { showError, showSuccess } from "../../utils/Toast";
+import {
+  FaSearch,
+  FaChalkboardTeacher,
+  FaUserTie,
+  FaUserShield,
+  FaUserCog,
+  FaUser,
+  FaDoorOpen,
+  FaTimes,
+  FaSpinner,
+} from "react-icons/fa";
+import TeacherReportModal from "./TeacherAttendenceReport";
+import PageTitle from "../PageTitle";
 
 const TeacherAttendence = () => {
   const [teachers, setTeachers] = useState([]);
   const [filteredTeachers, setFilteredTeachers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [userRole, setUserRole] = useState('');
-  const today = new Date().toISOString().split('T')[0];
+  const [userRole, setUserRole] = useState("");
+  const today = new Date().toISOString().split("T")[0];
 
   const [showModal, setShowModal] = useState(false);
-  const [modalTitle, setModalTitle] = useState('Attendance Report');
+  const [modalTitle, setModalTitle] = useState("Attendance Report");
   const [modalData, setModalData] = useState([]);
-  const [modalMode, setModalMode] = useState('detail');
+  const [modalMode, setModalMode] = useState("detail");
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   // For filters
-  const [designationFilter, setDesignationFilter] = useState('all');
-  const [sectionFilter, setSectionFilter] = useState('all');
-  const [classFilter, setClassFilter] = useState('all');
+  const [designationFilter, setDesignationFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
+  const [classFilter, setClassFilter] = useState("all");
 
   // For custom date selection in reports
   const [reportYear, setReportYear] = useState(new Date().getFullYear());
@@ -36,13 +47,19 @@ const TeacherAttendence = () => {
   // For custom report modal
   const [showCustomReportModal, setShowCustomReportModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [customReportType, setCustomReportType] = useState('monthly');
+  const [customReportType, setCustomReportType] = useState("monthly");
   const [customYear, setCustomYear] = useState(new Date().getFullYear());
   const [customMonth, setCustomMonth] = useState(new Date().getMonth() + 1);
 
   // Allowed designations
   const allowedDesignations = [
-    'Principle', 'Admin', 'Teacher', 'Incharge', 'Sub Incharge', 'Sweeper', 'Gatekeeper'
+    "Principle",
+    "Admin",
+    "Teacher",
+    "Incharge",
+    "Sub Incharge",
+    "Sweeper",
+    "Gatekeeper",
   ];
 
   useEffect(() => {
@@ -52,41 +69,41 @@ const TeacherAttendence = () => {
   }, []);
 
   const fetchTeachers = async () => {
-  try {
-    setLoading(true);
-    const res = await axios.get(`${BaseURL}/addaccount`);
+    try {
+      setLoading(true);
+      const res = await axios.get(`${BaseURL}/addaccount`);
 
-    if (!res.data || res.data.length === 0) {
-      setTeachers([]);
-      setFilteredTeachers([]);
+      if (!res.data || res.data.length === 0) {
+        setTeachers([]);
+        setFilteredTeachers([]);
+        setLoading(false);
+        return;
+      }
+
+      // Filter for all allowed designations and format the data
+      const teacherData = res.data
+        .filter((item) => allowedDesignations.includes(item.designation))
+        .map((t) => ({
+          teacherId: t._id,
+          class: t.Class || "N/A",
+          profilePic: t.profilePic || "",
+          name: t.name,
+          fatherName: t.fatherName || "", // FIXED: This line was incorrectly setting name instead of fatherName
+          email: t.email,
+          section: t.section || "General",
+          designation: t.designation,
+          status: "present",
+        }));
+
+      setTeachers(teacherData);
+      setFilteredTeachers(teacherData);
       setLoading(false);
-      return;
+    } catch (err) {
+      console.error("Error fetching teachers:", err);
+      showError("Failed to fetch staff members");
+      setLoading(false);
     }
-
-    // Filter for all allowed designations and format the data
-    const teacherData = res.data
-      .filter(item => allowedDesignations.includes(item.designation))
-      .map((t) => ({
-        teacherId: t._id,
-        class: t.Class || "N/A",
-        profilePic: t.profilePic || "",
-        name: t.name,
-        fatherName: t.fatherName || "", // FIXED: This line was incorrectly setting name instead of fatherName
-        email: t.email,
-        section: t.section || "General",
-        designation: t.designation,
-        status: "present",
-      }));
-
-    setTeachers(teacherData);
-    setFilteredTeachers(teacherData);
-    setLoading(false);
-  } catch (err) {
-    console.error("Error fetching teachers:", err);
-    showError("Failed to fetch staff members");
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     let filtered = teachers;
@@ -94,28 +111,29 @@ const TeacherAttendence = () => {
     // Apply search filter
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
-      filtered = filtered.filter((t) =>
-        t.name.toLowerCase().includes(lowerSearch) ||
-        t.fatherName.toLowerCase().includes(lowerSearch) ||
-        (t.class && t.class.toLowerCase().includes(lowerSearch)) ||
-        (t.email && t.email.toLowerCase().includes(lowerSearch)) ||
-        (t.section && t.section.toLowerCase().includes(lowerSearch)) ||
-        (t.designation && t.designation.toLowerCase().includes(lowerSearch))
+      filtered = filtered.filter(
+        (t) =>
+          t.name.toLowerCase().includes(lowerSearch) ||
+          t.fatherName.toLowerCase().includes(lowerSearch) ||
+          (t.class && t.class.toLowerCase().includes(lowerSearch)) ||
+          (t.email && t.email.toLowerCase().includes(lowerSearch)) ||
+          (t.section && t.section.toLowerCase().includes(lowerSearch)) ||
+          (t.designation && t.designation.toLowerCase().includes(lowerSearch))
       );
     }
 
     // Apply designation filter
-    if (designationFilter && designationFilter !== 'all') {
+    if (designationFilter && designationFilter !== "all") {
       filtered = filtered.filter((t) => t.designation === designationFilter);
     }
 
     // Apply section filter
-    if (sectionFilter && sectionFilter !== 'all') {
+    if (sectionFilter && sectionFilter !== "all") {
       filtered = filtered.filter((t) => t.section === sectionFilter);
     }
 
     // Apply class filter
-    if (classFilter && classFilter !== 'all') {
+    if (classFilter && classFilter !== "all") {
       filtered = filtered.filter((t) => t.class === classFilter);
     }
 
@@ -149,7 +167,10 @@ const TeacherAttendence = () => {
       showSuccess(res.data.message || "Attendance submitted successfully!");
       setShowConfirmPopup(false);
     } catch (err) {
-      console.error("Attendance submit error:", err.response?.data || err.message);
+      console.error(
+        "Attendance submit error:",
+        err.response?.data || err.message
+      );
       showError(err.response?.data?.message || "Failed to submit attendance");
     } finally {
       setSubmitting(false);
@@ -158,7 +179,11 @@ const TeacherAttendence = () => {
 
   // ... (previous imports and component setup)
 
-  const handleReportSelect = async (teacherId, reportType, customDate = null) => {
+  const handleReportSelect = async (
+    teacherId,
+    reportType,
+    customDate = null
+  ) => {
     try {
       let url = `${BaseURL}/teachers/attendence?teacherId=${teacherId}&type=${reportType}`;
 
@@ -175,15 +200,17 @@ const TeacherAttendence = () => {
 
       if (responseData.records) {
         // Single staff detail report
-        modalData = [{
-          staffId: teacherId,
-          name: responseData.staff?.name || '',
-          fatherName: responseData.staff?.fatherName || '',
-          designation: responseData.staff?.designation || '',
-          class: responseData.staff?.class || '',
-          section: responseData.staff?.section || '',
-          records: responseData.records
-        }];
+        modalData = [
+          {
+            staffId: teacherId,
+            name: responseData.staff?.name || "",
+            fatherName: responseData.staff?.fatherName || "",
+            designation: responseData.staff?.designation || "",
+            class: responseData.staff?.class || "",
+            section: responseData.staff?.section || "",
+            records: responseData.records,
+          },
+        ];
         modalMode = "detail";
       } else if (Array.isArray(responseData)) {
         // Direct array response
@@ -195,7 +222,11 @@ const TeacherAttendence = () => {
         modalMode = "summary";
       }
 
-      setModalTitle(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Attendance Report`);
+      setModalTitle(
+        `${
+          reportType.charAt(0).toUpperCase() + reportType.slice(1)
+        } Attendance Report`
+      );
       setModalData(modalData);
       setModalMode(modalMode);
       setShowModal(true);
@@ -214,14 +245,30 @@ const TeacherAttendence = () => {
         if (customDate.month) params.month = customDate.month;
       }
 
-      const response = await axios.get(`${BaseURL}/teachers/all/report`, { params });
+      const response = await axios.get(`${BaseURL}/teachers/all/report`, {
+        params,
+      });
       const responseData = response.data;
 
       let title = `All Staff - ${type} Report`;
       if (customDate) {
-        const monthNames = ["January", "February", "March", "April", "May", "June",
-          "July", "August", "September", "October", "November", "December"];
-        title = `All Staff - ${monthNames[customDate.month - 1]} ${customDate.year} Report`;
+        const monthNames = [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
+        ];
+        title = `All Staff - ${monthNames[customDate.month - 1]} ${
+          customDate.year
+        } Report`;
       }
 
       setModalTitle(title);
@@ -239,16 +286,18 @@ const TeacherAttendence = () => {
   // ... (rest of the component remains the same)
 
   const clearFilters = () => {
-    setSearchTerm('');
-    setDesignationFilter('all');
-    setSectionFilter('all');
-    setClassFilter('all');
+    setSearchTerm("");
+    setDesignationFilter("all");
+    setSectionFilter("all");
+    setClassFilter("all");
   };
 
   // Get unique sections, classes, and designations for filter
-  const sections = [...new Set(teachers.map(teacher => teacher.section))];
-  const classes = [...new Set(teachers.map(teacher => teacher.class))];
-  const designations = [...new Set(teachers.map(teacher => teacher.designation))];
+  const sections = [...new Set(teachers.map((teacher) => teacher.section))];
+  const classes = [...new Set(teachers.map((teacher) => teacher.class))];
+  const designations = [
+    ...new Set(teachers.map((teacher) => teacher.designation)),
+  ];
 
   // Generate years for dropdown (last 10 years and next 2 years)
   const generateYears = () => {
@@ -274,14 +323,17 @@ const TeacherAttendence = () => {
       { value: 9, name: "September" },
       { value: 10, name: "October" },
       { value: 11, name: "November" },
-      { value: 12, name: "December" }
+      { value: 12, name: "December" },
     ];
   };
 
   const handleCustomReport = (reportType) => {
     if (showDateSelector) {
       // Use the selected year and month for the report
-      handleAllTeachersReport(reportType, { year: reportYear, month: reportMonth });
+      handleAllTeachersReport(reportType, {
+        year: reportYear,
+        month: reportMonth,
+      });
       setShowDateSelector(false);
     } else {
       // For standard reports without date selection
@@ -292,19 +344,19 @@ const TeacherAttendence = () => {
   // Get icon based on designation
   const getDesignationIcon = (designation) => {
     switch (designation) {
-      case 'Principle':
+      case "Principle":
         return <FaUserTie className="text-purple-600" />;
-      case 'Admin':
+      case "Admin":
         return <FaUserShield className="text-blue-600" />;
-      case 'Teacher':
+      case "Teacher":
         return <FaChalkboardTeacher className="text-indigo-600" />;
-      case 'Incharge':
+      case "Incharge":
         return <FaUserCog className="text-green-600" />;
-      case 'Sub Incharge':
+      case "Sub Incharge":
         return <FaUserCog className="text-teal-600" />;
-      case 'Sweeper':
+      case "Sweeper":
         return <FaUser className="text-orange-600" />;
-      case 'Gatekeeper':
+      case "Gatekeeper":
         return <FaDoorOpen className="text-red-600" />;
       default:
         return <FaUser className="text-gray-600" />;
@@ -325,7 +377,7 @@ const TeacherAttendence = () => {
     if (selectedTeacher) {
       handleReportSelect(selectedTeacher.teacherId, customReportType, {
         year: customYear,
-        month: customMonth
+        month: customMonth,
       });
     }
     setShowCustomReportModal(false);
@@ -335,66 +387,36 @@ const TeacherAttendence = () => {
     <>
       <Sidebar />
       <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
-        <div className="bg-white w-full min-h-screen shadow-md rounded-md px-4 max-sm:px-4 overflow-hidden">
+        <div className="bg-white w-full min-h-screen shadow-md rounded-md px-4 max-sm:px-4 pt-2 overflow-hidden">
           {/* Header Section */}
-          <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-t-md mb-4 rounded-lg border border-blue-100">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center">
-                <div className="bg-white p-2 rounded-full shadow-sm mr-3">
-                  <FaUserTie className="text-indigo-600 text-xl" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">Staff Attendance</h1>
-                  <p className="text-sm text-gray-600">Manage staff attendance records</p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm hover:bg-gray-50"
-                >
-                  <FaFilter className="text-gray-500" />
-                  Filters
-                </button>
-
-                <div className="relative">
-                  <select
-                    onChange={(e) => {
-                      if (e.target.value === "custom") {
-                        setShowDateSelector(true);
-                      } else if (e.target.value) {
-                        handleAllTeachersReport(e.target.value);
-                      }
-                    }}
-                    className="border cursor-pointer border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                    defaultValue=""
-                  >
-                    <option value="" disabled>Reports</option>
-                    <option value="weekly">Weekly Report</option>
-                    <option value="monthly">Monthly Report</option>
-                    <option value="previous">Previous Month</option>
-                    <option value="yearly">Yearly Report</option>
-                    <option value="custom">Custom Report...</option>
-                  </select>
-                </div>
-
-                <button
-                  onClick={() => setShowConfirmPopup(true)}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium"
-                  disabled={filteredTeachers.length === 0 || submitting}
-                >
-                  {submitting ? "Submitting..." : "Submit Attendance"}
-                </button>
-              </div>
-            </div>
-          </div>
+          <PageTitle
+            title="Staff Attendance"
+            description="Manage staff attendance records"
+            icon={FaUserTie}
+            showStaffHeader={true}
+            onStaffFilterToggle={() => setShowFilters(!showFilters)}
+            onStaffReportChange={(e) => {
+              if (e.target.value === "custom") {
+                setShowDateSelector(true);
+              } else if (e.target.value) {
+                handleAllTeachersReport(e.target.value);
+              }
+            }}
+            onStaffSubmitAttendance={() => setShowConfirmPopup(true)}
+            isStaffSubmitDisabled={filteredTeachers.length === 0}
+            submitting={submitting}
+            bgGradient="bg-gradient-to-r from-blue-50 to-indigo-50"
+            borderColor="border-blue-100"
+            showBorder={true}
+          />
 
           {/* Custom Date Selector */}
           {showDateSelector && (
-            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg ">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-medium text-gray-700">Select Report Period</h3>
+                <h3 className="font-medium text-gray-700">
+                  Select Report Period
+                </h3>
                 <button
                   onClick={() => setShowDateSelector(false)}
                   className="text-red-500 hover:text-red-700"
@@ -404,40 +426,55 @@ const TeacherAttendence = () => {
               </div>
               <div className="flex flex-wrap gap-4 items-end">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Year
+                  </label>
                   <select
                     value={reportYear}
                     onChange={(e) => setReportYear(parseInt(e.target.value))}
                     className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    {generateYears().map(year => (
-                      <option key={year} value={year}>{year}</option>
+                    {generateYears().map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Month
+                  </label>
                   <select
                     value={reportMonth}
                     onChange={(e) => setReportMonth(parseInt(e.target.value))}
                     className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    {generateMonths().map(month => (
-                      <option key={month.value} value={month.value}>{month.name}</option>
+                    {generateMonths().map((month) => (
+                      <option key={month.value} value={month.value}>
+                        {month.name}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleAllTeachersReport("monthly", { year: reportYear, month: reportMonth })}
+                    onClick={() =>
+                      handleAllTeachersReport("monthly", {
+                        year: reportYear,
+                        month: reportMonth,
+                      })
+                    }
                     className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm"
                   >
                     Generate Monthly Report
                   </button>
                   <button
-                    onClick={() => handleAllTeachersReport("yearly", { year: reportYear })}
+                    onClick={() =>
+                      handleAllTeachersReport("yearly", { year: reportYear })
+                    }
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm"
                   >
                     Generate Yearly Report
@@ -448,7 +485,7 @@ const TeacherAttendence = () => {
           )}
 
           {/* Search and Filters Section */}
-          <div className="mb-6">
+          <div className="mb-6 mt-2">
             <div className="flex flex-wrap gap-3 items-center justify-between">
               <div className="relative flex-grow max-w-md">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -464,16 +501,23 @@ const TeacherAttendence = () => {
               </div>
 
               <div className="text-sm text-gray-500">
-                Showing {filteredTeachers.length} of {teachers.length} staff members
+                Showing {filteredTeachers.length} of {teachers.length} staff
+                members
               </div>
             </div>
 
             {/* Filters - Collapsible */}
-            <div className={`mt-4 bg-gray-50 p-4 rounded-lg ${showFilters ? 'block' : 'hidden'}`}>
+            <div
+              className={`mt-4 bg-gray-50 p-4 rounded-lg ${
+                showFilters ? "block" : "hidden"
+              }`}
+            >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Designation Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Designation
+                  </label>
                   <select
                     value={designationFilter}
                     onChange={(e) => setDesignationFilter(e.target.value)}
@@ -481,14 +525,18 @@ const TeacherAttendence = () => {
                   >
                     <option value="all">All Designations</option>
                     {designations.map((desig, index) => (
-                      <option key={index} value={desig}>{desig}</option>
+                      <option key={index} value={desig}>
+                        {desig}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Class Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Class
+                  </label>
                   <select
                     value={classFilter}
                     onChange={(e) => setClassFilter(e.target.value)}
@@ -496,14 +544,18 @@ const TeacherAttendence = () => {
                   >
                     <option value="all">All Classes</option>
                     {classes.map((cls, index) => (
-                      <option key={index} value={cls}>{cls}</option>
+                      <option key={index} value={cls}>
+                        {cls}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Section Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Section
+                  </label>
                   <select
                     value={sectionFilter}
                     onChange={(e) => setSectionFilter(e.target.value)}
@@ -511,7 +563,9 @@ const TeacherAttendence = () => {
                   >
                     <option value="all">All Sections</option>
                     {sections.map((sec, index) => (
-                      <option key={index} value={sec}>{sec}</option>
+                      <option key={index} value={sec}>
+                        {sec}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -539,7 +593,10 @@ const TeacherAttendence = () => {
               <FaUserTie className="text-6xl mb-4 opacity-50" />
               <p className="text-lg font-medium">No staff members found</p>
               <p className="text-sm mt-2">
-                {searchTerm || designationFilter !== 'all' || sectionFilter !== 'all' || classFilter !== 'all'
+                {searchTerm ||
+                designationFilter !== "all" ||
+                sectionFilter !== "all" ||
+                classFilter !== "all"
                   ? "Try adjusting your search or filters"
                   : "No staff members available for attendance"}
               </p>
@@ -549,13 +606,48 @@ const TeacherAttendence = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Member</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report</th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Staff Member
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Designation
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Class
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Section
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Email
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Status
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Report
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -569,19 +661,25 @@ const TeacherAttendence = () => {
                               alt="staff"
                               className="h-10 w-10 rounded-full object-cover"
                               onError={(e) => {
-                                e.target.src = 'https://via.placeholder.com/40';
+                                e.target.src = "https://via.placeholder.com/40";
                               }}
                             />
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{t.name}</div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {t.name}
+                            </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <span className="mr-2">{getDesignationIcon(t.designation)}</span>
-                          <span className="text-sm text-gray-900">{t.designation}</span>
+                          <span className="mr-2">
+                            {getDesignationIcon(t.designation)}
+                          </span>
+                          <span className="text-sm text-gray-900">
+                            {t.designation}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -595,14 +693,17 @@ const TeacherAttendence = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
-                          className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-600 ${t.status === 'absent'
-                            ? 'bg-red-100 text-red-800'
-                            : t.status === 'leave'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-green-100 text-green-800'
-                            }`}
+                          className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-600 ${
+                            t.status === "absent"
+                              ? "bg-red-100 text-red-800"
+                              : t.status === "leave"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
                           value={t.status}
-                          onChange={(e) => handleStatusChange(index, e.target.value)}
+                          onChange={(e) =>
+                            handleStatusChange(index, e.target.value)
+                          }
                           disabled={submitting}
                         >
                           <option value="present">Present</option>
@@ -624,7 +725,9 @@ const TeacherAttendence = () => {
                             defaultValue=""
                             disabled={submitting}
                           >
-                            <option value="" disabled>View Report</option>
+                            <option value="" disabled>
+                              View Report
+                            </option>
                             <option value="weekly">Weekly</option>
                             <option value="monthly">Monthly</option>
                             <option value="yearly">Yearly</option>
@@ -667,14 +770,20 @@ const TeacherAttendence = () => {
 
             {selectedTeacher && (
               <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                <p className="font-medium text-gray-700">{selectedTeacher.name}</p>
-                <p className="text-sm text-gray-500">{selectedTeacher.designation}</p>
+                <p className="font-medium text-gray-700">
+                  {selectedTeacher.name}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedTeacher.designation}
+                </p>
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Report Type
+                </label>
                 <select
                   value={customReportType}
                   onChange={(e) => setCustomReportType(e.target.value)}
@@ -687,30 +796,38 @@ const TeacherAttendence = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Year
+                </label>
                 <select
                   value={customYear}
                   onChange={(e) => setCustomYear(parseInt(e.target.value))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   disabled={submitting}
                 >
-                  {generateYears().map(year => (
-                    <option key={year} value={year}>{year}</option>
+                  {generateYears().map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
                   ))}
                 </select>
               </div>
 
-              {customReportType === 'monthly' && (
+              {customReportType === "monthly" && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Month
+                  </label>
                   <select
                     value={customMonth}
                     onChange={(e) => setCustomMonth(parseInt(e.target.value))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     disabled={submitting}
                   >
-                    {generateMonths().map(month => (
-                      <option key={month.value} value={month.value}>{month.name}</option>
+                    {generateMonths().map((month) => (
+                      <option key={month.value} value={month.value}>
+                        {month.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -765,12 +882,15 @@ const TeacherAttendence = () => {
               )}
 
               <h2 className="text-xl font-bold text-gray-800 mt-4">
-                {submitting ? "Submitting Attendance..." : "Confirm Attendance Submission"}
+                {submitting
+                  ? "Submitting Attendance..."
+                  : "Confirm Attendance Submission"}
               </h2>
 
               {!submitting && (
                 <p className="text-sm text-gray-600 mt-2">
-                  Are you sure you want to submit attendance for {filteredTeachers.length} staff members?
+                  Are you sure you want to submit attendance for{" "}
+                  {filteredTeachers.length} staff members?
                 </p>
               )}
             </div>
@@ -794,7 +914,9 @@ const TeacherAttendence = () => {
 
             {submitting && (
               <div className="mt-6">
-                <p className="text-sm text-gray-600">Please wait while we save attendance...</p>
+                <p className="text-sm text-gray-600">
+                  Please wait while we save attendance...
+                </p>
               </div>
             )}
           </div>

@@ -9,6 +9,7 @@ import ViewPopup from "./ViewPopup";
 import ConfirmDeletePopup from "./DeletePopup";
 import { BaseURL } from "../../helper/helper";
 import { showSuccess, showError } from "../../utils/Toast";
+import PageTitle from "../PageTitle";
 
 const AddAccount = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -233,22 +234,17 @@ const AddAccount = () => {
       <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
         <div className="bg-white w-full min-h-[calc(100vh-56px)] shadow-md rounded-lg px-6 py-4 max-sm:px-4">
           {/* Header Section */}
-          <div className="flex flex-col mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
-            <div className="flex items-center">
-              <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-                <p className="text-gray-600 mt-1">Manage all user accounts and permissions</p>
-              </div>
-            </div>
-          </div>
+          <PageTitle
+  title="User Management"
+  description="Manage all user accounts and permissions"
+  showUserHeader={true}
+  bgGradient="bg-gradient-to-r from-blue-50 to-indigo-50"
+  borderColor="border-blue-100"
+  showBorder={true}
+/>
 
           {/* Controls Section */}
-          <div className="bg-white rounded-lg p-4 shadow-sm mb-6 border border-gray-200">
+          <div className="bg-white rounded-lg p-4 shadow-sm mb-6 border border-gray-200 mt-2">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
               {/* Search Bar */}
               <div className="relative w-full lg:w-1/3">

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import Sidebar from "../sidebar/SideBar"
-import axios from 'axios';
-import { BaseURL } from '../../helper/helper';
+import React, { useState, useEffect } from "react";
+import Sidebar from "../sidebar/SideBar";
+import axios from "axios";
+import { BaseURL } from "../../helper/helper";
 import {
   Search,
   Download,
@@ -20,15 +20,26 @@ import {
   Info,
   ChevronLeft,
   ChevronRight,
-  Hash
-} from 'react-feather';
-import Loading from '../Loading';
+  Hash,
+} from "react-feather";
+import Loading from "../Loading";
+import PageTitle from "../PageTitle";
 
 const FeesManagement = () => {
   // Define all months for the academic year
   const allMonths = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   // State for students data
@@ -38,30 +49,32 @@ const FeesManagement = () => {
   const [error, setError] = useState(null);
 
   // State for UI controls
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedClass, setSelectedClass] = useState('All');
-  const [selectedStatus, setSelectedStatus] = useState('All');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClass, setSelectedClass] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentDate, setPaymentDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [paymentMonths, setPaymentMonths] = useState([]);
-  const [paymentMode, setPaymentMode] = useState('Cash');
+  const [paymentMode, setPaymentMode] = useState("Cash");
   const [showChallan, setShowChallan] = useState(false);
   const [challanData, setChallanData] = useState(null);
   const [challanMonths, setChallanMonths] = useState([]);
   const [examinationFee, setExaminationFee] = useState(0);
   const [otherFees, setOtherFees] = useState([]);
-  const [newFeeDescription, setNewFeeDescription] = useState('');
-  const [newFeeAmount, setNewFeeAmount] = useState('');
+  const [newFeeDescription, setNewFeeDescription] = useState("");
+  const [newFeeAmount, setNewFeeAmount] = useState("");
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsStudent, setDetailsStudent] = useState(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   // Date/Month filter states for fees collection
-const [feesFilterType, setFeesFilterType] = useState('all'); // 'all', 'month', 'date'
-const [selectedMonth, setSelectedMonth] = useState('');
-const [selectedDate, setSelectedDate] = useState('');
+  const [feesFilterType, setFeesFilterType] = useState("all"); // 'all', 'month', 'date'
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
 
   // Summary states
   const [totalFeesCollection, setTotalFeesCollection] = useState(0);
@@ -82,7 +95,7 @@ const [selectedDate, setSelectedDate] = useState('');
       // Use COMBINED API that gets students from main API + fees from separate system
       const response = await axios.get(`${BaseURL}/fees/combined`);
       const data = response.data;
-      console.log('Combined students + fees data:', data.students[0]);
+      console.log("Combined students + fees data:", data.students[0]);
 
       // Role-based filtering
       const role = localStorage.getItem("role");
@@ -92,17 +105,18 @@ const [selectedDate, setSelectedDate] = useState('');
         const assignedClass = localStorage.getItem("classAssigned");
         const assignedSection = localStorage.getItem("classSection");
 
-        filteredStudents = data.students.filter(student =>
-          student.Class === assignedClass &&
-          student.section === assignedSection
+        filteredStudents = data.students.filter(
+          (student) =>
+            student.Class === assignedClass &&
+            student.section === assignedSection
         );
       }
 
       // Use ACTUAL data from combined system
-      const processedStudents = filteredStudents.map(student => ({
+      const processedStudents = filteredStudents.map((student) => ({
         ...student,
         class: student.Class, // Use Class from main data
-        section: student.section
+        section: student.section,
       }));
 
       // ✅ All students store karein
@@ -112,10 +126,10 @@ const [selectedDate, setSelectedDate] = useState('');
       applyFiltersAndPagination(processedStudents);
 
       setError(null);
-
     } catch (err) {
-      console.error('Error fetching combined data:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to fetch students data';
+      console.error("Error fetching combined data:", err);
+      const errorMessage =
+        err.response?.data?.message || "Failed to fetch students data";
       setError(errorMessage);
       setAllStudents([]);
       setStudents([]);
@@ -135,31 +149,40 @@ const [selectedDate, setSelectedDate] = useState('');
 
     // Search filter
     if (searchTerm) {
-      resultStudents = resultStudents.filter(student =>
-        student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
+      resultStudents = resultStudents.filter(
+        (student) =>
+          student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Class filter
-    if (selectedClass !== 'All') {
-      resultStudents = resultStudents.filter(student =>
-        student.Class === selectedClass
+    if (selectedClass !== "All") {
+      resultStudents = resultStudents.filter(
+        (student) => student.Class === selectedClass
       );
     }
 
     // Status filter
-    if (selectedStatus !== 'All') {
-      resultStudents = resultStudents.filter(student =>
-        student.status === selectedStatus
+    if (selectedStatus !== "All") {
+      resultStudents = resultStudents.filter(
+        (student) => student.status === selectedStatus
       );
     }
 
     // ✅ TOTAL CALCULATIONS - Sabhi filtered students ki total fees calculate karein
-    const allStudentsTotalFees = resultStudents.reduce((sum, student) => sum + (student.paidFees || 0), 0);
-    const allStudentsTotalDues = resultStudents.reduce((sum, student) => sum + (student.dues || 0), 0);
-    const allStudentsFullyPaid = resultStudents.filter(student => student.status === 'Fully Paid').length;
+    const allStudentsTotalFees = resultStudents.reduce(
+      (sum, student) => sum + (student.paidFees || 0),
+      0
+    );
+    const allStudentsTotalDues = resultStudents.reduce(
+      (sum, student) => sum + (student.dues || 0),
+      0
+    );
+    const allStudentsFullyPaid = resultStudents.filter(
+      (student) => student.status === "Fully Paid"
+    ).length;
 
     // Total values set karein
     setTotalFeesCollection(allStudentsTotalFees);
@@ -198,11 +221,11 @@ const [selectedDate, setSelectedDate] = useState('');
       const response = await axios.get(`${BaseURL}/students/${studentId}`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching student details:', error);
+      console.error("Error fetching student details:", error);
 
       // Check if it's a 404 error (endpoint not found)
       if (error.response?.status === 404) {
-        console.log('Student details endpoint not found, using fallback data');
+        console.log("Student details endpoint not found, using fallback data");
         // Return null to indicate we should use fallback data
         return null;
       }
@@ -211,28 +234,27 @@ const [selectedDate, setSelectedDate] = useState('');
     }
   };
 
-  // Show student details 
+  // Show student details
   const showStudentDetails = async (student) => {
     try {
-      console.log('Student payment history:', student.paymentHistory);
+      console.log("Student payment history:", student.paymentHistory);
 
       // Use the student data with actual payment history
       const studentDetails = {
         ...student,
         // Use actual payment history if available, otherwise empty array
-        paymentHistory: student.paymentHistory || []
+        paymentHistory: student.paymentHistory || [],
       };
 
       setDetailsStudent(studentDetails);
       setShowDetailsModal(true);
-
     } catch (error) {
-      console.error('Error in showStudentDetails:', error);
+      console.error("Error in showStudentDetails:", error);
 
       // Fallback with empty payment history
       setDetailsStudent({
         ...student,
-        paymentHistory: []
+        paymentHistory: [],
       });
       setShowDetailsModal(true);
     }
@@ -241,12 +263,12 @@ const [selectedDate, setSelectedDate] = useState('');
   // Handle fee payment
   const handlePayment = async (student) => {
     if (!paymentAmount || paymentAmount <= 0 || paymentAmount > student.dues) {
-      alert('Please enter a valid payment amount');
+      alert("Please enter a valid payment amount");
       return;
     }
 
     if (paymentMonths.length === 0) {
-      alert('Please select at least one month for payment');
+      alert("Please select at least one month for payment");
       return;
     }
 
@@ -258,45 +280,50 @@ const [selectedDate, setSelectedDate] = useState('');
         amount: parseInt(paymentAmount),
         months: paymentMonths,
         paymentDate: paymentDate,
-        mode: paymentMode
+        mode: paymentMode,
       };
 
-      console.log('Sending payment to SEPARATE fees system...');
+      console.log("Sending payment to SEPARATE fees system...");
 
       // Use SEPARATE fees system API
-      const response = await axios.post(`${BaseURL}/fees/${studentId}/payment`, paymentData);
+      const response = await axios.post(
+        `${BaseURL}/fees/${studentId}/payment`,
+        paymentData
+      );
 
       if (response.data.success) {
-        console.log('✅ Payment Recorded in SEPARATE System!');
+        console.log("✅ Payment Recorded in SEPARATE System!");
 
         // ✅ Refresh data - API call karein
         await fetchAllStudents();
 
         // Close modal and reset
         setShowPaymentModal(false);
-        setPaymentAmount('');
+        setPaymentAmount("");
         setPaymentMonths([]);
-        setPaymentMode('Cash');
+        setPaymentMode("Cash");
       }
-
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error("Payment error:", error);
 
       // Detailed error message
-      let errorMessage = 'Payment failed. Please try again.';
+      let errorMessage = "Payment failed. Please try again.";
 
       if (error.response) {
         // Server responded with error status
-        errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
-        console.error('Server response:', error.response.data);
+        errorMessage =
+          error.response.data?.message ||
+          `Server error: ${error.response.status}`;
+        console.error("Server response:", error.response.data);
 
         // Specific handling for "Student not found" error
-        if (error.response.data?.message === 'Student not found') {
-          errorMessage = 'Student not found in database. Please check if student exists.';
+        if (error.response.data?.message === "Student not found") {
+          errorMessage =
+            "Student not found in database. Please check if student exists.";
         }
       } else if (error.request) {
         // Request was made but no response received
-        errorMessage = 'No response from server. Please check your connection.';
+        errorMessage = "No response from server. Please check your connection.";
       } else {
         // Something else happened
         errorMessage = error.message;
@@ -309,31 +336,41 @@ const [selectedDate, setSelectedDate] = useState('');
   // Generate challan with last payment data
   const generateChallan = async (student, months = []) => {
     try {
-      console.log('🔄 Generating challan with last payment data for:', student.name);
+      console.log(
+        "🔄 Generating challan with last payment data for:",
+        student.name
+      );
 
       // Get last payment details
-      const lastPayment = student.paymentHistory && student.paymentHistory.length > 0
-        ? student.paymentHistory[student.paymentHistory.length - 1]
-        : null;
+      const lastPayment =
+        student.paymentHistory && student.paymentHistory.length > 0
+          ? student.paymentHistory[student.paymentHistory.length - 1]
+          : null;
 
-      console.log('📋 Last payment:', lastPayment);
+      console.log("📋 Last payment:", lastPayment);
 
       if (!lastPayment) {
-        alert('No payment history found for this student. Please make a payment first.');
+        alert(
+          "No payment history found for this student. Please make a payment first."
+        );
         return;
       }
 
       // Use last payment months and amount
       const paymentMonths = lastPayment.months || [];
       const paymentAmount = lastPayment.amount || 0;
-      const paymentDate = lastPayment.date ? new Date(lastPayment.date) : new Date();
-      const paymentMode = lastPayment.mode || 'Cash';
+      const paymentDate = lastPayment.date
+        ? new Date(lastPayment.date)
+        : new Date();
+      const paymentMode = lastPayment.mode || "Cash";
 
       // Calculate fees breakdown based on last payment
       const monthlyFee = student.monthlyFee || Number(student.Fees) || 0;
       const tuitionFee = paymentAmount; // Use actual paid amount
 
-      const totalAmount = tuitionFee + examinationFee +
+      const totalAmount =
+        tuitionFee +
+        examinationFee +
         otherFees.reduce((sum, fee) => sum + fee.amount, 0);
 
       // Create challan data based on last payment
@@ -343,7 +380,7 @@ const [selectedDate, setSelectedDate] = useState('');
           fatherName: student.fatherName,
           rollNo: student.rollNo,
           class: student.class || student.Class,
-          section: student.section
+          section: student.section,
         },
         challanNo: `CH-${student.rollNo}-${Date.now()}`,
         issueDate: new Date().toISOString(),
@@ -351,54 +388,60 @@ const [selectedDate, setSelectedDate] = useState('');
         months: paymentMonths, // Use months from last payment
         paymentDate: paymentDate.toISOString(),
         paymentMode: paymentMode,
-        academicYear: '2024-2025',
+        academicYear: "2024-2025",
         feeBreakdown: {
           tuitionFee: tuitionFee,
           examinationFee: examinationFee,
           otherFees: otherFees,
           totalAmount: totalAmount,
-          paidAmount: paymentAmount // Show paid amount
+          paidAmount: paymentAmount, // Show paid amount
         },
-        lastPayment: lastPayment // Include full last payment details
+        lastPayment: lastPayment, // Include full last payment details
       };
 
-      console.log('✅ Challan generated with last payment data:', challanData);
+      console.log("✅ Challan generated with last payment data:", challanData);
 
       setChallanData(challanData);
       setChallanMonths(paymentMonths); // Set months from last payment
       setShowChallan(true);
-
     } catch (error) {
-      console.error('❌ Error generating challan:', error);
-      alert('Failed to generate challan. Please try again.');
+      console.error("❌ Error generating challan:", error);
+      alert("Failed to generate challan. Please try again.");
     }
   };
 
   // Get due list - WITH MONTHS COLUMN
   const getDueList = async () => {
     try {
-      console.log('🔄 Generating due list with months data...');
+      console.log("🔄 Generating due list with months data...");
 
       // ✅ CLIENT-SIDE PROCESSING - API call ki zaroorat nahi
-      let dueStudents = allStudents.filter(student =>
-        (student.dues || 0) > 0 && student.status !== 'Fully Paid'
+      let dueStudents = allStudents.filter(
+        (student) => (student.dues || 0) > 0 && student.status !== "Fully Paid"
       );
 
       // Apply class filter
-      if (selectedClass !== 'All') {
-        dueStudents = dueStudents.filter(student =>
-          student.Class === selectedClass || student.class === selectedClass
+      if (selectedClass !== "All") {
+        dueStudents = dueStudents.filter(
+          (student) =>
+            student.Class === selectedClass || student.class === selectedClass
         );
       }
 
       // Calculate total dues and get due months
-      const totalDues = dueStudents.reduce((sum, student) => sum + (student.dues || 0), 0);
+      const totalDues = dueStudents.reduce(
+        (sum, student) => sum + (student.dues || 0),
+        0
+      );
 
       const dueData = {
-        dueStudents: dueStudents.map(student => {
+        dueStudents: dueStudents.map((student) => {
           // Get unpaid months
-          const unpaidMonths = student.duesByMonth?.filter(month => !month.paid && month.dueAmount > 0) || [];
-          const dueMonthNames = unpaidMonths.map(month => month.month);
+          const unpaidMonths =
+            student.duesByMonth?.filter(
+              (month) => !month.paid && month.dueAmount > 0
+            ) || [];
+          const dueMonthNames = unpaidMonths.map((month) => month.month);
 
           return {
             rollNo: student.rollNo,
@@ -409,24 +452,23 @@ const [selectedDate, setSelectedDate] = useState('');
             status: student.status,
             dueMonths: dueMonthNames,
             dueMonthsCount: dueMonthNames.length,
-            monthlyFee: student.monthlyFee || 0
+            monthlyFee: student.monthlyFee || 0,
           };
         }),
         totalDues: totalDues,
-        totalStudents: dueStudents.length
+        totalStudents: dueStudents.length,
       };
 
-      console.log('✅ Due list with months generated:', dueData);
+      console.log("✅ Due list with months generated:", dueData);
       return dueData;
-
     } catch (error) {
-      console.error('Error generating due list:', error);
+      console.error("Error generating due list:", error);
 
       // Fallback - empty data return karein
       return {
         dueStudents: [],
         totalDues: 0,
-        totalStudents: 0
+        totalStudents: 0,
       };
     }
   };
@@ -434,12 +476,12 @@ const [selectedDate, setSelectedDate] = useState('');
   // Generate PDF for due list - WITH MONTHS COLUMN
   const generateDueListPDF = async () => {
     try {
-      console.log('🔄 Generating due list PDF with months...');
+      console.log("🔄 Generating due list PDF with months...");
 
       const dueData = await getDueList();
 
       if (!dueData.dueStudents || dueData.dueStudents.length === 0) {
-        alert('No students with dues found matching your criteria.');
+        alert("No students with dues found matching your criteria.");
         return;
       }
 
@@ -624,15 +666,22 @@ const [selectedDate, setSelectedDate] = useState('');
                   <div class="summary-label">Students with Dues</div>
                 </div>
                 <div class="summary-item">
-                  <div class="summary-value">Rs. ${dueData.totalDues?.toLocaleString() || '0'}</div>
+                  <div class="summary-value">Rs. ${
+                    dueData.totalDues?.toLocaleString() || "0"
+                  }</div>
                   <div class="summary-label">Total Dues Amount</div>
                 </div>
                 <div class="summary-item">
-                  <div class="summary-value">${selectedClass === 'All' ? 'All' : selectedClass}</div>
+                  <div class="summary-value">${
+                    selectedClass === "All" ? "All" : selectedClass
+                  }</div>
                   <div class="summary-label">Class Filter</div>
                 </div>
                 <div class="summary-item">
-                  <div class="summary-value">${dueData.dueStudents.reduce((sum, student) => sum + (student.dueMonthsCount || 0), 0)}</div>
+                  <div class="summary-value">${dueData.dueStudents.reduce(
+                    (sum, student) => sum + (student.dueMonthsCount || 0),
+                    0
+                  )}</div>
                   <div class="summary-label">Total Due Months</div>
                 </div>
               </div>
@@ -655,28 +704,41 @@ const [selectedDate, setSelectedDate] = useState('');
     `;
 
       if (dueData.dueStudents && dueData.dueStudents.length > 0) {
-        dueData.dueStudents.forEach(student => {
-          const monthTags = student.dueMonths && student.dueMonths.length > 0
-            ? student.dueMonths.map(month => `<span class="month-tag">${month}</span>`).join('')
-            : '<span style="color: #718096; font-style: italic;">No months data</span>';
+        dueData.dueStudents.forEach((student) => {
+          const monthTags =
+            student.dueMonths && student.dueMonths.length > 0
+              ? student.dueMonths
+                  .map((month) => `<span class="month-tag">${month}</span>`)
+                  .join("")
+              : '<span style="color: #718096; font-style: italic;">No months data</span>';
 
           content += `
           <tr>
-            <td><strong>${student.rollNo || 'N/A'}</strong></td>
-            <td>${student.name || 'N/A'}</td>
-            <td>${student.class || 'N/A'}</td>
-            <td>${student.section || 'N/A'}</td>
-            <td class="due"><strong>Rs. ${(student.dues || 0).toLocaleString()}</strong></td>
+            <td><strong>${student.rollNo || "N/A"}</strong></td>
+            <td>${student.name || "N/A"}</td>
+            <td>${student.class || "N/A"}</td>
+            <td>${student.section || "N/A"}</td>
+            <td class="due"><strong>Rs. ${(
+              student.dues || 0
+            ).toLocaleString()}</strong></td>
             <td class="months">
               <div style="max-height: 80px; overflow-y: auto;">
                 ${monthTags}
-                ${student.dueMonthsCount > 0 ? `<div style="margin-top: 5px; font-size: 10px; color: #718096;">Total: ${student.dueMonthsCount} months</div>` : ''}
+                ${
+                  student.dueMonthsCount > 0
+                    ? `<div style="margin-top: 5px; font-size: 10px; color: #718096;">Total: ${student.dueMonthsCount} months</div>`
+                    : ""
+                }
               </div>
             </td>
             <td>Rs. ${(student.monthlyFee || 0).toLocaleString()}</td>
             <td>
-              <span class="status-badge ${student.status === 'Partially Paid' ? 'status-partial' : 'status-notpaid'}">
-                ${student.status || 'Not Paid'}
+              <span class="status-badge ${
+                student.status === "Partially Paid"
+                  ? "status-partial"
+                  : "status-notpaid"
+              }">
+                ${student.status || "Not Paid"}
               </span>
             </td>
           </tr>
@@ -697,10 +759,16 @@ const [selectedDate, setSelectedDate] = useState('');
             </table>
 
             <div class="footer">
-              <p>Generated by School Management System | ${dueData.dueStudents?.length || 0} records</p>
+              <p>Generated by School Management System | ${
+                dueData.dueStudents?.length || 0
+              } records</p>
               <p>Filters Applied: 
-                ${selectedClass !== 'All' ? 'Class: ' + selectedClass + ' | ' : ''}
-                ${searchTerm ? 'Search: ' + searchTerm + ' | ' : ''}
+                ${
+                  selectedClass !== "All"
+                    ? "Class: " + selectedClass + " | "
+                    : ""
+                }
+                ${searchTerm ? "Search: " + searchTerm + " | " : ""}
                 Dues Only
               </p>
               <p style="margin-top: 5px; color: #e53e3e; font-weight: bold;">
@@ -712,7 +780,7 @@ const [selectedDate, setSelectedDate] = useState('');
       </html>
     `;
 
-      const printWindow = window.open('', '_blank', 'width=1200,height=800');
+      const printWindow = window.open("", "_blank", "width=1200,height=800");
       printWindow.document.write(content);
       printWindow.document.close();
 
@@ -720,17 +788,16 @@ const [selectedDate, setSelectedDate] = useState('');
       setTimeout(() => {
         printWindow.print();
       }, 500);
-
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Failed to generate due list PDF. Please try again.');
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate due list PDF. Please try again.");
     }
   };
 
   // Export data to Excel
   const exportToExcel = async () => {
     try {
-      console.log('🔄 Exporting ALL students data to Excel...');
+      console.log("🔄 Exporting ALL students data to Excel...");
 
       // ✅ CLIENT-SIDE PROCESSING - API call ki zaroorat nahi
       // Use allStudents instead of making API call
@@ -742,41 +809,56 @@ const [selectedDate, setSelectedDate] = useState('');
         const assignedClass = localStorage.getItem("classAssigned");
         const assignedSection = localStorage.getItem("classSection");
 
-        studentsData = studentsData.filter(student =>
-          student.Class === assignedClass &&
-          student.section === assignedSection
+        studentsData = studentsData.filter(
+          (student) =>
+            student.Class === assignedClass &&
+            student.section === assignedSection
         );
       }
 
       // Apply filters for export (same as table filters)
       if (searchTerm) {
-        studentsData = studentsData.filter(student =>
-          student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
+        studentsData = studentsData.filter(
+          (student) =>
+            student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            student.fatherName?.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
 
-      if (selectedClass !== 'All') {
-        studentsData = studentsData.filter(student =>
-          student.Class === selectedClass || student.class === selectedClass
+      if (selectedClass !== "All") {
+        studentsData = studentsData.filter(
+          (student) =>
+            student.Class === selectedClass || student.class === selectedClass
         );
       }
 
-      if (selectedStatus !== 'All') {
-        studentsData = studentsData.filter(student =>
-          student.status === selectedStatus
+      if (selectedStatus !== "All") {
+        studentsData = studentsData.filter(
+          (student) => student.status === selectedStatus
         );
       }
 
       console.log(`✅ Exporting ${studentsData.length} students to Excel`);
 
       // ✅ CORRECTED: Use studentsData for ALL calculations
-      const totalFeesCollection = studentsData.reduce((sum, student) => sum + (student.paidFees || 0), 0);
-      const totalDues = studentsData.reduce((sum, student) => sum + (student.dues || 0), 0);
-      const fullyPaidCount = studentsData.filter(student => student.status === 'Fully Paid').length;
-      const partiallyPaidCount = studentsData.filter(student => student.status === 'Partially Paid').length;
-      const notPaidCount = studentsData.filter(student => student.status === 'Not Paid').length;
+      const totalFeesCollection = studentsData.reduce(
+        (sum, student) => sum + (student.paidFees || 0),
+        0
+      );
+      const totalDues = studentsData.reduce(
+        (sum, student) => sum + (student.dues || 0),
+        0
+      );
+      const fullyPaidCount = studentsData.filter(
+        (student) => student.status === "Fully Paid"
+      ).length;
+      const partiallyPaidCount = studentsData.filter(
+        (student) => student.status === "Partially Paid"
+      ).length;
+      const notPaidCount = studentsData.filter(
+        (student) => student.status === "Not Paid"
+      ).length;
 
       let tableContent = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
@@ -863,33 +945,51 @@ const [selectedDate, setSelectedDate] = useState('');
           <tbody>
     `;
 
-      studentsData.forEach(student => {
+      studentsData.forEach((student) => {
         const statusClass =
-          student.status === 'Fully Paid' ? 'fully-paid' :
-            student.status === 'Partially Paid' ? 'partially-paid' : 'not-paid';
+          student.status === "Fully Paid"
+            ? "fully-paid"
+            : student.status === "Partially Paid"
+            ? "partially-paid"
+            : "not-paid";
 
         // Find last payment date
-        let lastPaymentDate = 'N/A';
-        let paymentMonths = 'N/A';
+        let lastPaymentDate = "N/A";
+        let paymentMonths = "N/A";
 
         if (student.paymentHistory && student.paymentHistory.length > 0) {
-          const lastPayment = student.paymentHistory[student.paymentHistory.length - 1];
+          const lastPayment =
+            student.paymentHistory[student.paymentHistory.length - 1];
           lastPaymentDate = new Date(lastPayment.date).toLocaleDateString();
-          paymentMonths = lastPayment.months ? lastPayment.months.join(', ') : 'N/A';
+          paymentMonths = lastPayment.months
+            ? lastPayment.months.join(", ")
+            : "N/A";
         }
 
         tableContent += `
         <tr>
-          <td>${student.rollNo || 'N/A'}</td>
-          <td>${student.name || 'N/A'}</td>
-          <td>${student.fatherName || 'N/A'}</td>
-          <td>${student.class || student.Class || 'N/A'}</td>
-          <td>${student.section || 'N/A'}</td>
-          <td>${student.monthlyFee ? 'Rs. ' + student.monthlyFee.toLocaleString() : 'N/A'}</td>
-          <td>${student.Fees ? 'Rs. ' + student.Fees.toLocaleString() : 'N/A'}</td>
-          <td>${student.paidFees ? 'Rs. ' + student.paidFees.toLocaleString() : 'Rs. 0'}</td>
-          <td>${student.dues ? 'Rs. ' + student.dues.toLocaleString() : 'Rs. 0'}</td>
-          <td class="${statusClass}">${student.status || 'Not Paid'}</td>
+          <td>${student.rollNo || "N/A"}</td>
+          <td>${student.name || "N/A"}</td>
+          <td>${student.fatherName || "N/A"}</td>
+          <td>${student.class || student.Class || "N/A"}</td>
+          <td>${student.section || "N/A"}</td>
+          <td>${
+            student.monthlyFee
+              ? "Rs. " + student.monthlyFee.toLocaleString()
+              : "N/A"
+          }</td>
+          <td>${
+            student.Fees ? "Rs. " + student.Fees.toLocaleString() : "N/A"
+          }</td>
+          <td>${
+            student.paidFees
+              ? "Rs. " + student.paidFees.toLocaleString()
+              : "Rs. 0"
+          }</td>
+          <td>${
+            student.dues ? "Rs. " + student.dues.toLocaleString() : "Rs. 0"
+          }</td>
+          <td class="${statusClass}">${student.status || "Not Paid"}</td>
           <td>${lastPaymentDate}</td>
           <td>${paymentMonths}</td>
         </tr>
@@ -901,11 +1001,17 @@ const [selectedDate, setSelectedDate] = useState('');
         </table>
 
         <div class="footer">
-          <p>Generated by School Management System | ${studentsData.length} records exported</p>
+          <p>Generated by School Management System | ${
+            studentsData.length
+          } records exported</p>
           <p>Filters Applied: 
-            ${searchTerm ? 'Search: ' + searchTerm + ' | ' : ''}
-            ${selectedClass !== 'All' ? 'Class: ' + selectedClass + ' | ' : ''}
-            ${selectedStatus !== 'All' ? 'Status: ' + selectedStatus : 'All Statuses'}
+            ${searchTerm ? "Search: " + searchTerm + " | " : ""}
+            ${selectedClass !== "All" ? "Class: " + selectedClass + " | " : ""}
+            ${
+              selectedStatus !== "All"
+                ? "Status: " + selectedStatus
+                : "All Statuses"
+            }
           </p>
           <p style="color: #059669; font-weight: bold; margin-top: 10px;">
             ✅ Complete Report: All students data exported successfully
@@ -917,7 +1023,7 @@ const [selectedDate, setSelectedDate] = useState('');
 
       // Create and download Excel file
       const blob = new Blob([tableContent], {
-        type: 'application/vnd.ms-excel;charset=utf-8'
+        type: "application/vnd.ms-excel;charset=utf-8",
       });
 
       const url = URL.createObjectURL(blob);
@@ -925,7 +1031,7 @@ const [selectedDate, setSelectedDate] = useState('');
       link.setAttribute("href", url);
 
       // Create filename with timestamp
-      const timestamp = new Date().toISOString().split('T')[0];
+      const timestamp = new Date().toISOString().split("T")[0];
       const filename = `complete_fees_report_${timestamp}.xls`;
       link.setAttribute("download", filename);
 
@@ -938,80 +1044,89 @@ const [selectedDate, setSelectedDate] = useState('');
         URL.revokeObjectURL(url);
       }, 100);
 
-      console.log('✅ Excel export completed successfully');
-
+      console.log("✅ Excel export completed successfully");
     } catch (error) {
-      console.error('❌ Error exporting to Excel:', error);
-      alert('Failed to export data to Excel. Please try again.');
+      console.error("❌ Error exporting to Excel:", error);
+      alert("Failed to export data to Excel. Please try again.");
     }
   };
 
-// Calculate filtered fees collection based on month/date
-// Calculate filtered fees collection based on month/date
-const calculateFilteredFeesCollection = () => {
-  // Agar koi filter nahi lagaya hai to total collection return karo
-  if (!selectedMonth && !selectedDate) {
-    return totalFeesCollection;
-  }
-  
-  let filteredFees = 0;
-  
-  allStudents.forEach(student => {
-    if (student.paymentHistory) {
-      student.paymentHistory.forEach(payment => {
-        const paymentDateObj = new Date(payment.date);
-        
-        // Timezone-safe month calculation
-        const paymentMonth = paymentDateObj.toLocaleString('default', { month: 'long' });
-        
-        // Timezone-safe date comparison
-        const paymentDate = paymentDateObj.toISOString().split('T')[0];
-        const [paymentYear, paymentMonthNum, paymentDay] = paymentDate.split('-');
-        const paymentDateFormatted = `${paymentYear}-${paymentMonthNum}-${paymentDay}`;
-        
-        // Case 1: Sirf month selected hai
-        if (selectedMonth && !selectedDate) {
-          if (paymentMonth === selectedMonth) {
-            filteredFees += payment.amount || 0;
-          }
-        }
-        // Case 2: Sirf date selected hai
-        else if (!selectedMonth && selectedDate) {
-          if (paymentDateFormatted === selectedDate) {
-            filteredFees += payment.amount || 0;
-          }
-        }
-        // Case 3: Dono month aur date selected hain
-        else if (selectedMonth && selectedDate) {
-          if (paymentMonth === selectedMonth && paymentDateFormatted === selectedDate) {
-            filteredFees += payment.amount || 0;
-          }
-        }
-      });
+  // Calculate filtered fees collection based on month/date
+  // Calculate filtered fees collection based on month/date
+  const calculateFilteredFeesCollection = () => {
+    // Agar koi filter nahi lagaya hai to total collection return karo
+    if (!selectedMonth && !selectedDate) {
+      return totalFeesCollection;
     }
-  });
-  
-  return filteredFees;
-};
 
-// Format date for display without timezone issues
-const formatDisplayDate = (dateString) => {
-  if (!dateString) return '';
-  
-  // Directly split the date string to avoid timezone issues
-  const [year, month, day] = dateString.split('-');
-  
-  // Create date in local timezone
-  const date = new Date(year, month - 1, day);
-  
-  // Format as DD/MM/YYYY
-  return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-};
+    let filteredFees = 0;
+
+    allStudents.forEach((student) => {
+      if (student.paymentHistory) {
+        student.paymentHistory.forEach((payment) => {
+          const paymentDateObj = new Date(payment.date);
+
+          // Timezone-safe month calculation
+          const paymentMonth = paymentDateObj.toLocaleString("default", {
+            month: "long",
+          });
+
+          // Timezone-safe date comparison
+          const paymentDate = paymentDateObj.toISOString().split("T")[0];
+          const [paymentYear, paymentMonthNum, paymentDay] =
+            paymentDate.split("-");
+          const paymentDateFormatted = `${paymentYear}-${paymentMonthNum}-${paymentDay}`;
+
+          // Case 1: Sirf month selected hai
+          if (selectedMonth && !selectedDate) {
+            if (paymentMonth === selectedMonth) {
+              filteredFees += payment.amount || 0;
+            }
+          }
+          // Case 2: Sirf date selected hai
+          else if (!selectedMonth && selectedDate) {
+            if (paymentDateFormatted === selectedDate) {
+              filteredFees += payment.amount || 0;
+            }
+          }
+          // Case 3: Dono month aur date selected hain
+          else if (selectedMonth && selectedDate) {
+            if (
+              paymentMonth === selectedMonth &&
+              paymentDateFormatted === selectedDate
+            ) {
+              filteredFees += payment.amount || 0;
+            }
+          }
+        });
+      }
+    });
+
+    return filteredFees;
+  };
+
+  // Format date for display without timezone issues
+  const formatDisplayDate = (dateString) => {
+    if (!dateString) return "";
+
+    // Directly split the date string to avoid timezone issues
+    const [year, month, day] = dateString.split("-");
+
+    // Create date in local timezone
+    const date = new Date(year, month - 1, day);
+
+    // Format as DD/MM/YYYY
+    return `${date.getDate().toString().padStart(2, "0")}/${(
+      date.getMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}/${date.getFullYear()}`;
+  };
 
   // Toggle month selection for payment
   const toggleMonthSelection = (month) => {
     if (paymentMonths.includes(month)) {
-      setPaymentMonths(paymentMonths.filter(m => m !== month));
+      setPaymentMonths(paymentMonths.filter((m) => m !== month));
     } else {
       setPaymentMonths([...paymentMonths, month]);
       if (selectedStudent) {
@@ -1024,14 +1139,17 @@ const formatDisplayDate = (dateString) => {
   // Add a new fee to the challan
   const addNewFee = () => {
     if (newFeeDescription && newFeeAmount && parseInt(newFeeAmount) > 0) {
-      setOtherFees([...otherFees, {
-        description: newFeeDescription,
-        amount: parseInt(newFeeAmount)
-      }]);
-      setNewFeeDescription('');
-      setNewFeeAmount('');
+      setOtherFees([
+        ...otherFees,
+        {
+          description: newFeeDescription,
+          amount: parseInt(newFeeAmount),
+        },
+      ]);
+      setNewFeeDescription("");
+      setNewFeeAmount("");
     } else {
-      alert('Please enter both description and a valid amount greater than 0');
+      alert("Please enter both description and a valid amount greater than 0");
     }
   };
 
@@ -1044,7 +1162,8 @@ const formatDisplayDate = (dateString) => {
 
   // Calculate total challan amount
   const calculateChallanTotal = () => {
-    const tuitionFee = challanData?.feeBreakdown?.tuitionFee ||
+    const tuitionFee =
+      challanData?.feeBreakdown?.tuitionFee ||
       (challanData?.student?.monthlyFee || 0) * challanMonths.length;
     const examFee = examinationFee || 0;
     const otherFeesTotal = otherFees.reduce((sum, fee) => sum + fee.amount, 0);
@@ -1058,9 +1177,9 @@ const formatDisplayDate = (dateString) => {
 
   // Get status icon
   const getStatusIcon = (status) => {
-    if (status === 'Fully Paid') {
+    if (status === "Fully Paid") {
       return <CheckCircle size={16} className="text-green-500" />;
-    } else if (status === 'Partially Paid') {
+    } else if (status === "Partially Paid") {
       return <AlertCircle size={16} className="text-yellow-500" />;
     } else {
       return <XCircle size={16} className="text-red-500" />;
@@ -1089,13 +1208,13 @@ const formatDisplayDate = (dateString) => {
         startPage = totalPages - maxVisiblePages + 2;
       }
       if (startPage > 2) {
-        pageNumbers.push('...');
+        pageNumbers.push("...");
       }
       for (let i = startPage; i <= endPage; i++) {
         pageNumbers.push(i);
       }
       if (endPage < totalPages - 1) {
-        pageNumbers.push('...');
+        pageNumbers.push("...");
       }
       if (totalPages > 1) {
         pageNumbers.push(totalPages);
@@ -1106,7 +1225,7 @@ const formatDisplayDate = (dateString) => {
   };
 
   if (loading) {
-    return <Loading text='Loading Student Fees Record' />;
+    return <Loading text="Loading Student Fees Record" />;
   }
 
   return (
@@ -1114,99 +1233,38 @@ const formatDisplayDate = (dateString) => {
       <Sidebar />
 
       <div className="flex w-full h-screen ">
-      <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
-          <div className="bg-white w-full min-h-screen shadow-md rounded-md px-0 overflow-hidden">
-
+        <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+          <div className="bg-white w-full min-h-screen shadow-md rounded-md px-0  overflow-hidden">
             <main className="flex-1 overflow-y-auto md:p-2 bg-gray-50">
               {/* Header Section */}
-              <div className="bg-gradient-to-r from-white to-blue-50/30 rounded-3xl p-6 mb-3 border border-blue-100/50 shadow-sm">
-                <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
-
-                  {/* Page Title Section */}
-                  <div className="flex items-center">
-                    <div className="relative group">
-                      <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg mr-4 transform group-hover:scale-105 transition-transform duration-300">
-                        <DollarSign className="text-white" size={26} />
-                      </div>
-                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-400 rounded-full border-2 border-white flex items-center justify-center">
-                        <CheckCircle size={10} className="text-white" />
-                      </div>
-                    </div>
-                    <div>
-                      <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-800 bg-clip-text text-transparent">
-                        Fees Management
-                      </h1>
-                    </div>
-                  </div>
-
-                  {/* Search and Actions Section */}
-                  <div className="flex flex-col lg:flex-row gap-4 flex-1 lg:max-w-2xl">
-
-                    {/* Enhanced Search Bar */}
-                    <div className="relative flex-1 group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Search size={20} className="text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Search students by name, roll number, or father's name..."
-                        className="w-full pl-12 pr-4 py-4 bg-white/80 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 transition-all duration-300 shadow-sm hover:shadow-md text-lg"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setShowFilterModal(true)}
-                        className="flex items-center px-4 sm:px-6 py-3 sm:py-4 bg-white border-2 border-gray-200 text-gray-700 rounded-2xl hover:bg-gray-50 hover:border-gray-300 hover:shadow-lg transition-all duration-200 group min-w-[60px] sm:min-w-[120px] justify-center"
-                      >
-                        <Filter size={18} className="sm:mr-3 text-gray-500 group-hover:text-blue-600" />
-                        <span className="hidden sm:inline font-semibold">Filter</span>
-                        <span className="sm:hidden sr-only">Filter</span>
-                      </button>
-
-                      <button
-                        onClick={generateDueListPDF}
-                        className="flex items-center px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-2xl hover:from-purple-600 hover:to-purple-700 hover:shadow-xl transform hover:scale-105 transition-all duration-200 shadow-lg min-w-[60px] sm:min-w-[140px] justify-center"
-                      >
-                        <FileText size={18} className="sm:mr-3" />
-                        <span className="hidden sm:inline font-semibold">Due List</span>
-                        <span className="sm:hidden sr-only">Due List</span>
-                      </button>
-
-                      <button
-                        onClick={exportToExcel}
-                        className="flex items-center px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-2xl hover:from-green-600 hover:to-green-700 hover:shadow-xl transform hover:scale-105 transition-all duration-200 shadow-lg min-w-[60px] sm:min-w-[120px] justify-center"
-                      >
-                        <Download size={18} className="sm:mr-3" />
-                        <span className="hidden sm:inline font-semibold">Export</span>
-                        <span className="sm:hidden sr-only">Export</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-center">
-                    <AlertCircle className="text-red-500 mr-2" size={20} />
-                    <span className="text-red-700">{error}</span>
-                  </div>
-                </div>
-              )}
+              <PageTitle
+                title="Fees Management"
+                description="Manage student fees, payments, and financial records"
+                icon={DollarSign}
+                showFeesHeader={true}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                onFilterClick={() => setShowFilterModal(true)}
+                onDueListClick={generateDueListPDF}
+                onExportClick={exportToExcel}
+                bgGradient="bg-gradient-to-r from-white to-blue-50/30"
+                borderColor="border-blue-100/50"
+                iconBg="bg-gradient-to-br from-blue-500 to-blue-600"
+                showStatusBadge={true}
+              />
 
               {/* Summary Cards Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pt-3 mb-4">
                 {/* Total Students Card */}
                 <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 shadow-lg border border-blue-100/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-blue-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Total Students</p>
-                      <h3 className="text-3xl font-bold text-gray-900 mb-1">{totalStudents.toLocaleString()}</h3>
+                      <p className="text-blue-600/80 text-sm font-semibold uppercase tracking-wide mb-2">
+                        Total Students
+                      </p>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                        {totalStudents.toLocaleString()}
+                      </h3>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <Users className="text-white" size={28} />
@@ -1214,27 +1272,33 @@ const formatDisplayDate = (dateString) => {
                   </div>
                 </div>
 
-{/* Fees Collected Card */}
-<div className="bg-gradient-to-br from-white to-green-50 rounded-2xl p-6 shadow-lg border border-green-100/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
-  <div className="flex items-center justify-between">
-    <div className="flex-1">
-      <p className="text-green-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Fees Collected</p>
-      <h3 className="text-3xl font-bold text-gray-900 mb-1">
-        Rs. {calculateFilteredFeesCollection().toLocaleString()}
-      </h3>
-    </div>
-    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-      <DollarSign className="text-white" size={28} />
-    </div>
-  </div>
-</div>
+                {/* Fees Collected Card */}
+                <div className="bg-gradient-to-br from-white to-green-50 rounded-2xl p-6 shadow-lg border border-green-100/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-green-600/80 text-sm font-semibold uppercase tracking-wide mb-2">
+                        Fees Collected
+                      </p>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                        Rs. {calculateFilteredFeesCollection().toLocaleString()}
+                      </h3>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <DollarSign className="text-white" size={28} />
+                    </div>
+                  </div>
+                </div>
 
                 {/* Total Dues Card */}
                 <div className="bg-gradient-to-br from-white to-orange-50 rounded-2xl p-6 shadow-lg border border-orange-100/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-orange-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Total Dues</p>
-                      <h3 className="text-3xl font-bold text-gray-900 mb-1">Rs. {totalDues.toLocaleString()}</h3>
+                      <p className="text-orange-600/80 text-sm font-semibold uppercase tracking-wide mb-2">
+                        Total Dues
+                      </p>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                        Rs. {totalDues.toLocaleString()}
+                      </h3>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <AlertCircle className="text-white" size={28} />
@@ -1246,8 +1310,12 @@ const formatDisplayDate = (dateString) => {
                 <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-6 shadow-lg border border-purple-100/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-purple-600/80 text-sm font-semibold uppercase tracking-wide mb-2">Fully Paid</p>
-                      <h3 className="text-3xl font-bold text-gray-900 mb-1">{fullyPaidStudents.toLocaleString()}</h3>
+                      <p className="text-purple-600/80 text-sm font-semibold uppercase tracking-wide mb-2">
+                        Fully Paid
+                      </p>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                        {fullyPaidStudents.toLocaleString()}
+                      </h3>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <CheckCircle className="text-white" size={28} />
@@ -1262,14 +1330,30 @@ const formatDisplayDate = (dateString) => {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-blue-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Roll No</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Student Name</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Father Name</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider">Class/Section</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider">Total Fees</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider">Dues</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider">Status</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider">Actions</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+                          Roll No
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+                          Student Name
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+                          Father Name
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider">
+                          Class/Section
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider">
+                          Total Fees
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider">
+                          Dues
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -1283,52 +1367,84 @@ const formatDisplayDate = (dateString) => {
                                 </div>
                               </div>
                               <div>
-                                <div className="font-mono font-semibold text-gray-900 text-sm">{student.rollNo}</div>
+                                <div className="font-mono font-semibold text-gray-900 text-sm">
+                                  {student.rollNo}
+                                </div>
                               </div>
                             </div>
                           </td>
 
                           <td className="px-4 py-3 align-middle">
-                            <div className="font-semibold text-gray-900 text-sm">{student.name}</div>
+                            <div className="font-semibold text-gray-900 text-sm">
+                              {student.name}
+                            </div>
                           </td>
 
                           <td className="px-4 py-3 align-middle">
-                            <div className="font-semibold text-gray-900 text-sm">{student.fatherName}</div>
+                            <div className="font-semibold text-gray-900 text-sm">
+                              {student.fatherName}
+                            </div>
                           </td>
 
                           <td className="px-4 py-3 align-middle text-center">
                             <div className="inline-flex flex-col items-center justify-center">
-                              <span className="font-bold text-gray-900 text-sm">{student.class}</span>
-                              <span className="text-xs text-gray-500">Section {student.section}</span>
+                              <span className="font-bold text-gray-900 text-sm">
+                                {student.class}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                Section {student.section}
+                              </span>
                             </div>
                           </td>
 
                           <td className="px-4 py-3 align-middle text-right">
                             <div className="space-y-1">
-                              <div className="font-bold text-gray-900 text-sm">Rs. {student.Fees?.toLocaleString()}</div>
+                              <div className="font-bold text-gray-900 text-sm">
+                                Rs. {student.Fees?.toLocaleString()}
+                              </div>
                             </div>
                           </td>
 
                           <td className="px-4 py-3 align-middle text-right">
-                            <div className={`space-y-1 ${student.dues > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                              <div className="font-bold text-sm">Rs. {student.dues?.toLocaleString()}</div>
+                            <div
+                              className={`space-y-1 ${
+                                student.dues > 0
+                                  ? "text-red-600"
+                                  : "text-green-600"
+                              }`}
+                            >
+                              <div className="font-bold text-sm">
+                                Rs. {student.dues?.toLocaleString()}
+                              </div>
                               <div className="text-xs font-medium">
-                                {student.dues > 0 ? 'Due' : 'Clear'}
+                                {student.dues > 0 ? "Due" : "Clear"}
                               </div>
                             </div>
                           </td>
 
                           <td className="px-4 py-3 align-middle text-center">
                             <div className="flex justify-center">
-                              <div className={`inline-flex items-center px-3 py-1 rounded-full ${student.status === 'Fully Paid' ? 'bg-green-100 text-green-800' :
-                                student.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                <div className={`w-1.5 h-1.5 rounded-full mr-2 ${student.status === 'Fully Paid' ? 'bg-green-500' :
-                                  student.status === 'Partially Paid' ? 'bg-yellow-500' :
-                                    'bg-red-500'
-                                  }`} />
-                                <span className="text-xs font-semibold">{student.status}</span>
+                              <div
+                                className={`inline-flex items-center px-3 py-1 rounded-full ${
+                                  student.status === "Fully Paid"
+                                    ? "bg-green-100 text-green-800"
+                                    : student.status === "Partially Paid"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                <div
+                                  className={`w-1.5 h-1.5 rounded-full mr-2 ${
+                                    student.status === "Fully Paid"
+                                      ? "bg-green-500"
+                                      : student.status === "Partially Paid"
+                                      ? "bg-yellow-500"
+                                      : "bg-red-500"
+                                  }`}
+                                />
+                                <span className="text-xs font-semibold">
+                                  {student.status}
+                                </span>
                               </div>
                             </div>
                           </td>
@@ -1348,10 +1464,11 @@ const formatDisplayDate = (dateString) => {
                                   setShowPaymentModal(true);
                                 }}
                                 disabled={student.dues === 0}
-                                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white transition-colors ${student.dues === 0
-                                  ? 'bg-gray-400 cursor-not-allowed'
-                                  : 'bg-blue-600 hover:bg-blue-700'
-                                  }`}
+                                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white transition-colors ${
+                                  student.dues === 0
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-700"
+                                }`}
                               >
                                 <DollarSign size={14} className="mr-1" />
                                 Pay
@@ -1359,7 +1476,10 @@ const formatDisplayDate = (dateString) => {
                               <button
                                 onClick={() => {
                                   setSelectedStudent(student);
-                                  generateChallan(student, allMonths.slice(0, 5));
+                                  generateChallan(
+                                    student,
+                                    allMonths.slice(0, 5)
+                                  );
                                 }}
                                 className="inline-flex items-center px-3 py-1.5 border border-green-300 rounded-md text-sm font-medium text-green-700 hover:bg-green-50 transition-colors"
                               >
@@ -1377,18 +1497,25 @@ const formatDisplayDate = (dateString) => {
                 {students.length === 0 && !loading && (
                   <div className="text-center py-8 text-gray-500">
                     <User size={48} className="mx-auto text-gray-400" />
-                    <p className="mt-2">No students found matching your criteria</p>
+                    <p className="mt-2">
+                      No students found matching your criteria
+                    </p>
                   </div>
                 )}
 
                 {students.length > 0 && (
                   <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-200 bg-white">
                     <div className="text-sm text-gray-700">
-                      Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
+                      Showing{" "}
+                      <span className="font-medium">
+                        {(currentPage - 1) * itemsPerPage + 1}
+                      </span>{" "}
+                      to{" "}
                       <span className="font-medium">
                         {Math.min(currentPage * itemsPerPage, totalStudents)}
-                      </span>{' '}
-                      of <span className="font-medium">{totalStudents}</span> students
+                      </span>{" "}
+                      of <span className="font-medium">{totalStudents}</span>{" "}
+                      students
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -1412,12 +1539,15 @@ const formatDisplayDate = (dateString) => {
 
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(prev - 1, 1))
+                        }
                         disabled={currentPage === 1}
-                        className={`p-2 rounded-lg border transition-colors ${currentPage === 1
-                          ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
-                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                          }`}
+                        className={`p-2 rounded-lg border transition-colors ${
+                          currentPage === 1
+                            ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50"
+                            : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
                         <ChevronLeft size={16} />
                       </button>
@@ -1425,26 +1555,35 @@ const formatDisplayDate = (dateString) => {
                       {getPageNumbers().map((pageNumber, index) => (
                         <button
                           key={index}
-                          onClick={() => typeof pageNumber === 'number' && setCurrentPage(pageNumber)}
-                          disabled={pageNumber === '...'}
-                          className={`min-w-[40px] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${currentPage === pageNumber
-                            ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
-                            : pageNumber === '...'
-                              ? 'border-gray-300 bg-white text-gray-500 cursor-default'
-                              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                            }`}
+                          onClick={() =>
+                            typeof pageNumber === "number" &&
+                            setCurrentPage(pageNumber)
+                          }
+                          disabled={pageNumber === "..."}
+                          className={`min-w-[40px] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                            currentPage === pageNumber
+                              ? "border-blue-600 bg-blue-600 text-white shadow-sm"
+                              : pageNumber === "..."
+                              ? "border-gray-300 bg-white text-gray-500 cursor-default"
+                              : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                          }`}
                         >
                           {pageNumber}
                         </button>
                       ))}
 
                       <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                          )
+                        }
                         disabled={currentPage === totalPages}
-                        className={`p-2 rounded-lg border transition-colors ${currentPage === totalPages
-                          ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
-                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                          }`}
+                        className={`p-2 rounded-lg border transition-colors ${
+                          currentPage === totalPages
+                            ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50"
+                            : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
                         <ChevronRight size={16} />
                       </button>
@@ -1460,7 +1599,9 @@ const formatDisplayDate = (dateString) => {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
               <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-4 sm:p-6 max-h-[95vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-gray-800">Record Fee Payment</h2>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Record Fee Payment
+                  </h2>
                   <button
                     onClick={() => {
                       setShowPaymentModal(false);
@@ -1475,30 +1616,52 @@ const formatDisplayDate = (dateString) => {
                 <div className="mb-4 p-3 sm:p-4 bg-blue-50 rounded-lg">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                     <div>
-                      <p className="text-xs sm:text-sm text-blue-700 font-medium">Student</p>
-                      <p className="font-semibold text-sm sm:text-base">{selectedStudent.name}</p>
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">
+                        Student
+                      </p>
+                      <p className="font-semibold text-sm sm:text-base">
+                        {selectedStudent.name}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-xs sm:text-sm text-blue-700 font-medium">Roll No</p>
-                      <p className="font-semibold text-sm sm:text-base">{selectedStudent.rollNo}</p>
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">
+                        Roll No
+                      </p>
+                      <p className="font-semibold text-sm sm:text-base">
+                        {selectedStudent.rollNo}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-xs sm:text-sm text-blue-700 font-medium">Class</p>
-                      <p className="font-semibold text-sm sm:text-base">{selectedStudent.class}</p>
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">
+                        Class
+                      </p>
+                      <p className="font-semibold text-sm sm:text-base">
+                        {selectedStudent.class}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-xs sm:text-sm text-blue-700 font-medium">Monthly Fee</p>
-                      <p className="font-semibold text-sm sm:text-base">Rs. {selectedStudent.monthlyFee}</p>
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">
+                        Monthly Fee
+                      </p>
+                      <p className="font-semibold text-sm sm:text-base">
+                        Rs. {selectedStudent.monthlyFee}
+                      </p>
                     </div>
                     <div className="sm:col-span-2">
-                      <p className="text-xs sm:text-sm text-blue-700 font-medium">Total Dues</p>
-                      <p className="font-semibold text-sm sm:text-base text-red-600">Rs. {selectedStudent.dues}</p>
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">
+                        Total Dues
+                      </p>
+                      <p className="font-semibold text-sm sm:text-base text-red-600">
+                        Rs. {selectedStudent.dues}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Payment Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Date
+                  </label>
                   <input
                     type="date"
                     className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -1508,7 +1671,9 @@ const formatDisplayDate = (dateString) => {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Payment Mode</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Mode
+                  </label>
                   <select
                     className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     value={paymentMode}
@@ -1522,26 +1687,37 @@ const formatDisplayDate = (dateString) => {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Months to Pay</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Months to Pay
+                  </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 sm:max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-lg">
                     {selectedStudent.duesByMonth
-                      ?.filter(month => !month.paid && month.dueAmount > 0)
+                      ?.filter((month) => !month.paid && month.dueAmount > 0)
                       .map((monthData, index) => (
                         <div
                           key={index}
-                          className={`p-2 rounded text-center cursor-pointer transition-all ${paymentMonths.includes(monthData.month) ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                            }`}
+                          className={`p-2 rounded text-center cursor-pointer transition-all ${
+                            paymentMonths.includes(monthData.month)
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-100 hover:bg-gray-200"
+                          }`}
                           onClick={() => toggleMonthSelection(monthData.month)}
                         >
-                          <div className="text-xs sm:text-sm font-medium">{monthData.month}</div>
-                          <div className="text-xs">Rs. {monthData.dueAmount}</div>
+                          <div className="text-xs sm:text-sm font-medium">
+                            {monthData.month}
+                          </div>
+                          <div className="text-xs">
+                            Rs. {monthData.dueAmount}
+                          </div>
                         </div>
                       ))}
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount (Rs.)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Amount (Rs.)
+                  </label>
                   <input
                     type="number"
                     className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -1578,7 +1754,9 @@ const formatDisplayDate = (dateString) => {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-gray-800">Student Details</h2>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Student Details
+                  </h2>
                   <button
                     onClick={() => setShowDetailsModal(false)}
                     className="text-gray-400 hover:text-gray-600"
@@ -1590,82 +1768,140 @@ const formatDisplayDate = (dateString) => {
                 <div className="mb-4 p-4 bg-blue-50 rounded-lg">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Student</p>
+                      <p className="text-sm text-blue-700 font-medium">
+                        Student
+                      </p>
                       <p className="font-semibold">{detailsStudent.name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Roll No</p>
+                      <p className="text-sm text-blue-700 font-medium">
+                        Roll No
+                      </p>
                       <p className="font-semibold">{detailsStudent.rollNo}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Father Name</p>
-                      <p className="font-semibold">{detailsStudent.fatherName}</p>
+                      <p className="text-sm text-blue-700 font-medium">
+                        Father Name
+                      </p>
+                      <p className="font-semibold">
+                        {detailsStudent.fatherName}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Class & Section</p>
-                      <p className="font-semibold">{detailsStudent.Class} - {detailsStudent.section}</p>
+                      <p className="text-sm text-blue-700 font-medium">
+                        Class & Section
+                      </p>
+                      <p className="font-semibold">
+                        {detailsStudent.Class} - {detailsStudent.section}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Total Fees</p>
+                      <p className="text-sm text-blue-700 font-medium">
+                        Total Fees
+                      </p>
                       <p className="font-semibold">Rs. {detailsStudent.Fees}</p>
                     </div>
                     <div>
                       <p className="text-sm text-blue-700 font-medium">Dues</p>
-                      <p className="font-semibold text-red-600">Rs. {detailsStudent.dues}</p>
+                      <p className="font-semibold text-red-600">
+                        Rs. {detailsStudent.dues}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <h3 className="font-semibold text-gray-700 mb-2">Month-wise Dues Status</h3>
+                  <h3 className="font-semibold text-gray-700 mb-2">
+                    Month-wise Dues Status
+                  </h3>
                   <div className="grid grid-cols-4 lg:grid-cols-6 gap-2">
                     {detailsStudent.duesByMonth?.map((monthData, index) => (
-                      <div key={index} className={`p-2 rounded text-center ${monthData.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                        <div className="text-sm font-medium">{monthData.month}</div>
+                      <div
+                        key={index}
+                        className={`p-2 rounded text-center ${
+                          monthData.paid
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        <div className="text-sm font-medium">
+                          {monthData.month}
+                        </div>
                         <div className="text-xs">Rs. {monthData.dueAmount}</div>
-                        <div className="text-xs">{monthData.paid ? 'Paid' : 'Due'}</div>
+                        <div className="text-xs">
+                          {monthData.paid ? "Paid" : "Due"}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Payment History</h3>
-                  {detailsStudent.paymentHistory && detailsStudent.paymentHistory.length > 0 ? (
+                  <h3 className="font-semibold text-gray-700 mb-2">
+                    Payment History
+                  </h3>
+                  {detailsStudent.paymentHistory &&
+                  detailsStudent.paymentHistory.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-100">
                           <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Months Paid</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Receipt No</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                              Date
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                              Months Paid
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                              Amount
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                              Mode
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                              Receipt No
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {detailsStudent.paymentHistory.map((payment, index) => (
-                            <tr key={index}>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">
-                                {new Date(payment.date).toLocaleDateString()}
-                              </td>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">
-                                {payment.months ? payment.months.join(', ') : 'N/A'}
-                              </td>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">Rs. {payment.amount}</td>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.mode || 'Cash'}</td>
-                              <td className="px-4 py-2 whitespace-nowrap text-sm">{payment.receiptNo || 'N/A'}</td>
-                            </tr>
-                          ))}
+                          {detailsStudent.paymentHistory.map(
+                            (payment, index) => (
+                              <tr key={index}>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                  {new Date(payment.date).toLocaleDateString()}
+                                </td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                  {payment.months
+                                    ? payment.months.join(", ")
+                                    : "N/A"}
+                                </td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                  Rs. {payment.amount}
+                                </td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                  {payment.mode || "Cash"}
+                                </td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                  {payment.receiptNo || "N/A"}
+                                </td>
+                              </tr>
+                            )
+                          )}
                         </tbody>
                       </table>
                     </div>
                   ) : (
                     <div className="text-center py-8 bg-gray-50 rounded-lg">
-                      <DollarSign size={48} className="mx-auto text-gray-400 mb-2" />
-                      <p className="text-gray-500 text-lg">No Payment History</p>
-                      <p className="text-gray-400 text-sm">This student hasn't made any payments yet.</p>
+                      <DollarSign
+                        size={48}
+                        className="mx-auto text-gray-400 mb-2"
+                      />
+                      <p className="text-gray-500 text-lg">
+                        No Payment History
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        This student hasn't made any payments yet.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1678,7 +1914,9 @@ const formatDisplayDate = (dateString) => {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-gray-800">Fee Challan (Last Payment)</h2>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Fee Challan (Last Payment)
+                  </h2>
                   <div className="flex space-x-2">
                     <button
                       onClick={printChallan}
@@ -1691,8 +1929,8 @@ const formatDisplayDate = (dateString) => {
                       onClick={() => {
                         setShowChallan(false);
                         setOtherFees([]);
-                        setNewFeeDescription('');
-                        setNewFeeAmount('');
+                        setNewFeeDescription("");
+                        setNewFeeAmount("");
                         setExaminationFee(0);
                       }}
                       className="text-gray-400 hover:text-gray-600"
@@ -1704,63 +1942,112 @@ const formatDisplayDate = (dateString) => {
 
                 <div className="p-6 border-2 border-dashed border-gray-300 rounded-lg">
                   <div className="text-center mb-6">
-                    <h1 className="text-2xl font-bold text-blue-800">City School System</h1>
-                    <p className="text-sm text-gray-600">123 Education Street, Karachi, Pakistan</p>
+                    <h1 className="text-2xl font-bold text-blue-800">
+                      City School System
+                    </h1>
+                    <p className="text-sm text-gray-600">
+                      123 Education Street, Karachi, Pakistan
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6 mb-6">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800">Student Information</h3>
-                      <p className="text-sm"><span className="font-medium">Name:</span> {challanData.student?.name}</p>
-                      <p className="text-sm"><span className="font-medium">Father Name:</span> {challanData.student?.fatherName}</p>
-                      <p className="text-sm"><span className="font-medium">Roll No:</span> {challanData.student?.rollNo}</p>
-                      <p className="text-sm"><span className="font-medium">Class:</span> {challanData.student?.class}</p>
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        Student Information
+                      </h3>
+                      <p className="text-sm">
+                        <span className="font-medium">Name:</span>{" "}
+                        {challanData.student?.name}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Father Name:</span>{" "}
+                        {challanData.student?.fatherName}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Roll No:</span>{" "}
+                        {challanData.student?.rollNo}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Class:</span>{" "}
+                        {challanData.student?.class}
+                      </p>
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800">Payment Information</h3>
-                      <p className="text-sm"><span className="font-medium">Challan No:</span> {challanData.challanNo}</p>
-                      <p className="text-sm"><span className="font-medium">Issue Date:</span> {new Date(challanData.issueDate).toLocaleDateString()}</p>
-                      <p className="text-sm"><span className="font-medium">Due Date:</span> {new Date(challanData.dueDate).toLocaleDateString()}</p>
-                      <p className="text-sm"><span className="font-medium">Last Payment Date:</span> {new Date(challanData.paymentDate).toLocaleDateString()}</p>
-                      <p className="text-sm"><span className="font-medium">Payment Mode:</span> {challanData.paymentMode}</p>
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        Payment Information
+                      </h3>
+                      <p className="text-sm">
+                        <span className="font-medium">Challan No:</span>{" "}
+                        {challanData.challanNo}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Issue Date:</span>{" "}
+                        {new Date(challanData.issueDate).toLocaleDateString()}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Due Date:</span>{" "}
+                        {new Date(challanData.dueDate).toLocaleDateString()}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Last Payment Date:</span>{" "}
+                        {new Date(challanData.paymentDate).toLocaleDateString()}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Payment Mode:</span>{" "}
+                        {challanData.paymentMode}
+                      </p>
                     </div>
                   </div>
 
                   {/* Last Payment Summary */}
                   {challanData.lastPayment && (
                     <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                      <h3 className="text-lg font-semibold text-green-800 mb-2">Last Payment Summary</h3>
+                      <h3 className="text-lg font-semibold text-green-800 mb-2">
+                        Last Payment Summary
+                      </h3>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                          <span className="font-medium">Amount Paid:</span> Rs. {challanData.lastPayment.amount}
+                          <span className="font-medium">Amount Paid:</span> Rs.{" "}
+                          {challanData.lastPayment.amount}
                         </div>
                         <div>
-                          <span className="font-medium">Months Paid:</span> {challanData.lastPayment.months?.join(', ') || 'N/A'}
+                          <span className="font-medium">Months Paid:</span>{" "}
+                          {challanData.lastPayment.months?.join(", ") || "N/A"}
                         </div>
                         <div>
-                          <span className="font-medium">Payment Date:</span> {new Date(challanData.lastPayment.date).toLocaleDateString()}
+                          <span className="font-medium">Payment Date:</span>{" "}
+                          {new Date(
+                            challanData.lastPayment.date
+                          ).toLocaleDateString()}
                         </div>
                         <div>
-                          <span className="font-medium">Payment Mode:</span> {challanData.lastPayment.mode || 'Cash'}
+                          <span className="font-medium">Payment Mode:</span>{" "}
+                          {challanData.lastPayment.mode || "Cash"}
                         </div>
                       </div>
                     </div>
                   )}
 
                   <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Fee Details</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      Fee Details
+                    </h3>
                     <table className="w-full border-collapse border border-gray-300">
                       <thead>
                         <tr className="bg-gray-100">
-                          <th className="border border-gray-300 p-2 text-left text-sm">Description</th>
-                          <th className="border border-gray-300 p-2 text-right text-sm">Amount (Rs.)</th>
+                          <th className="border border-gray-300 p-2 text-left text-sm">
+                            Description
+                          </th>
+                          <th className="border border-gray-300 p-2 text-right text-sm">
+                            Amount (Rs.)
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
                           <td className="border border-gray-300 p-2 text-sm">
-                            Tuition Fee ({challanData.months?.join(', ')})
+                            Tuition Fee ({challanData.months?.join(", ")})
                           </td>
                           <td className="border border-gray-300 p-2 text-sm text-right">
                             {challanData.feeBreakdown?.tuitionFee?.toLocaleString()}
@@ -1797,7 +2084,9 @@ const formatDisplayDate = (dateString) => {
                                 </button>
                               </div>
                             </td>
-                            <td className="border border-gray-300 p-2 text-sm text-right">{fee.amount.toLocaleString()}</td>
+                            <td className="border border-gray-300 p-2 text-sm text-right">
+                              {fee.amount.toLocaleString()}
+                            </td>
                           </tr>
                         ))}
 
@@ -1809,7 +2098,9 @@ const formatDisplayDate = (dateString) => {
                                 placeholder="Add custom fee description"
                                 className="flex-1 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                                 value={newFeeDescription}
-                                onChange={(e) => setNewFeeDescription(e.target.value)}
+                                onChange={(e) =>
+                                  setNewFeeDescription(e.target.value)
+                                }
                               />
                             </div>
                           </td>
@@ -1820,7 +2111,9 @@ const formatDisplayDate = (dateString) => {
                                 placeholder="Amount"
                                 className="w-20 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                                 value={newFeeAmount}
-                                onChange={(e) => setNewFeeAmount(e.target.value)}
+                                onChange={(e) =>
+                                  setNewFeeAmount(e.target.value)
+                                }
                               />
                               <button
                                 onClick={addNewFee}
@@ -1834,7 +2127,9 @@ const formatDisplayDate = (dateString) => {
                         </tr>
 
                         <tr className="bg-blue-50">
-                          <td className="border border-gray-300 p-2 text-sm font-semibold">Total Amount</td>
+                          <td className="border border-gray-300 p-2 text-sm font-semibold">
+                            Total Amount
+                          </td>
                           <td className="border border-gray-300 p-2 text-sm text-right font-semibold">
                             Rs. {calculateChallanTotal().toLocaleString()}
                           </td>
@@ -1843,7 +2138,9 @@ const formatDisplayDate = (dateString) => {
                         {/* Paid Amount Row */}
                         {challanData.feeBreakdown?.paidAmount && (
                           <tr className="bg-green-50">
-                            <td className="border border-gray-300 p-2 text-sm font-semibold text-green-700">Amount Paid</td>
+                            <td className="border border-gray-300 p-2 text-sm font-semibold text-green-700">
+                              Amount Paid
+                            </td>
                             <td className="border border-gray-300 p-2 text-sm text-right font-semibold text-green-700">
                               Rs. {calculateChallanTotal().toLocaleString()}
                             </td>
@@ -1860,7 +2157,11 @@ const formatDisplayDate = (dateString) => {
                       <span className="font-semibold">Payment Verified</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-2">
-                      This challan is generated based on the last payment made on {challanData.paymentDate ? new Date(challanData.paymentDate).toLocaleDateString() : 'N/A'}
+                      This challan is generated based on the last payment made
+                      on{" "}
+                      {challanData.paymentDate
+                        ? new Date(challanData.paymentDate).toLocaleDateString()
+                        : "N/A"}
                     </p>
                   </div>
                 </div>
@@ -1868,150 +2169,174 @@ const formatDisplayDate = (dateString) => {
             </div>
           )}
 
-{/* Filter Modal */}
-{showFilterModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-gray-800">Filter Students</h2>
-        <button
-          onClick={() => setShowFilterModal(false)}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <X size={24} />
-        </button>
-      </div>
+          {/* Filter Modal */}
+          {showFilterModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Filter Students
+                  </h2>
+                  <button
+                    onClick={() => setShowFilterModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
 
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Class
+                  </label>
+                  <select
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={selectedClass}
+                    onChange={(e) => setSelectedClass(e.target.value)}
+                  >
+                    <option value="All">All Classes</option>
+                    {[...new Set(allStudents.map((student) => student.class))]
+                      .sort()
+                      .map((className) => (
+                        <option key={className} value={className}>
+                          {className}
+                        </option>
+                      ))}
+                  </select>
+                </div>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-        <select
-          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={selectedClass}
-          onChange={(e) => setSelectedClass(e.target.value)}
-        >
-          <option value="All">All Classes</option>
-          {[...new Set(allStudents.map(student => student.class))].sort().map(className => (
-            <option key={className} value={className}>{className}</option>
-          ))}
-        </select>
-      </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <select
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                  >
+                    <option value="All">All Status</option>
+                    <option value="Fully Paid">Fully Paid</option>
+                    <option value="Partially Paid">Partially Paid</option>
+                    <option value="Not Paid">Not Paid</option>
+                  </select>
+                </div>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-        <select
-          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-        >
-          <option value="All">All Status</option>
-          <option value="Fully Paid">Fully Paid</option>
-          <option value="Partially Paid">Partially Paid</option>
-          <option value="Not Paid">Not Paid</option>
-        </select>
-      </div>
+                {/* Fees Collection Filter Section */}
+                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h3 className="text-sm font-semibold text-blue-800 mb-3">
+                    Fees Collection Filter
+                  </h3>
 
-      {/* Fees Collection Filter Section */}
-      <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <h3 className="text-sm font-semibold text-blue-800 mb-3">Fees Collection Filter</h3>
-        
-        <div className="grid grid-cols-2 gap-3">
-          {/* Month Filter */}
-          <div>
-            <label className="block text-xs font-medium text-blue-700 mb-1">Select Month</label>
-            <select 
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-full p-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            >
-              <option value="">All Months</option>
-              {allMonths.map(month => (
-                <option key={month} value={month}>{month}</option>
-              ))}
-            </select>
-          </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Month Filter */}
+                    <div>
+                      <label className="block text-xs font-medium text-blue-700 mb-1">
+                        Select Month
+                      </label>
+                      <select
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        className="w-full p-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      >
+                        <option value="">All Months</option>
+                        {allMonths.map((month) => (
+                          <option key={month} value={month}>
+                            {month}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-          {/* Date Filter */}
-          <div>
-            <label className="block text-xs font-medium text-blue-700 mb-1">Select Date</label>
-            <input 
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full p-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            />
-          </div>
-        </div>
+                    {/* Date Filter */}
+                    <div>
+                      <label className="block text-xs font-medium text-blue-700 mb-1">
+                        Select Date
+                      </label>
+                      <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="w-full p-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
 
-      {/* Current Filter Info */}
-<div className="mt-3 text-xs">
-  {selectedMonth && selectedDate ? (
-    <div className="text-blue-600 bg-blue-100 px-2 py-1 rounded">
-      📅 Showing collection for: <strong>{selectedMonth} - {formatDisplayDate(selectedDate)}</strong>
-    </div>
-  ) : selectedMonth && !selectedDate ? (
-    <div className="text-blue-600 bg-blue-100 px-2 py-1 rounded">
-      📅 Showing collection for: <strong>Entire {selectedMonth}</strong>
-    </div>
-  ) : !selectedMonth && selectedDate ? (
-    <div className="text-blue-600 bg-blue-100 px-2 py-1 rounded">
-      📅 Showing collection for: <strong>{formatDisplayDate(selectedDate)}</strong>
-    </div>
-  ) : (
-    <div className="text-blue-600 bg-blue-100 px-2 py-1 rounded">
-      📊 Showing total collection (All Time)
-    </div>
-  )}
-</div>
+                  {/* Current Filter Info */}
+                  <div className="mt-3 text-xs">
+                    {selectedMonth && selectedDate ? (
+                      <div className="text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                        📅 Showing collection for:{" "}
+                        <strong>
+                          {selectedMonth} - {formatDisplayDate(selectedDate)}
+                        </strong>
+                      </div>
+                    ) : selectedMonth && !selectedDate ? (
+                      <div className="text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                        📅 Showing collection for:{" "}
+                        <strong>Entire {selectedMonth}</strong>
+                      </div>
+                    ) : !selectedMonth && selectedDate ? (
+                      <div className="text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                        📅 Showing collection for:{" "}
+                        <strong>{formatDisplayDate(selectedDate)}</strong>
+                      </div>
+                    ) : (
+                      <div className="text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                        📊 Showing total collection (All Time)
+                      </div>
+                    )}
+                  </div>
 
-        {/* Quick Actions */}
-        <div className="mt-2 flex gap-2">
-          <button
-            onClick={() => {
-              setSelectedMonth('');
-              setSelectedDate('');
-            }}
-            className="text-xs bg-white border border-blue-300 text-blue-600 px-2 py-1 rounded hover:bg-blue-50"
-          >
-            Clear Filters
-          </button>
-          <button
-            onClick={() => {
-              const today = new Date();
-              setSelectedMonth(today.toLocaleString('default', { month: 'long' }));
-              setSelectedDate(today.toISOString().split('T')[0]);
-            }}
-            className="text-xs bg-blue-100 border border-blue-300 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
-          >
-            Today
-          </button>
-        </div>
-      </div>
+                  {/* Quick Actions */}
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedMonth("");
+                        setSelectedDate("");
+                      }}
+                      className="text-xs bg-white border border-blue-300 text-blue-600 px-2 py-1 rounded hover:bg-blue-50"
+                    >
+                      Clear Filters
+                    </button>
+                    <button
+                      onClick={() => {
+                        const today = new Date();
+                        setSelectedMonth(
+                          today.toLocaleString("default", { month: "long" })
+                        );
+                        setSelectedDate(today.toISOString().split("T")[0]);
+                      }}
+                      className="text-xs bg-blue-100 border border-blue-300 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
+                    >
+                      Today
+                    </button>
+                  </div>
+                </div>
 
-      <div className="flex justify-end space-x-3">
-        <button
-          onClick={() => {
-            setSelectedClass('All');
-            setSelectedStatus('All');
-            setSearchTerm('');
-            setSelectedMonth('');
-            setSelectedDate('');
-            setShowFilterModal(false);
-          }}
-          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
-        >
-          Clear All
-        </button>
-        <button
-          onClick={() => setShowFilterModal(false)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Apply Filters
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => {
+                      setSelectedClass("All");
+                      setSelectedStatus("All");
+                      setSearchTerm("");
+                      setSelectedMonth("");
+                      setSelectedDate("");
+                      setShowFilterModal(false);
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+                  >
+                    Clear All
+                  </button>
+                  <button
+                    onClick={() => setShowFilterModal(false)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
