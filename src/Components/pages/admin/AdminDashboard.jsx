@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import SideBar from "../sidebar/SideBar";
-import StatsOverview from "./dashboard/StatsOverview";
-import AttendanceCharts from "./dashboard/AttendanceCharts";
-import FinanceOverview from "./dashboard/FinanceOverview";
-import QuickActionsPanel from "./dashboard/QuickActionsPanel";
-import RecentActivities from "./dashboard/RecentActivities";
-import CalendarWidget from "./dashboard/CalendarWidget";
-import StudentDistribution from "./dashboard/StudentDistribution";
-import LoadingSpinner from "../ui/LoadingSpinner";
+import StatsOverview from "./DashboardStats";
+import AttendanceCharts from "./DashAttendanceCharts";
+import FinanceOverview from "./DashFinanceOverview";
+import QuickActionsPanel from "./QuickAction";
+import RecentActivities from "./RecentActivity";
+import CalendarWidget from "./CalendarWidget";
+import StudentDistribution from "./DashStudentDistribution";
+import LoadingSpinner from "../LoadingSpinner";
 
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);

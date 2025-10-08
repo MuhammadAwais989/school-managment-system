@@ -3,24 +3,38 @@ import React from "react";
 const RecentActivities = ({ activities }) => {
   const getActivityIcon = (type) => {
     const icons = {
+      admission: "👨‍🎓",
       fee_payment: "💰",
       attendance: "📝",
-      new_admission: "👨‍🎓",
-      teacher_attendance: "👨‍🏫",
-      expense: "💸"
+      notice: "📢",
+      login: "🔐",
+      logout: "🚪",
+      exam: "📝",
+      event: "🎉"
     };
     return icons[type] || "🔔";
   };
 
   const getActivityColor = (type) => {
     const colors = {
-      fee_payment: "text-green-600 bg-green-50",
-      attendance: "text-blue-600 bg-blue-50",
-      new_admission: "text-purple-600 bg-purple-50",
-      teacher_attendance: "text-orange-600 bg-orange-50",
-      expense: "text-red-600 bg-red-50"
+      admission: "bg-purple-100 text-purple-600",
+      fee_payment: "bg-green-100 text-green-600",
+      attendance: "bg-blue-100 text-blue-600",
+      notice: "bg-orange-100 text-orange-600",
+      login: "bg-gray-100 text-gray-600",
+      logout: "bg-gray-100 text-gray-600",
+      exam: "bg-red-100 text-red-600",
+      event: "bg-pink-100 text-pink-600"
     };
-    return colors[type] || "text-gray-600 bg-gray-50";
+    return colors[type] || "bg-gray-100 text-gray-600";
+  };
+
+  const formatTime = (timestamp) => {
+    return timestamp.toLocaleTimeString('en-IN', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
   };
 
   return (
@@ -30,19 +44,27 @@ const RecentActivities = ({ activities }) => {
         <span className="text-sm text-gray-500">{activities.length} activities</span>
       </div>
       
-      <div className="space-y-3">
+      <div className="space-y-3 max-h-96 overflow-y-auto">
         {activities.map((activity) => (
-          <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+          <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${getActivityColor(activity.type)}`}>
               {getActivityIcon(activity.type)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-800">{activity.message}</p>
-              <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+              <div className="flex items-start justify-between">
+                <p className="text-sm font-medium text-gray-800">{activity.title}</p>
+                <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                  {formatTime(activity.timestamp)}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
               {activity.amount && (
                 <p className="text-xs font-medium text-green-600 mt-1">
                   ₹{activity.amount.toLocaleString()}
                 </p>
+              )}
+              {activity.user && (
+                <p className="text-xs text-gray-500 mt-1">By: {activity.user}</p>
               )}
             </div>
           </div>
