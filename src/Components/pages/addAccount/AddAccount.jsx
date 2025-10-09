@@ -10,6 +10,7 @@ import ConfirmDeletePopup from "./DeletePopup";
 import { BaseURL } from "../../helper/helper";
 import { showSuccess, showError } from "../../utils/Toast";
 import PageTitle from "../PageTitle";
+import ExcelExport from "../ExportExcel";
 
 const AddAccount = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -123,33 +124,23 @@ const AddAccount = () => {
     }
   };
 
-  // Function to export data to Excel
-  const exportToExcel = () => {
-    const dataToExport = filteredUsers.map(user => ({
-      'Name': user.name,
-      'Father Name': user.fatherName,
-      'Designation': user.designation,
-      'Date of Joining': user.dateOfJoining,
-      'Class': user.Class,
-      'Section': user.section,
-      'Salary': user.salary,
-      'Gender': user.gender,
-      'Last Qualification': user.last_qualification,
-      'Date of Birth': user.dateOfBirth,
-      'CNIC No': user.CNIC_No,
-      'Phone': user.phone,
-      'Email': user.email,
-      'Address': user.address
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
-
-    // Generate Excel file and trigger download
-    XLSX.writeFile(workbook, "Users_Data.xlsx");
-    showSuccess("Data exported to Excel successfully");
-  };
+   // Mapping function for Excel export
+   const mapUserData = (user) => ({
+    'Name': user.name || 'N/A',
+    'Father Name': user.fatherName || 'N/A',
+    'Designation': user.designation || 'N/A',
+    'Date of Joining': user.dateOfJoining || 'N/A',
+    'Class': user.Class || 'N/A',
+    'Section': user.section || 'N/A',
+    'Salary': user.salary || 'N/A',
+    'Gender': user.gender || 'N/A',
+    'Last Qualification': user.last_qualification || 'N/A',
+    'Date of Birth': user.dateOfBirth || 'N/A',
+    'CNIC No': user.CNIC_No || 'N/A',
+    'Phone': user.phone || 'N/A',
+    'Email': user.email || 'N/A',
+    'Address': user.address || 'N/A'
+  });
 
   // Get unique values for filter dropdowns
   const getUniqueValues = (key) => {
@@ -274,13 +265,14 @@ const AddAccount = () => {
               {/* Button Group */}
               <div className="flex flex-wrap gap-2 w-full lg:w-auto">
                 {/* Export Button */}
-                <button
-                  onClick={exportToExcel}
-                  className="flex items-center bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-sm hover:shadow-md"
-                >
-                  <FaFileExport className="mr-2" />
-                  <span className="hidden sm:inline">Export Excel</span>
-                </button>
+                <ExcelExport 
+                  data={filteredUsers}
+                  mappingFunction={mapUserData}
+                  fileName="Users_Data"
+                  sheetName="Users"
+                  buttonText="Export Excel"
+                  disabled={filteredUsers.length === 0}
+                />
 
                 {/* Filter Button */}
                 <button
@@ -441,14 +433,40 @@ const AddAccount = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {isLoading ? (
-                    <tr>
-                      <td colSpan="9" className="px-6 py-8 text-center">
-                        <div className="flex justify-center items-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        </div>
-                        <p className="mt-2 text-gray-500">Loading user data...</p>
-                      </td>
-                    </tr>
+                    <>
+                    {Array.from({ length: 5 }, (_, index) => (
+                      <tr key={index} className="animate-pulse">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-8"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-32"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-20"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-16"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-12"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex space-x-2">
+                            <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+                            <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+                            <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </>
                   ) : currentUsers.length > 0 ? (
                     currentUsers.map((user, index) => (
                       <tr key={user._id} className="hover:bg-gray-50 transition-colors">

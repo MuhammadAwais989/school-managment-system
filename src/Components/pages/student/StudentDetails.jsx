@@ -21,6 +21,7 @@ import ViewPopup from "../addAccount/ViewPopup";
 import ConfirmDeletePopup from "../addAccount/DeletePopup";
 import { BaseURL } from "../../helper/helper";
 import { showSuccess, showError } from "../../utils/Toast";
+import ExcelExport from "../ExportExcel";
 
 const StudentDetails = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -276,34 +277,25 @@ const StudentDetails = () => {
     }
   };
 
-  const exportToExcel = () => {
-    const dataToExport = filteredStudents.map((student) => ({
-      "Roll No": student.rollNo,
-      Name: student.name,
-      "Father Name": student.fatherName,
-      "Mother Name": student.motherName,
-      "Father Occupation": student.fatherOccupation,
-      Gender: student.gender,
-      "Joining Date": student.dateOfJoining,
-      Class: student.Class,
-      Section: student.section,
-      Fees: student.Fees,
-      "Date of Birth": student.dateOfBirth,
-      Age: student.age,
-      Religion: student.religion,
-      Phone: student.phone,
-      "CNIC/B-Form": student.CNIC_No,
-      "Present Address": student.presentAddress,
-      "Permanent Address": student.permanentAddress,
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
-
-    XLSX.writeFile(workbook, "Students_Data.xlsx");
-    showSuccess("Data exported to Excel successfully");
-  };
+  const mapStudentData = (student) => ({
+    "Roll No": student.rollNo || "N/A",
+    "Name": student.name || "N/A",
+    "Father Name": student.fatherName || "N/A",
+    "Mother Name": student.motherName || "N/A",
+    "Father Occupation": student.fatherOccupation || "N/A",
+    "Gender": student.gender || "N/A",
+    "Joining Date": student.dateOfJoining || "N/A",
+    "Class": student.Class || "N/A",
+    "Section": student.section || "N/A",
+    "Fees": student.Fees || "N/A",
+    "Date of Birth": student.dateOfBirth || "N/A",
+    "Age": student.age || "N/A",
+    "Religion": student.religion || "N/A",
+    "Phone": student.phone || "N/A",
+    "CNIC/B-Form": student.CNIC_No || "N/A",
+    "Present Address": student.presentAddress || "N/A",
+    "Permanent Address": student.permanentAddress || "N/A",
+  });
 
   // Pagination functions
   const goToNextPage = () => {
@@ -421,13 +413,14 @@ const StudentDetails = () => {
               {/* Button Group */}
               <div className="flex flex-wrap gap-2 w-full lg:w-auto">
                 {/* Export Button */}
-                <button
-                  onClick={exportToExcel}
-                  className="flex items-center bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-sm hover:shadow-md"
-                >
-                  <FaFileExport className="mr-2" />
-                  <span className="hidden sm:inline">Export Excel</span>
-                </button>
+                <ExcelExport 
+                  data={filteredStudents}
+                  mappingFunction={mapStudentData}
+                  fileName="Students_Data"
+                  sheetName="Students"
+                  buttonText="Export Excel"
+                  disabled={filteredStudents.length === 0}
+                />
 
                 {/* Filter Button - Hide for teachers */}
                 {userRole !== "Teacher" && (

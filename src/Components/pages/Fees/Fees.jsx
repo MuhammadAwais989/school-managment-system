@@ -24,6 +24,7 @@ import {
 } from "react-feather";
 import Loading from "../Loading";
 import PageTitle from "../PageTitle";
+import ExcelExport from "../ExportExcel";
 
 const FeesManagement = () => {
   // Define all months for the academic year
@@ -794,6 +795,39 @@ const FeesManagement = () => {
     }
   };
 
+    // Custom mapping function for fees data
+    const mapFeesData = (student) => {
+      // Find last payment details
+      let lastPaymentDate = "N/A";
+      let paymentMonths = "N/A";
+      let lastPaymentAmount = 0;
+  
+      if (student.paymentHistory && student.paymentHistory.length > 0) {
+        const lastPayment = student.paymentHistory[student.paymentHistory.length - 1];
+        lastPaymentDate = new Date(lastPayment.date).toLocaleDateString();
+        paymentMonths = lastPayment.months ? lastPayment.months.join(", ") : "N/A";
+        lastPaymentAmount = lastPayment.amount || 0;
+      }
+  
+      return {
+        'Roll No': student.rollNo || 'N/A',
+        'Student Name': student.name || 'N/A',
+        'Father Name': student.fatherName || 'N/A',
+        'Class': student.class || student.Class || 'N/A',
+        'Section': student.section || 'N/A',
+        'Monthly Fee': student.monthlyFee ? `Rs. ${student.monthlyFee.toLocaleString()}` : 'N/A',
+        'Total Fees': student.Fees ? `Rs. ${student.Fees.toLocaleString()}` : 'N/A',
+        'Paid Fees': `Rs. ${(student.paidFees || 0).toLocaleString()}`,
+        'Dues': `Rs. ${(student.dues || 0).toLocaleString()}`,
+        'Status': student.status || 'Not Paid',
+        'Last Payment Date': lastPaymentDate,
+        'Last Payment Amount': `Rs. ${lastPaymentAmount.toLocaleString()}`,
+        'Payment Months': paymentMonths,
+        'Payment History Count': student.paymentHistory ? student.paymentHistory.length : 0
+      };
+    };
+
+    
   // Export data to Excel
   const exportToExcel = async () => {
     try {
@@ -1252,6 +1286,18 @@ const FeesManagement = () => {
                 iconBg="bg-gradient-to-br from-blue-500 to-blue-600"
                 showStatusBadge={true}
               />
+
+               {/* Add Excel Export Button in Controls Section */}
+               <div className="flex justify-end mb-4 px-4">
+                <ExcelExport 
+                  data={students}
+                  mappingFunction={mapFeesData}
+                  fileName="Fees_Management_Report"
+                  sheetName="Fees Data"
+                  buttonText="Export Excel"
+                  disabled={students.length === 0}
+                />
+              </div>
 
               {/* Summary Cards Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pt-3 mb-4">

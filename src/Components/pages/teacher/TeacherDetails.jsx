@@ -9,6 +9,7 @@ import ViewPopup from "../addAccount/ViewPopup";
 import ConfirmDeletePopup from "../addAccount/DeletePopup";
 import { BaseURL } from "../../helper/helper";
 import { showSuccess, showError } from "../../utils/Toast";
+import ExcelExport from "../ExportExcel";
 
 const TeacherDetails = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -127,38 +128,25 @@ const TeacherDetails = () => {
     }
   };
 
-  // Function to export data to Excel
-  const exportToExcel = () => {
-    const dataToExport = filteredTeachers.map(teacher => ({
-      'Name': teacher.name,
-      'Father Name': teacher.fatherName,
-      'Email': teacher.email,
-      'Phone': teacher.phone,
-      'Designation': teacher.designation,
-      'Class': teacher.Class,
-      'Section': teacher.section,
-      'Salary': teacher.salary,
-      'Gender': teacher.gender,
-      'Last Qualification': teacher.last_qualification,
-      'Date of Birth': teacher.dateOfBirth,
-      'CNIC No': teacher.CNIC_No,
-      'Joining Date': teacher.dateOfJoining,
-      'Address': teacher.address
-    }));
+  const mapTeacherData = (teacher) => ({
+    'Name': teacher.name || 'N/A',
+    'Father Name': teacher.fatherName || 'N/A',
+    'Email': teacher.email || 'N/A',
+    'Phone': teacher.phone || 'N/A',
+    'Designation': teacher.designation || 'N/A',
+    'Class': teacher.Class || 'N/A',
+    'Section': teacher.section || 'N/A',
+    'Salary': teacher.salary || 'N/A',
+    'Gender': teacher.gender || 'N/A',
+    'Last Qualification': teacher.last_qualification || 'N/A',
+    'Date of Birth': teacher.dateOfBirth || 'N/A',
+    'CNIC No': teacher.CNIC_No || 'N/A',
+    'Joining Date': teacher.dateOfJoining || 'N/A',
+    'Address': teacher.address || 'N/A'
+  });
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Teachers");
-    
-    // Generate Excel file and trigger download
-    XLSX.writeFile(workbook, "Teachers_Data.xlsx");
-    showSuccess("Data exported to Excel successfully");
-  };
 
-  // Get unique values for filter dropdowns
-  const getUniqueValues = (key) => {
-    return [...new Set(teacherList.map(item => item[key]))].filter(Boolean);
-  };
+
 
   // Pagination functions
   const goToNextPage = () => {
@@ -281,13 +269,14 @@ const TeacherDetails = () => {
               {/* Button Group */}
               <div className="flex flex-wrap gap-2 w-full lg:w-auto">
                 {/* Export Button */}
-                <button
-                  onClick={exportToExcel}
-                  className="flex items-center bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-sm hover:shadow-md"
-                >
-                  <FaFileExport className="mr-2" />
-                  <span className="hidden sm:inline">Export Excel</span>
-                </button>
+                <ExcelExport 
+                  data={filteredTeachers}
+                  mappingFunction={mapTeacherData}
+                  fileName="Teachers_Data"
+                  sheetName="Teachers"
+                  buttonText="Export Excel"
+                  disabled={filteredTeachers.length === 0}
+                />
 
                 {/* Filter Button */}
                 <button

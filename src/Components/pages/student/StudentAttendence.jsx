@@ -265,94 +265,173 @@ const StudentAttendence = () => {
 
           {/* Search and Filters Section */}
           <div className="mb-6 mt-3">
-            <div className="flex flex-wrap gap-3 items-center justify-between">
-              <div className="relative flex-grow max-w-md">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaSearch className="text-gray-400" />
+            {loading ? (
+              <div className="animate-pulse">
+                <div className="flex flex-wrap gap-3 items-center justify-between">
+                  <div className="flex-grow max-w-md">
+                    <div className="h-10 bg-gray-200 rounded-lg"></div>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded w-32"></div>
                 </div>
-                <input
-                  type="text"
-                  placeholder="Search students by name or roll number"
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
               </div>
+            ) : (
+              <div className="flex flex-wrap gap-3 items-center justify-between">
+                <div className="relative flex-grow max-w-md">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaSearch className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search students by name or roll number"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
 
-              <div className="text-sm text-gray-500">
-                Showing {filteredStudents.length} of{" "}
-                {userRole === "Teacher"
-                  ? students.filter(
-                      (s) =>
-                        s.class === localStorage.getItem("classAssigned") &&
-                        s.section === localStorage.getItem("classSection")
-                    ).length
-                  : students.length}{" "}
-                students
+                <div className="text-sm text-gray-500">
+                  Showing {filteredStudents.length} of{" "}
+                  {userRole === "Teacher"
+                    ? students.filter(
+                        (s) =>
+                          s.class === localStorage.getItem("classAssigned") &&
+                          s.section === localStorage.getItem("classSection")
+                      ).length
+                    : students.length}{" "}
+                  students
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Filters - Collapsible */}
-            <div
-              className={`mt-4 bg-gray-50 p-4 rounded-lg ${
-                showFilters ? "block" : "hidden"
-              }`}
-            >
-              <div className="flex flex-wrap gap-4 items-end">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Class
-                  </label>
-                  <select
-                    value={classFilter}
-                    onChange={(e) => setClassFilter(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
-                    disabled={userRole === "Teacher"}
-                  >
-                    <option value="">All Classes</option>
-                    {uniqueClasses.map((cls) => (
-                      <option key={cls} value={cls}>
-                        {cls}
-                      </option>
-                    ))}
-                  </select>
+            {loading ? (
+              <div className="mt-4 bg-gray-50 p-4 rounded-lg animate-pulse">
+                <div className="flex flex-wrap gap-4 items-end">
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    <div className="h-10 bg-gray-200 rounded w-40"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    <div className="h-10 bg-gray-200 rounded w-40"></div>
+                  </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Section
-                  </label>
-                  <select
-                    value={sectionFilter}
-                    onChange={(e) => setSectionFilter(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
-                    disabled={userRole === "Teacher"}
-                  >
-                    <option value="">All Sections</option>
-                    {uniqueSections.map((sec) => (
-                      <option key={sec} value={sec}>
-                        {sec}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {(searchTerm || classFilter || sectionFilter) && (
-                  <button
-                    onClick={clearFilters}
-                    className="text-indigo-600 text-sm font-medium hover:text-indigo-800"
-                  >
-                    Clear Filters
-                  </button>
-                )}
               </div>
-            </div>
+            ) : (
+              <div
+                className={`mt-4 bg-gray-50 p-4 rounded-lg ${
+                  showFilters ? "block" : "hidden"
+                }`}
+              >
+                <div className="flex flex-wrap gap-4 items-end">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Class
+                    </label>
+                    <select
+                      value={classFilter}
+                      onChange={(e) => setClassFilter(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
+                      disabled={userRole === "Teacher"}
+                    >
+                      <option value="">All Classes</option>
+                      {uniqueClasses.map((cls) => (
+                        <option key={cls} value={cls}>
+                          {cls}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Section
+                    </label>
+                    <select
+                      value={sectionFilter}
+                      onChange={(e) => setSectionFilter(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
+                      disabled={userRole === "Teacher"}
+                    >
+                      <option value="">All Sections</option>
+                      {uniqueSections.map((sec) => (
+                        <option key={sec} value={sec}>
+                          {sec}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {(searchTerm || classFilter || sectionFilter) && (
+                    <button
+                      onClick={clearFilters}
+                      className="text-indigo-600 text-sm font-medium hover:text-indigo-800"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Students Table */}
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+            // Skeleton loading for table
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {Array.from({ length: 6 }, (_, index) => (
+                    <tr key={index} className="animate-pulse">
+                      {/* Student Column Skeleton */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+                          <div className="ml-4 space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-32"></div>
+                            <div className="h-3 bg-gray-200 rounded w-24"></div>
+                          </div>
+                        </div>
+                      </td>
+                      
+                      {/* Roll No Skeleton */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-4 bg-gray-200 rounded w-16"></div>
+                      </td>
+                      
+                      {/* Class Skeleton */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                      </td>
+                      
+                      {/* Section Skeleton */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-4 bg-gray-200 rounded w-12"></div>
+                      </td>
+                      
+                      {/* Status Skeleton */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-8 bg-gray-200 rounded w-24"></div>
+                      </td>
+                      
+                      {/* Report Skeleton */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-8 bg-gray-200 rounded w-32"></div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : filteredStudents.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500 bg-gray-50 rounded-lg">
