@@ -44,8 +44,8 @@ const FeesManagement = () => {
   ];
 
   // State for students data
-  const [allStudents, setAllStudents] = useState([]); // ✅ All students data store karein
-  const [students, setStudents] = useState([]); // ✅ Current page ke students
+  const [allStudents, setAllStudents] = useState([]);
+  const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -73,7 +73,7 @@ const FeesManagement = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   // Date/Month filter states for fees collection
-  const [feesFilterType, setFeesFilterType] = useState("all"); // 'all', 'month', 'date'
+  const [feesFilterType, setFeesFilterType] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
 
@@ -116,7 +116,7 @@ const FeesManagement = () => {
       // Use ACTUAL data from combined system
       const processedStudents = filteredStudents.map((student) => ({
         ...student,
-        class: student.Class, // Use Class from main data
+        class: student.Class,
         section: student.section,
       }));
 
@@ -203,11 +203,11 @@ const FeesManagement = () => {
   // ✅ INITIAL DATA FETCH - Ek hi baar
   useEffect(() => {
     fetchAllStudents();
-  }, []); // ✅ Empty dependency - sirf ek baar call hoga
+  }, []);
 
   // ✅ FILTERS CHANGE PAR - Client-side processing
   useEffect(() => {
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
     applyFiltersAndPagination();
   }, [searchTerm, selectedClass, selectedStatus]);
 
@@ -223,14 +223,10 @@ const FeesManagement = () => {
       return response.data;
     } catch (error) {
       console.error("Error fetching student details:", error);
-
-      // Check if it's a 404 error (endpoint not found)
       if (error.response?.status === 404) {
         console.log("Student details endpoint not found, using fallback data");
-        // Return null to indicate we should use fallback data
         return null;
       }
-
       throw error;
     }
   };
@@ -240,10 +236,8 @@ const FeesManagement = () => {
     try {
       console.log("Student payment history:", student.paymentHistory);
 
-      // Use the student data with actual payment history
       const studentDetails = {
         ...student,
-        // Use actual payment history if available, otherwise empty array
         paymentHistory: student.paymentHistory || [],
       };
 
@@ -251,8 +245,6 @@ const FeesManagement = () => {
       setShowDetailsModal(true);
     } catch (error) {
       console.error("Error in showStudentDetails:", error);
-
-      // Fallback with empty payment history
       setDetailsStudent({
         ...student,
         paymentHistory: [],
@@ -276,7 +268,6 @@ const FeesManagement = () => {
     try {
       const studentId = student._id;
 
-      // Prepare payment data
       const paymentData = {
         amount: parseInt(paymentAmount),
         months: paymentMonths,
@@ -286,7 +277,6 @@ const FeesManagement = () => {
 
       console.log("Sending payment to SEPARATE fees system...");
 
-      // Use SEPARATE fees system API
       const response = await axios.post(
         `${BaseURL}/fees/${studentId}/payment`,
         paymentData
@@ -295,10 +285,8 @@ const FeesManagement = () => {
       if (response.data.success) {
         console.log("✅ Payment Recorded in SEPARATE System!");
 
-        // ✅ Refresh data - API call karein
         await fetchAllStudents();
 
-        // Close modal and reset
         setShowPaymentModal(false);
         setPaymentAmount("");
         setPaymentMonths([]);
@@ -307,26 +295,21 @@ const FeesManagement = () => {
     } catch (error) {
       console.error("Payment error:", error);
 
-      // Detailed error message
       let errorMessage = "Payment failed. Please try again.";
 
       if (error.response) {
-        // Server responded with error status
         errorMessage =
           error.response.data?.message ||
           `Server error: ${error.response.status}`;
         console.error("Server response:", error.response.data);
 
-        // Specific handling for "Student not found" error
         if (error.response.data?.message === "Student not found") {
           errorMessage =
             "Student not found in database. Please check if student exists.";
         }
       } else if (error.request) {
-        // Request was made but no response received
         errorMessage = "No response from server. Please check your connection.";
       } else {
-        // Something else happened
         errorMessage = error.message;
       }
 
@@ -342,7 +325,6 @@ const FeesManagement = () => {
         student.name
       );
 
-      // Get last payment details
       const lastPayment =
         student.paymentHistory && student.paymentHistory.length > 0
           ? student.paymentHistory[student.paymentHistory.length - 1]
@@ -357,7 +339,6 @@ const FeesManagement = () => {
         return;
       }
 
-      // Use last payment months and amount
       const paymentMonths = lastPayment.months || [];
       const paymentAmount = lastPayment.amount || 0;
       const paymentDate = lastPayment.date
@@ -365,16 +346,14 @@ const FeesManagement = () => {
         : new Date();
       const paymentMode = lastPayment.mode || "Cash";
 
-      // Calculate fees breakdown based on last payment
       const monthlyFee = student.monthlyFee || Number(student.Fees) || 0;
-      const tuitionFee = paymentAmount; // Use actual paid amount
+      const tuitionFee = paymentAmount;
 
       const totalAmount =
         tuitionFee +
         examinationFee +
         otherFees.reduce((sum, fee) => sum + fee.amount, 0);
 
-      // Create challan data based on last payment
       const challanData = {
         student: {
           name: student.name,
@@ -386,7 +365,7 @@ const FeesManagement = () => {
         challanNo: `CH-${student.rollNo}-${Date.now()}`,
         issueDate: new Date().toISOString(),
         dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-        months: paymentMonths, // Use months from last payment
+        months: paymentMonths,
         paymentDate: paymentDate.toISOString(),
         paymentMode: paymentMode,
         academicYear: "2024-2025",
@@ -395,15 +374,15 @@ const FeesManagement = () => {
           examinationFee: examinationFee,
           otherFees: otherFees,
           totalAmount: totalAmount,
-          paidAmount: paymentAmount, // Show paid amount
+          paidAmount: paymentAmount,
         },
-        lastPayment: lastPayment, // Include full last payment details
+        lastPayment: lastPayment,
       };
 
       console.log("✅ Challan generated with last payment data:", challanData);
 
       setChallanData(challanData);
-      setChallanMonths(paymentMonths); // Set months from last payment
+      setChallanMonths(paymentMonths);
       setShowChallan(true);
     } catch (error) {
       console.error("❌ Error generating challan:", error);
@@ -416,12 +395,10 @@ const FeesManagement = () => {
     try {
       console.log("🔄 Generating due list with months data...");
 
-      // ✅ CLIENT-SIDE PROCESSING - API call ki zaroorat nahi
       let dueStudents = allStudents.filter(
         (student) => (student.dues || 0) > 0 && student.status !== "Fully Paid"
       );
 
-      // Apply class filter
       if (selectedClass !== "All") {
         dueStudents = dueStudents.filter(
           (student) =>
@@ -429,7 +406,6 @@ const FeesManagement = () => {
         );
       }
 
-      // Calculate total dues and get due months
       const totalDues = dueStudents.reduce(
         (sum, student) => sum + (student.dues || 0),
         0
@@ -437,7 +413,6 @@ const FeesManagement = () => {
 
       const dueData = {
         dueStudents: dueStudents.map((student) => {
-          // Get unpaid months
           const unpaidMonths =
             student.duesByMonth?.filter(
               (month) => !month.paid && month.dueAmount > 0
@@ -464,8 +439,6 @@ const FeesManagement = () => {
       return dueData;
     } catch (error) {
       console.error("Error generating due list:", error);
-
-      // Fallback - empty data return karein
       return {
         dueStudents: [],
         totalDues: 0,
@@ -785,7 +758,6 @@ const FeesManagement = () => {
       printWindow.document.write(content);
       printWindow.document.close();
 
-      // Auto-print after a short delay
       setTimeout(() => {
         printWindow.print();
       }, 500);
@@ -795,49 +767,44 @@ const FeesManagement = () => {
     }
   };
 
-    // Custom mapping function for fees data
-    const mapFeesData = (student) => {
-      // Find last payment details
-      let lastPaymentDate = "N/A";
-      let paymentMonths = "N/A";
-      let lastPaymentAmount = 0;
-  
-      if (student.paymentHistory && student.paymentHistory.length > 0) {
-        const lastPayment = student.paymentHistory[student.paymentHistory.length - 1];
-        lastPaymentDate = new Date(lastPayment.date).toLocaleDateString();
-        paymentMonths = lastPayment.months ? lastPayment.months.join(", ") : "N/A";
-        lastPaymentAmount = lastPayment.amount || 0;
-      }
-  
-      return {
-        'Roll No': student.rollNo || 'N/A',
-        'Student Name': student.name || 'N/A',
-        'Father Name': student.fatherName || 'N/A',
-        'Class': student.class || student.Class || 'N/A',
-        'Section': student.section || 'N/A',
-        'Monthly Fee': student.monthlyFee ? `Rs. ${student.monthlyFee.toLocaleString()}` : 'N/A',
-        'Total Fees': student.Fees ? `Rs. ${student.Fees.toLocaleString()}` : 'N/A',
-        'Paid Fees': `Rs. ${(student.paidFees || 0).toLocaleString()}`,
-        'Dues': `Rs. ${(student.dues || 0).toLocaleString()}`,
-        'Status': student.status || 'Not Paid',
-        'Last Payment Date': lastPaymentDate,
-        'Last Payment Amount': `Rs. ${lastPaymentAmount.toLocaleString()}`,
-        'Payment Months': paymentMonths,
-        'Payment History Count': student.paymentHistory ? student.paymentHistory.length : 0
-      };
-    };
+  // Custom mapping function for fees data
+  const mapFeesData = (student) => {
+    let lastPaymentDate = "N/A";
+    let paymentMonths = "N/A";
+    let lastPaymentAmount = 0;
 
-    
+    if (student.paymentHistory && student.paymentHistory.length > 0) {
+      const lastPayment = student.paymentHistory[student.paymentHistory.length - 1];
+      lastPaymentDate = new Date(lastPayment.date).toLocaleDateString();
+      paymentMonths = lastPayment.months ? lastPayment.months.join(", ") : "N/A";
+      lastPaymentAmount = lastPayment.amount || 0;
+    }
+
+    return {
+      'Roll No': student.rollNo || 'N/A',
+      'Student Name': student.name || 'N/A',
+      'Father Name': student.fatherName || 'N/A',
+      'Class': student.class || student.Class || 'N/A',
+      'Section': student.section || 'N/A',
+      'Monthly Fee': student.monthlyFee ? `Rs. ${student.monthlyFee.toLocaleString()}` : 'N/A',
+      'Total Fees': student.Fees ? `Rs. ${student.Fees.toLocaleString()}` : 'N/A',
+      'Paid Fees': `Rs. ${(student.paidFees || 0).toLocaleString()}`,
+      'Dues': `Rs. ${(student.dues || 0).toLocaleString()}`,
+      'Status': student.status || 'Not Paid',
+      'Last Payment Date': lastPaymentDate,
+      'Last Payment Amount': `Rs. ${lastPaymentAmount.toLocaleString()}`,
+      'Payment Months': paymentMonths,
+      'Payment History Count': student.paymentHistory ? student.paymentHistory.length : 0
+    };
+  };
+
   // Export data to Excel
   const exportToExcel = async () => {
     try {
       console.log("🔄 Exporting ALL students data to Excel...");
 
-      // ✅ CLIENT-SIDE PROCESSING - API call ki zaroorat nahi
-      // Use allStudents instead of making API call
       let studentsData = [...allStudents];
 
-      // Role-based filtering for export
       const role = localStorage.getItem("role");
       if (role === "Teacher") {
         const assignedClass = localStorage.getItem("classAssigned");
@@ -850,7 +817,6 @@ const FeesManagement = () => {
         );
       }
 
-      // Apply filters for export (same as table filters)
       if (searchTerm) {
         studentsData = studentsData.filter(
           (student) =>
@@ -875,7 +841,6 @@ const FeesManagement = () => {
 
       console.log(`✅ Exporting ${studentsData.length} students to Excel`);
 
-      // ✅ CORRECTED: Use studentsData for ALL calculations
       const totalFeesCollection = studentsData.reduce(
         (sum, student) => sum + (student.paidFees || 0),
         0
@@ -987,7 +952,6 @@ const FeesManagement = () => {
             ? "partially-paid"
             : "not-paid";
 
-        // Find last payment date
         let lastPaymentDate = "N/A";
         let paymentMonths = "N/A";
 
@@ -1055,7 +1019,6 @@ const FeesManagement = () => {
       </html>
     `;
 
-      // Create and download Excel file
       const blob = new Blob([tableContent], {
         type: "application/vnd.ms-excel;charset=utf-8",
       });
@@ -1064,7 +1027,6 @@ const FeesManagement = () => {
       const link = document.createElement("a");
       link.setAttribute("href", url);
 
-      // Create filename with timestamp
       const timestamp = new Date().toISOString().split("T")[0];
       const filename = `complete_fees_report_${timestamp}.xls`;
       link.setAttribute("download", filename);
@@ -1073,7 +1035,6 @@ const FeesManagement = () => {
       link.click();
       document.body.removeChild(link);
 
-      // Clean up URL object
       setTimeout(() => {
         URL.revokeObjectURL(url);
       }, 100);
@@ -1086,9 +1047,7 @@ const FeesManagement = () => {
   };
 
   // Calculate filtered fees collection based on month/date
-  // Calculate filtered fees collection based on month/date
   const calculateFilteredFeesCollection = () => {
-    // Agar koi filter nahi lagaya hai to total collection return karo
     if (!selectedMonth && !selectedDate) {
       return totalFeesCollection;
     }
@@ -1100,30 +1059,25 @@ const FeesManagement = () => {
         student.paymentHistory.forEach((payment) => {
           const paymentDateObj = new Date(payment.date);
 
-          // Timezone-safe month calculation
           const paymentMonth = paymentDateObj.toLocaleString("default", {
             month: "long",
           });
 
-          // Timezone-safe date comparison
           const paymentDate = paymentDateObj.toISOString().split("T")[0];
           const [paymentYear, paymentMonthNum, paymentDay] =
             paymentDate.split("-");
           const paymentDateFormatted = `${paymentYear}-${paymentMonthNum}-${paymentDay}`;
 
-          // Case 1: Sirf month selected hai
           if (selectedMonth && !selectedDate) {
             if (paymentMonth === selectedMonth) {
               filteredFees += payment.amount || 0;
             }
           }
-          // Case 2: Sirf date selected hai
           else if (!selectedMonth && selectedDate) {
             if (paymentDateFormatted === selectedDate) {
               filteredFees += payment.amount || 0;
             }
           }
-          // Case 3: Dono month aur date selected hain
           else if (selectedMonth && selectedDate) {
             if (
               paymentMonth === selectedMonth &&
@@ -1143,13 +1097,9 @@ const FeesManagement = () => {
   const formatDisplayDate = (dateString) => {
     if (!dateString) return "";
 
-    // Directly split the date string to avoid timezone issues
     const [year, month, day] = dateString.split("-");
-
-    // Create date in local timezone
     const date = new Date(year, month - 1, day);
 
-    // Format as DD/MM/YYYY
     return `${date.getDate().toString().padStart(2, "0")}/${(
       date.getMonth() + 1
     )
@@ -1258,8 +1208,24 @@ const FeesManagement = () => {
     return pageNumbers;
   };
 
+  // Agar loading chal raha hai toh Loading component dikhao
   if (loading) {
-    return <Loading text="Loading Student Fees Record" />;
+    return (
+      <>
+        <Sidebar />
+        <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+          <div className="bg-white w-full min-h-screen shadow-md rounded-md px-4 max-sm:px-4 pt-2 overflow-hidden">
+            <main className="flex-1 overflow-y-auto md:p-2 bg-gray-50">
+              <Loading 
+                type="skeleton"
+                overlay={false}
+                fullScreen={false}
+              />
+            </main>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
@@ -2099,23 +2065,6 @@ const FeesManagement = () => {
                             {challanData.feeBreakdown?.tuitionFee?.toLocaleString()}
                           </td>
                         </tr>
-
-                        {/* <tr>
-                          <td className="border border-gray-300 p-2 text-sm">
-                            <div className="flex items-center">
-                              <input
-                                type="text"
-                                placeholder="Examination Fee"
-                                className="flex-1 p-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                                value={examinationFee > 0 ? examinationFee : ''}
-                                onChange={(e) => setExaminationFee(parseInt(e.target.value) || 0)}
-                              />
-                            </div>
-                          </td>
-                          <td className="border border-gray-300 p-2 text-sm text-right">
-                            {examinationFee > 0 ? examinationFee.toLocaleString() : '0'}
-                          </td>
-                        </tr> */}
 
                         {otherFees.map((fee, index) => (
                           <tr key={index}>

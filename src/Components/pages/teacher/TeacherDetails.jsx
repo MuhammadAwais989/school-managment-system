@@ -10,6 +10,7 @@ import ConfirmDeletePopup from "../addAccount/DeletePopup";
 import { BaseURL } from "../../helper/helper";
 import { showSuccess, showError } from "../../utils/Toast";
 import ExcelExport from "../ExportExcel";
+import Loading from "../Loading"; // Import your Loading component
 
 const TeacherDetails = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -75,10 +76,10 @@ const TeacherDetails = () => {
   const getFilteredData = () => {
     return teacherList
       .filter((teacher) =>
-        teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        teacher.fatherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        teacher.phone.includes(searchTerm)
+        teacher.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teacher.fatherName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teacher.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teacher.phone?.includes(searchTerm)
       )
       .filter((teacher) =>
         (!filters.Class || teacher.Class === filters.Class) &&
@@ -144,9 +145,6 @@ const TeacherDetails = () => {
     'Joining Date': teacher.dateOfJoining || 'N/A',
     'Address': teacher.address || 'N/A'
   });
-
-
-
 
   // Pagination functions
   const goToNextPage = () => {
@@ -223,8 +221,22 @@ const TeacherDetails = () => {
   return (
     <>
       <Sidebar />
+      
+      {/* Full Screen Loading */}
+      {isLoading && (
+        <Loading 
+          text="Loading Teachers..."
+          size="lg"
+          color="primary"
+          overlay={true}
+          fullScreen={true}
+          textColor="text-blue-600"
+        />
+      )}
+      
       <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
         <div className="bg-white w-full min-h-[calc(100vh-56px)] shadow-md rounded-lg px-6 py-4 max-sm:px-4">
+          
           {/* Header Section */}
           <div className="flex flex-col mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
             <div className="flex items-center">
@@ -359,131 +371,180 @@ const TeacherDetails = () => {
           </div>
 
           {/* Stats Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="rounded-full bg-blue-100 p-3 mr-4">
-                  <FaChalkboardTeacher className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">{teacherList.length}</h2>
-                  <p className="text-gray-600 text-sm">Total Teachers</p>
+          {!isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center">
+                  <div className="rounded-full bg-blue-100 p-3 mr-4">
+                    <FaChalkboardTeacher className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">{teacherList.length}</h2>
+                    <p className="text-gray-600 text-sm">Total Teachers</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="rounded-full bg-green-100 p-3 mr-4">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">{filteredTeachers.length}</h2>
-                  <p className="text-gray-600 text-sm">Filtered Teachers</p>
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center">
+                  <div className="rounded-full bg-green-100 p-3 mr-4">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">{filteredTeachers.length}</h2>
+                    <p className="text-gray-600 text-sm">Filtered Teachers</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="rounded-full bg-purple-100 p-3 mr-4">
-                  <FaUserGraduate className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">{classOrder.length}</h2>
-                  <p className="text-gray-600 text-sm">Classes</p>
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center">
+                  <div className="rounded-full bg-purple-100 p-3 mr-4">
+                    <FaUserGraduate className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">{classOrder.length}</h2>
+                    <p className="text-gray-600 text-sm">Classes</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* TABLE */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {isLoading ? (
+          {!isLoading ? (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <td colSpan="8" className="px-6 py-8 text-center">
-                        <div className="flex justify-center items-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        </div>
-                        <p className="mt-2 text-gray-500">Loading teacher data...</p>
-                      </td>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ) : currentTeachers.length > 0 ? (
-                    currentTeachers.map((teacher, index) => (
-                      <tr key={teacher._id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <img src={teacher.profilePic || '/default-avatar.png'} alt="Profile" className="h-10 w-10 object-cover rounded-full" />
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentTeachers.length > 0 ? (
+                      currentTeachers.map((teacher, index) => (
+                        <tr key={teacher._id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <img src={teacher.profilePic || '/default-avatar.png'} alt="Profile" className="h-10 w-10 object-cover rounded-full" />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{teacher.name}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.email}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.phone}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.Class}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.section}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleView(teacher)}
+                                className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50 transition-colors"
+                                title="View Details"
+                              >
+                                <FaEye />
+                              </button>
+                              <button
+                                onClick={() => handleEdit(teacher)}
+                                className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-50 transition-colors"
+                                title="Edit"
+                              >
+                                <FaEdit />
+                              </button>
+                              <button
+                                onClick={() => confirmDelete(teacher)}
+                                className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors"
+                                title="Delete"
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="8" className="px-6 py-8 text-center">
+                          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <h3 className="mt-2 text-sm font-medium text-gray-900">No teachers found</h3>
+                          <p className="mt-1 text-sm text-gray-500">
+                            Try adjusting your search or filter to find what you're looking for.
+                          </p>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{teacher.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.email}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.phone}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.Class}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.section}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            // Table Skeleton Loading
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <tr key={index} className="animate-pulse">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-6"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-32"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-40"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-16"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="h-4 bg-gray-200 rounded w-8"></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleView(teacher)}
-                              className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50 transition-colors"
-                              title="View Details"
-                            >
-                              <FaEye />
-                            </button>
-                            <button
-                              onClick={() => handleEdit(teacher)}
-                              className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-50 transition-colors"
-                              title="Edit"
-                            >
-                              <FaEdit />
-                            </button>
-                            <button
-                              onClick={() => confirmDelete(teacher)}
-                              className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors"
-                              title="Delete"
-                            >
-                              <FaTrash />
-                            </button>
+                            <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+                            <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+                            <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
                           </div>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="8" className="px-6 py-8 text-center">
-                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">No teachers found</h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                          Try adjusting your search or filter to find what you're looking for.
-                        </p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Pagination */}
-          {filteredTeachers.length > 0 && !isLoading && (
+          {!isLoading && filteredTeachers.length > 0 && (
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between">
               <div className="text-sm text-gray-700 mb-4 sm:mb-0">
                 Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">

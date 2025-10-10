@@ -22,6 +22,7 @@ import ConfirmDeletePopup from "../addAccount/DeletePopup";
 import { BaseURL } from "../../helper/helper";
 import { showSuccess, showError } from "../../utils/Toast";
 import ExcelExport from "../ExportExcel";
+import Loading from "../Loading";
 
 const StudentDetails = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -364,6 +365,27 @@ const StudentDetails = () => {
     return pageNumbers;
   };
 
+  // Agar loading chal raha hai toh Loading component dikhao
+  if (isLoading) {
+    return (
+      <>
+        <Sidebar />
+        <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+          <div className="bg-white w-full min-h-[calc(100vh-56px)] shadow-md rounded-lg px-6 py-4 pt-2 max-sm:px-4">
+            <main className="flex-1 overflow-y-auto md:p-2 bg-gray-50">
+              <Loading 
+                type="skeleton"
+                skeletonType="students"
+                overlay={false}
+                fullScreen={false}
+              />
+            </main>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Sidebar />
@@ -683,18 +705,7 @@ const StudentDetails = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan="9" className="px-6 py-8 text-center">
-                        <div className="flex justify-center items-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        </div>
-                        <p className="mt-2 text-gray-500">
-                          Loading student data...
-                        </p>
-                      </td>
-                    </tr>
-                  ) : currentStudents.length > 0 ? (
+                  {currentStudents.length > 0 ? (
                     currentStudents.map((student, index) => (
                       <tr
                         key={student._id}
@@ -808,7 +819,7 @@ const StudentDetails = () => {
           </div>
 
           {/* Pagination */}
-          {filteredStudents.length > 0 && !isLoading && (
+          {filteredStudents.length > 0 && (
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between">
               <div className="text-sm text-gray-700 mb-4 sm:mb-0">
                 Showing{" "}
