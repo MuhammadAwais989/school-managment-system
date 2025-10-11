@@ -139,7 +139,6 @@ const StudentDetails = () => {
           (!filters.religion || student.religion === filters.religion)
       );
   };
-
   const groupedData = () => {
     const sorted = [...getFilteredData()].sort((a, b) => {
       const classA = classOrder.indexOf(a.Class);
