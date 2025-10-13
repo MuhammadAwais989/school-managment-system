@@ -17,92 +17,7 @@ import {
 } from "react-icons/fa";
 import TeacherReportModal from "./TeacherAttendenceReport";
 import PageTitle from "../PageTitle";
-
-// Skeleton Loading Component
-const SkeletonLoading = () => {
-  return (
-    <div className="animate-pulse">
-      {/* Header Skeleton */}
-      <div className="mb-6">
-        <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
-        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-      </div>
-
-      {/* Search and Filters Skeleton */}
-      <div className="mb-6 mt-2">
-        <div className="flex flex-wrap gap-3 items-center justify-between">
-          <div className="relative flex-grow max-w-md">
-            <div className="h-12 bg-gray-200 rounded-lg"></div>
-          </div>
-          <div className="h-4 bg-gray-200 rounded w-1/6"></div>
-        </div>
-
-        {/* Filters Skeleton */}
-        <div className="mt-4 bg-gray-50 p-4 rounded-lg">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, index) => (
-              <div key={index}>
-                <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-                <div className="h-10 bg-gray-200 rounded"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Table Skeleton */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              {[...Array(7)].map((_, index) => (
-                <th key={index} className="px-6 py-3">
-                  <div className="h-4 bg-gray-300 rounded"></div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {[...Array(5)].map((_, rowIndex) => (
-              <tr key={rowIndex}>
-                {[...Array(7)].map((_, colIndex) => (
-                  <td key={colIndex} className="px-6 py-4">
-                    <div className="flex items-center">
-                      {colIndex === 0 && (
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
-                          <div className="h-4 bg-gray-200 rounded w-24"></div>
-                        </div>
-                      )}
-                      {colIndex === 1 && (
-                        <div className="flex items-center space-x-2">
-                          <div className="h-4 w-4 bg-gray-200 rounded"></div>
-                          <div className="h-4 bg-gray-200 rounded w-20"></div>
-                        </div>
-                      )}
-                      {colIndex > 1 && colIndex < 4 && (
-                        <div className="h-4 bg-gray-200 rounded w-16"></div>
-                      )}
-                      {colIndex === 4 && (
-                        <div className="h-4 bg-gray-200 rounded w-32"></div>
-                      )}
-                      {colIndex === 5 && (
-                        <div className="h-8 bg-gray-200 rounded w-full"></div>
-                      )}
-                      {colIndex === 6 && (
-                        <div className="h-8 bg-gray-200 rounded w-full"></div>
-                      )}
-                    </div>
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
+import Loading from "../Loading"; // Import the centralized Loading component
 
 const TeacherAttendence = () => {
   const [teachers, setTeachers] = useState([]);
@@ -465,14 +380,19 @@ const TeacherAttendence = () => {
     setShowCustomReportModal(false);
   };
 
-  // Agar loading chal raha hai toh Skeleton Loading dikhao
+  // Agar loading chal raha hai toh Loading component dikhao
   if (loading) {
     return (
       <>
         <Sidebar />
         <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
           <div className="bg-white w-full min-h-screen shadow-md rounded-md px-4 max-sm:px-4 pt-2 overflow-hidden">
-            <SkeletonLoading />
+            <Loading 
+              type="skeleton" 
+              skeletonType="staff"
+              fullScreen={false}
+              overlay={false}
+            />
           </div>
         </div>
       </>

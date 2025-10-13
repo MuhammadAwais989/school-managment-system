@@ -1218,6 +1218,7 @@ const FeesManagement = () => {
             <main className="flex-1 overflow-y-auto md:p-2 bg-gray-50">
               <Loading 
                 type="skeleton"
+                skeletonType="fees"
                 overlay={false}
                 fullScreen={false}
               />
