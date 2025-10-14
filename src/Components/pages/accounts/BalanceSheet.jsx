@@ -331,7 +331,10 @@ export default function BalanceSheet() {
   if (loading) {
     return (
       <>
-        <Loading text="Loading Balance Sheet" />
+        <Sidebar />
+        <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+          <Loading type="skeleton" skeletonType="fees" />
+        </div>
       </>
     );
   }

@@ -13,6 +13,7 @@ import Sidebar from "../sidebar/SideBar";
 import { BaseURL } from "../../helper/helper";
 import PageTitle from "../PageTitle";
 import { LuTrendingDown } from "react-icons/lu";
+import Loading from "../Loading"; // Import Loading component
 
 // MonthlyBarChart component
 function MonthlyBarChart({ data, year }) {
@@ -61,6 +62,7 @@ const Expense = () => {
   const [downloadMonth, setDownloadMonth] = useState(new Date().getMonth() + 1);
   const [chartData, setChartData] = useState([]);
   const [chartYear, setChartYear] = useState(new Date().getFullYear());
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     fetchExpenses();
@@ -73,12 +75,15 @@ const Expense = () => {
 
   const fetchExpenses = async () => {
     try {
+      setLoading(true);
       const res = await axios.get(
         `${BaseURL}/accounts/expense?filter=${filters}`
       );
       setExpenses(res.data.expenses);
     } catch (error) {
       console.error("Error fetching expenses:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -195,6 +200,18 @@ const Expense = () => {
     { name: "November", value: 11 },
     { name: "December", value: 12 },
   ];
+
+  // Show loading skeleton when data is being fetched
+  if (loading) {
+    return (
+      <>
+        <Sidebar />
+        <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+          <Loading type="skeleton" skeletonType="fees" />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

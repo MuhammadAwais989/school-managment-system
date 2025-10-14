@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import PageTitle from "../PageTitle";
 import { LuTrendingUp } from "react-icons/lu";
+import Loading from "../Loading"; // Import Loading component
 
 function MonthlyBarChart({ data, year }) {
   return (
@@ -58,27 +59,30 @@ const Income = () => {
   const [downloadPeriod, setDownloadPeriod] = useState("yearly");
   const [downloadYear, setDownloadYear] = useState(new Date().getFullYear());
   const [downloadMonth, setDownloadMonth] = useState(new Date().getMonth() + 1);
-  const [chartData, setChartData] = useState([]); // State to hold dynamic chart data
-  const [chartYear, setChartYear] = useState(new Date().getFullYear()); // State for chart year
+  const [chartData, setChartData] = useState([]);
+  const [chartYear, setChartYear] = useState(new Date().getFullYear());
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     fetchIncome();
     fetchSummary();
   }, [filters]);
 
-  // Fetch chart data on component mount and when chartYear changes
   useEffect(() => {
     fetchChartData();
   }, [chartYear]);
 
   const fetchIncome = async () => {
     try {
+      setLoading(true);
       const res = await axios.get(
         `${BaseURL}/accounts/income?filter=${filters}`
       );
       setIncomes(res.data.incomes);
     } catch (error) {
       console.error("Error fetching incomes:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,10 +95,8 @@ const Income = () => {
     }
   };
 
-  // --- Function to Fetch Chart Data ---
   const fetchChartData = async () => {
     try {
-      // Fetch both income and expense data for the selected year
       const [incomeRes, expenseRes] = await Promise.all([
         axios.get(
           `${BaseURL}/accounts/income/yearly-summary?year=${chartYear}`
@@ -107,7 +109,6 @@ const Income = () => {
       const incomeData = incomeRes.data;
       const expenseData = expenseRes.data;
 
-      // Combine the data
       const combinedData = incomeData.map((incomeMonth, index) => {
         const expenseMonth = expenseData[index] || { expense: 0 };
         return {
@@ -122,7 +123,6 @@ const Income = () => {
       console.error("Error fetching chart data:", error);
     }
   };
-  // --- End Updated Function ---
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,7 +132,7 @@ const Income = () => {
       setShowModal(false);
       fetchIncome();
       fetchSummary();
-      fetchChartData(); // Refresh chart data after adding new income
+      fetchChartData();
     } catch (error) {
       console.error("Error adding income:", error);
     }
@@ -169,14 +169,6 @@ const Income = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error downloading file:", error);
-      if (error.response) {
-        console.error("Response data:", error.response.data);
-        console.error("Response status:", error.response.status);
-      } else if (error.request) {
-        console.error("Request made but no response received:", error.request);
-      } else {
-        console.error("Error setting up the request:", error.message);
-      }
     }
   };
 
@@ -197,12 +189,24 @@ const Income = () => {
     { name: "December", value: 12 },
   ];
 
+  // Show loading skeleton when data is being fetched
+  if (loading) {
+    return (
+      <>
+        <Sidebar />
+        <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 pt-4 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+          <Loading type="skeleton" skeletonType="fees" />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Sidebar />
       <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 pt-4 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
         <div className="bg-white w-full h-full shadow-md rounded-md px-4 max-sm:px-4 pt-2 pb-3">
-          {/* Page TItle */}
+          {/* Page Title */}
           <PageTitle
             title="Income Management"
             description="Track and manage all income sources"
@@ -211,6 +215,7 @@ const Income = () => {
             borderColor="border-green-200"
             iconBg="bg-gradient-to-r from-green-500 to-green-600"
           />
+          
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 pt-5">
             {/* Today Income */}
@@ -349,13 +354,12 @@ const Income = () => {
             </div>
           </div>
 
-          {/* New Chart Section */}
+          {/* Chart Section */}
           <div className="mb-8">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="text-2xl font-bold text-gray-800">
                 Yearly Overview
               </h2>
-              {/* Year Selector for Chart */}
               <div className="relative">
                 <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">
                   Select Year
@@ -378,7 +382,7 @@ const Income = () => {
             </div>
           </div>
 
-          {/* Modified Add Income Button and New Download Section */}
+          {/* Controls Section */}
           <div className="flex justify-between items-center flex-wrap gap-4 mb-6 pt-5">
             {/* Filter */}
             <div className="relative">
@@ -496,7 +500,7 @@ const Income = () => {
             </button>
           </div>
 
-          {/* New Modal Form */}
+          {/* Modal */}
           {showModal && (
             <div className="fixed inset-0 px-2 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -581,6 +585,7 @@ const Income = () => {
             </div>
           )}
 
+          {/* Income Table */}
           <div className="overflow-x-auto scrollbar-hide rounded-xl shadow-sm border border-[#E0E7FF] ">
             <table className="min-w-full table-auto ">
               <thead>

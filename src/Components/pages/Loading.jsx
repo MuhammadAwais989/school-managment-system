@@ -2,15 +2,14 @@ import React from 'react';
 
 const Loading = ({
   text = "",
-  size = "md", // Options: "sm", "md", "lg", "xl"
-  color = "primary", // Options: "primary", "secondary", "accent", "white"
-  overlay = true, // Toggles a semi-transparent full-screen overlay
-  fullScreen = true, // Centers the loading indicator in the full viewport
-  textColor = "text-white", // New prop for custom text color
-  type = "spinner", // New prop: "spinner" or "skeleton"
-  skeletonType = "fees" // New prop: "fees", "attendance", "students", "staff"
+  size = "md",
+  color = "primary",
+  overlay = true,
+  fullScreen = true,
+  textColor = "text-white",
+  type = "spinner",
+  skeletonType = "fees"
 }) => {
-  // Define Tailwind CSS classes for sizes
   const sizeClasses = {
     sm: 'h-6 w-6',
     md: 'h-8 w-8',
@@ -18,7 +17,6 @@ const Loading = ({
     xl: 'h-16 w-16'
   };
 
-  // Define Tailwind CSS classes for spinner colors
   const spinnerColorClasses = {
     primary: 'text-blue-600',
     secondary: 'text-gray-600',
@@ -26,15 +24,12 @@ const Loading = ({
     white: 'text-white'
   };
 
-  // Base container classes for positioning and overlay
   const containerBaseClasses = 'flex items-center justify-center z-50';
   const containerPositionClasses = fullScreen ? 'fixed inset-0' : 'relative';
   const containerOverlayClasses = overlay && fullScreen ? 'bg-black bg-opacity-50' : '';
 
-  // Combine container classes
   const containerClasses = `${containerBaseClasses} ${containerPositionClasses} ${containerOverlayClasses}`;
 
-  // Combine spinner classes
   const spinnerClasses = `
     animate-spin
     ${sizeClasses[size]}
@@ -154,7 +149,7 @@ const Loading = ({
     );
   };
 
-  // Staff Attendance Skeleton Loading Component
+  // Other skeleton components remain the same...
   const StaffAttendanceSkeletonLoading = () => {
     return (
       <div className="animate-pulse w-full max-w-7xl mx-auto p-4">
@@ -240,7 +235,6 @@ const Loading = ({
     );
   };
 
-  // Attendance Management Skeleton Loading Component
   const AttendanceSkeletonLoading = () => {
     return (
       <div className="animate-pulse w-full max-w-6xl mx-auto p-4">
@@ -334,7 +328,6 @@ const Loading = ({
     );
   };
 
-  // Students Management Skeleton Loading Component
   const StudentsSkeletonLoading = () => {
     return (
       <div className="animate-pulse w-full max-w-6xl mx-auto p-4">

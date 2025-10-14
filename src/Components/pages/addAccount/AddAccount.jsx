@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaSearch, FaPlus, FaEye, FaEdit, FaTrash, FaFilter, FaFileExport, FaTimes, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import * as XLSX from "xlsx";
+import { FaSearch, FaPlus, FaEye, FaEdit, FaTrash, FaFilter, FaTimes, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 import Sidebar from "../sidebar/SideBar";
 import PopupModel from "./PopupModel";
@@ -11,6 +10,7 @@ import { BaseURL } from "../../helper/helper";
 import { showSuccess, showError } from "../../utils/Toast";
 import PageTitle from "../PageTitle";
 import ExcelExport from "../ExportExcel";
+import Loading from "../Loading"; // Import Loading component
 
 const AddAccount = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -219,6 +219,18 @@ const AddAccount = () => {
     "Six", "Seven", "Eight", "Nine", "Matric"
   ];
 
+  // Show loading skeleton when data is being fetched
+  if (isLoading) {
+    return (
+      <>
+        <Sidebar />
+        <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+          <Loading type="skeleton" skeletonType="staff" />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Sidebar />
@@ -226,13 +238,13 @@ const AddAccount = () => {
         <div className="bg-white w-full min-h-[calc(100vh-56px)] shadow-md rounded-lg px-6 py-4 max-sm:px-4">
           {/* Header Section */}
           <PageTitle
-  title="User Management"
-  description="Manage all user accounts and permissions"
-  showUserHeader={true}
-  bgGradient="bg-gradient-to-r from-blue-50 to-indigo-50"
-  borderColor="border-blue-100"
-  showBorder={true}
-/>
+            title="User Management"
+            description="Manage all user accounts and permissions"
+            showUserHeader={true}
+            bgGradient="bg-gradient-to-r from-blue-50 to-indigo-50"
+            borderColor="border-blue-100"
+            showBorder={true}
+          />
 
           {/* Controls Section */}
           <div className="bg-white rounded-lg p-4 shadow-sm mb-6 border border-gray-200 mt-2">
@@ -432,42 +444,7 @@ const AddAccount = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {isLoading ? (
-                    <>
-                    {Array.from({ length: 5 }, (_, index) => (
-                      <tr key={index} className="animate-pulse">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="h-4 bg-gray-200 rounded w-8"></div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="h-4 bg-gray-200 rounded w-32"></div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="h-4 bg-gray-200 rounded w-24"></div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="h-4 bg-gray-200 rounded w-20"></div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="h-4 bg-gray-200 rounded w-16"></div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="h-4 bg-gray-200 rounded w-12"></div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex space-x-2">
-                            <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
-                            <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
-                            <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </>
-                  ) : currentUsers.length > 0 ? (
+                  {currentUsers.length > 0 ? (
                     currentUsers.map((user, index) => (
                       <tr key={user._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
@@ -530,7 +507,7 @@ const AddAccount = () => {
           </div>
 
           {/* Pagination */}
-          {filteredUsers.length > 0 && !isLoading && (
+          {filteredUsers.length > 0 && (
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between">
               <div className="text-sm text-gray-700 mb-4 sm:mb-0">
                 Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">
