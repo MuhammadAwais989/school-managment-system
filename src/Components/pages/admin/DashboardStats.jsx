@@ -64,10 +64,11 @@ const StatsOverview = ({ data }) => {
     },
     {
       title: "Fee Collection",
-      value: `₹${(data.fees.collectedThisMonth / 1000).toFixed(0)}K`,
-      change: `${data.fees.achievement}% of target`,
+      // Yahan hum current month collection aur dues dono dikhayenge
+      value: `₹${(data.fees.currentMonthCollection / 1000).toFixed(0)}K`,
+      change: `₹${(data.fees.currentMonthDues / 1000).toFixed(0)}K dues`,
       trend: "up",
-      secondary: `₹${(data.fees.dueThisWeek / 1000).toFixed(0)}K due this week`,
+      secondary: `${data.currentMonthFees?.currentMonth || new Date().toLocaleString('default', { month: 'long' })}`,
       icon: FaMoneyBillWave,
       color: "indigo",
       link: "/fees"
