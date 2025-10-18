@@ -82,6 +82,10 @@ const FeesManagement = () => {
   const [totalDues, setTotalDues] = useState(0);
   const [fullyPaidStudents, setFullyPaidStudents] = useState(0);
 
+  // Current month collection state
+  const [currentMonthCollection, setCurrentMonthCollection] = useState(0);
+  const [currentMonthDues, setCurrentMonthDues] = useState(0);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -123,6 +127,9 @@ const FeesManagement = () => {
       // ✅ All students store karein
       setAllStudents(processedStudents);
 
+      // ✅ Calculate current month collection and dues
+      calculateCurrentMonthData(processedStudents);
+
       // ✅ Initial display ke liye students set karein
       applyFiltersAndPagination(processedStudents);
 
@@ -139,8 +146,65 @@ const FeesManagement = () => {
       setTotalFeesCollection(0);
       setTotalDues(0);
       setFullyPaidStudents(0);
+      setCurrentMonthCollection(0);
+      setCurrentMonthDues(0);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ CALCULATE CURRENT MONTH COLLECTION AND DUES
+  const calculateCurrentMonthData = (studentsData) => {
+    try {
+      const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+      const currentYear = new Date().getFullYear();
+      
+      let monthCollection = 0;
+      let monthDues = 0;
+
+      studentsData.forEach((student) => {
+        // Calculate current month dues
+        const monthlyFee = student.monthlyFee || Number(student.Fees) || 0;
+        const currentMonthDue = student.duesByMonth?.find(
+          month => month.month === currentMonth && !month.paid
+        );
+        
+        if (currentMonthDue) {
+          monthDues += currentMonthDue.dueAmount || monthlyFee;
+        }
+
+        // Calculate current month collection from payment history
+        if (student.paymentHistory) {
+          student.paymentHistory.forEach((payment) => {
+            const paymentDate = new Date(payment.date);
+            const paymentMonth = paymentDate.toLocaleString('default', { month: 'long' });
+            const paymentYear = paymentDate.getFullYear();
+            
+            if (paymentMonth === currentMonth && paymentYear === currentYear) {
+              monthCollection += payment.amount || 0;
+            }
+          });
+        }
+      });
+
+      console.log("📊 Current Month Data:", {
+        month: currentMonth,
+        collection: monthCollection,
+        dues: monthDues
+      });
+
+      setCurrentMonthCollection(monthCollection);
+      setCurrentMonthDues(monthDues);
+
+      // Store in localStorage for AdminDashboard to access
+      localStorage.setItem('currentMonthCollection', monthCollection.toString());
+      localStorage.setItem('currentMonthDues', monthDues.toString());
+      localStorage.setItem('currentMonth', currentMonth);
+
+    } catch (error) {
+      console.error("Error calculating current month data:", error);
+      setCurrentMonthCollection(0);
+      setCurrentMonthDues(0);
     }
   };
 
@@ -1302,16 +1366,25 @@ const FeesManagement = () => {
                   </div>
                 </div>
 
-                {/* Total Dues Card */}
+                {/* Total Dues Card - UPDATED WITH CURRENT MONTH DUES */}
                 <div className="bg-gradient-to-br from-white to-orange-50 rounded-2xl p-6 shadow-lg border border-orange-100/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <p className="text-orange-600/80 text-sm font-semibold uppercase tracking-wide mb-2">
                         Total Dues
                       </p>
                       <h3 className="text-3xl font-bold text-gray-900 mb-1">
                         Rs. {totalDues.toLocaleString()}
                       </h3>
+                      {/* Current Month Dues added here */}
+                      <div className="mt-2 pt-2 border-t border-orange-200/50">
+                        <p className="text-orange-500 text-sm font-medium">
+                          Current Month Dues
+                        </p>
+                        <p className="text-orange-700 text-lg font-semibold">
+                          Rs. {currentMonthDues.toLocaleString()}
+                        </p>
+                      </div>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <AlertCircle className="text-white" size={28} />
@@ -2298,7 +2371,7 @@ const FeesManagement = () => {
                       onClick={() => {
                         const today = new Date();
                         setSelectedMonth(
-                          today.toLocaleString("default", { month: "long" })
+                          today.toLocaleString("default", { month: 'long' })
                         );
                         setSelectedDate(today.toISOString().split("T")[0]);
                       }}
