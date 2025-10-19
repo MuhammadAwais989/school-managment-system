@@ -1318,18 +1318,6 @@ const FeesManagement = () => {
                 showStatusBadge={true}
               />
 
-               {/* Add Excel Export Button in Controls Section */}
-               <div className="flex justify-end mb-4 px-4">
-                <ExcelExport 
-                  data={students}
-                  mappingFunction={mapFeesData}
-                  fileName="Fees_Management_Report"
-                  sheetName="Fees Data"
-                  buttonText="Export Excel"
-                  disabled={students.length === 0}
-                />
-              </div>
-
               {/* Summary Cards Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pt-3 mb-4">
                 {/* Total Students Card */}
@@ -1367,30 +1355,32 @@ const FeesManagement = () => {
                 </div>
 
                 {/* Total Dues Card - UPDATED WITH CURRENT MONTH DUES */}
-                <div className="bg-gradient-to-br from-white to-orange-50 rounded-2xl p-6 shadow-lg border border-orange-100/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="text-orange-600/80 text-sm font-semibold uppercase tracking-wide mb-2">
-                        Total Dues
-                      </p>
-                      <h3 className="text-3xl font-bold text-gray-900 mb-1">
-                        Rs. {totalDues.toLocaleString()}
-                      </h3>
-                      {/* Current Month Dues added here */}
-                      <div className="mt-2 pt-2 border-t border-orange-200/50">
-                        <p className="text-orange-500 text-sm font-medium">
-                          Current Month Dues
-                        </p>
-                        <p className="text-orange-700 text-lg font-semibold">
-                          Rs. {currentMonthDues.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <AlertCircle className="text-white" size={28} />
-                    </div>
-                  </div>
-                </div>
+                <div className="bg-gradient-to-br from-white to-orange-50 rounded-2xl px-4 pb-0 pt-2 shadow-lg border border-orange-100/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
+  <div className="flex items-start justify-between">
+    <div className="flex-1">
+      <p className="text-orange-600/80 text-xs font-semibold uppercase tracking-wide mb-1">
+        Total Dues
+      </p>
+      <h3 className="text-2xl font-bold text-gray-900 mb-2">
+        Rs. {totalDues.toLocaleString()}
+      </h3>
+      
+      {/* Compact Current Month Dues */}
+      <div className="flex justify-between items-center bg-orange-50/80 rounded-lg px-3 py-0">
+        <p className="text-orange-600 text-sm font-medium">
+          Current Month
+        </p>
+        <p className="text-orange-700 text-base font-semibold">
+          Rs. {currentMonthDues.toLocaleString()}
+        </p>
+      </div>
+    </div>
+    
+    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 ml-3">
+      <AlertCircle className="text-white" size={20} />
+    </div>
+  </div>
+</div>
 
                 {/* Fully Paid Card */}
                 <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-6 shadow-lg border border-purple-100/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
