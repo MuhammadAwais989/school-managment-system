@@ -207,13 +207,7 @@ const AdminDashboard = () => {
       let presentTeaching = 0;
       let presentNonTeaching = 0;
 
-      console.log("🔍 DEBUG calculateStaffStats:");
-      console.log("📊 Total staff:", totalStaff);
-      console.log("📊 Attendance data received:", attendanceData);
-      console.log("📊 Attendance data length:", attendanceData.length);
-
       if (attendanceData && attendanceData.length > 0) {
-        console.log("🎯 Processing real attendance data...");
         
         // If we have real attendance data, count actual present staff
         attendanceData.forEach((record, index) => {
@@ -248,7 +242,6 @@ const AdminDashboard = () => {
               if (staffMember.designation && 
                   staffMember.designation.toLowerCase().includes("teacher")) {
                 presentTeaching++;
-                console.log(`👨‍🏫 Teaching staff present: ${staffMember.name}`);
               } else {
                 console.log(`👨‍💼 Non-teaching staff present: ${staffMember.name}`);
               }
@@ -260,7 +253,6 @@ const AdminDashboard = () => {
         
         presentNonTeaching = presentToday - presentTeaching;
       } else {
-        console.log("❌ No attendance data found, using 0 for present staff");
         // If no attendance data found, show 0 present (attendance not marked)
         presentToday = 0;
         presentTeaching = 0;
