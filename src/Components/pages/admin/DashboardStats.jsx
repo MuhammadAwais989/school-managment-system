@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   FaUsers, 
   FaChalkboardTeacher, 
@@ -11,13 +11,63 @@ import {
 } from "react-icons/fa";
 
 const StatsOverview = ({ data }) => {
+  const [localStorageData, setLocalStorageData] = useState({
+    teacherPresentCount: 0,
+    totalPresentStaffCount: 0,
+    studentPresentCount: 0 // ✅ ADDED: Student present count
+  });
+
+  // ✅ Load data from localStorage
+  useEffect(() => {
+    const teacherPresentCount = parseInt(localStorage.getItem("teacherPresentCount")) || 0;
+    const totalPresentStaffCount = parseInt(localStorage.getItem("totalPresentStaffCount")) || 0;
+    const studentPresentCount = parseInt(localStorage.getItem("studentPresentCount")) || 0; // ✅ ADDED
+    
+    console.log("📊 Dashboard - localStorage data loaded:", {
+      teacherPresentCount,
+      totalPresentStaffCount,
+      studentPresentCount // ✅ ADDED
+    });
+
+    setLocalStorageData({
+      teacherPresentCount,
+      totalPresentStaffCount,
+      studentPresentCount // ✅ ADDED
+    });
+  }, [data]);
+
+  // ✅ Calculate attendance percentage
+  const calculateAttendancePercentage = (present, total) => {
+    if (total === 0) return 0;
+    return Math.round((present / total) * 100);
+  };
+
+  // ✅ Calculate staff attendance percentage
+  const staffAttendancePercentage = calculateAttendancePercentage(
+    localStorageData.totalPresentStaffCount, 
+    data.staff.total
+  );
+
+  // ✅ Calculate teacher attendance percentage  
+  const teacherAttendancePercentage = calculateAttendancePercentage(
+    localStorageData.teacherPresentCount,
+    data.teachers.total
+  );
+
+  // ✅ ADDED: Calculate student attendance percentage
+  const studentAttendancePercentage = calculateAttendancePercentage(
+    localStorageData.studentPresentCount,
+    data.students.total
+  );
+
   const stats = [
     {
       title: "Total Students",
       value: data.students.total.toLocaleString(),
       change: data.students.change,
       trend: data.students.trend,
-      secondary: `${data.students.newToday} new today`,
+      // ✅ CHANGED: Use localStorage data for student present count
+      secondary: `${localStorageData.studentPresentCount} present today`,
       icon: FaUsers,
       color: "purple",
       link: "/students"
@@ -25,9 +75,10 @@ const StatsOverview = ({ data }) => {
     {
       title: "Teaching Staff",
       value: data.teachers.total.toLocaleString(),
-      change: data.teachers.change,
-      trend: data.teachers.trend,
-      secondary: `${data.teachers.presentToday} present`,
+      // ✅ CHANGED: Calculate trend based on present vs total
+      change: `${teacherAttendancePercentage}%`,
+      trend: teacherAttendancePercentage >= 80 ? "up" : "down",
+      secondary: `${localStorageData.teacherPresentCount} present`,
       icon: FaChalkboardTeacher,
       color: "blue",
       link: "/staff/teachers"
@@ -35,36 +86,41 @@ const StatsOverview = ({ data }) => {
     {
       title: "Total Staff",
       value: data.staff.total.toLocaleString(),
-      change: data.staff.change,
-      trend: data.staff.trend,
-      secondary: `${data.staff.presentToday} present`,
+      // ✅ CHANGED: Calculate trend based on present vs total
+      change: `${staffAttendancePercentage}%`,
+      trend: staffAttendancePercentage >= 80 ? "up" : "down",
+      secondary: `${localStorageData.totalPresentStaffCount} present`,
       icon: FaUserTie,
       color: "green",
       link: "/staff/support"
     },
     {
       title: "Student Attendance",
-      value: `${data.attendance.students.rate}%`,
-      change: data.attendance.students.change,
-      trend: "up",
-      secondary: `${data.attendance.students.present} present`,
+      // ✅ CHANGED: Calculate percentage based on localStorage data
+      value: `${studentAttendancePercentage}%`,
+      // ✅ CHANGED: Show actual present count
+      change: `${localStorageData.studentPresentCount}/${data.students.total}`,
+      trend: studentAttendancePercentage >= 80 ? "up" : "down",
+      // ✅ CHANGED: Show detailed information
+      secondary: `${localStorageData.studentPresentCount} present out of ${data.students.total}`,
       icon: FaChartLine,
       color: "emerald",
       link: "/attendance/students"
     },
     {
       title: "Staff Attendance",
-      value: `${data.attendance.staff.rate}%`,
-      change: data.attendance.staff.change,
-      trend: "up",
-      secondary: `${data.attendance.staff.present} present`,
+      // ✅ CHANGED: Calculate percentage based on localStorage data
+      value: `${staffAttendancePercentage}%`,
+      // ✅ CHANGED: Show actual present count
+      change: `${localStorageData.totalPresentStaffCount}/${data.staff.total}`,
+      trend: staffAttendancePercentage >= 80 ? "up" : "down",
+      secondary: `${localStorageData.totalPresentStaffCount} present out of ${data.staff.total}`,
       icon: FaCheckCircle,
       color: "orange",
       link: "/attendance/staff"
     },
     {
       title: "Fee Collection",
-      // Yahan hum current month collection aur dues dono dikhayenge
       value: `₹${(data.fees.currentMonthCollection / 1000).toFixed(0)}K`,
       change: `₹${(data.fees.currentMonthDues / 1000).toFixed(0)}K dues`,
       trend: "up",
@@ -126,6 +182,19 @@ const StatsOverview = ({ data }) => {
   const getTrendIcon = (trend) => {
     return trend === "up" ? <FaArrowUp className="w-3 h-3" /> : <FaArrowDown className="w-3 h-3" />;
   };
+
+  // ✅ Updated Debug log
+  console.log("📊 Dashboard Stats - Calculated Data:", {
+    studentPresent: localStorageData.studentPresentCount,
+    studentTotal: data.students.total,
+    studentPercentage: studentAttendancePercentage,
+    teacherPresent: localStorageData.teacherPresentCount,
+    teacherTotal: data.teachers.total,
+    teacherPercentage: teacherAttendancePercentage,
+    staffPresent: localStorageData.totalPresentStaffCount,
+    staffTotal: data.staff.total,
+    staffPercentage: staffAttendancePercentage
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">

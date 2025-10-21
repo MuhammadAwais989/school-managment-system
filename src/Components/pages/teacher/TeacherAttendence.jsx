@@ -149,7 +149,7 @@ const TeacherAttendence = () => {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-
+  
     const payload = {
       date: today,
       records: filteredTeachers.map(({ teacherId, status }) => ({
@@ -157,14 +157,36 @@ const TeacherAttendence = () => {
         status,
       })),
     };
-
+  
     console.log("Submitting attendance payload:", payload);
-
+  
     try {
       const res = await axios.post(`${BaseURL}/teachers/attendence`, payload, {
         headers: { "Content-Type": "application/json" },
       });
-
+  
+      // ✅ NEW CODE: Calculate and save counts to localStorage
+      const presentTeachers = filteredTeachers.filter(
+        teacher => teacher.status === "present"
+      );
+      
+      // 1. Count teachers with designation "Teacher" who are present
+      const teacherDesignationPresentCount = presentTeachers.filter(
+        teacher => teacher.designation === "Teacher"
+      ).length;
+      
+      // 2. Count total present staff
+      const totalPresentStaffCount = presentTeachers.length;
+      
+      // Save to localStorage
+      localStorage.setItem("teacherPresentCount", teacherDesignationPresentCount.toString());
+      localStorage.setItem("totalPresentStaffCount", totalPresentStaffCount.toString());
+      
+      // Optional: Log for verification
+      console.log("Teacher Present Count:", teacherDesignationPresentCount);
+      console.log("Total Present Staff Count:", totalPresentStaffCount);
+      console.log("Saved to localStorage");
+  
       showSuccess(res.data.message || "Attendance submitted successfully!");
       setShowConfirmPopup(false);
     } catch (err) {

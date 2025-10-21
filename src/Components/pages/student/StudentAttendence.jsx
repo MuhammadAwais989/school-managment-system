@@ -150,7 +150,24 @@ const StudentAttendence = () => {
           })
         ),
       };
-
+  
+      // ✅ NEW CODE: Calculate today's present students count
+      const presentStudentsCount = filteredStudents.filter(
+        student => student.status === "present"
+      ).length;
+  
+      // ✅ Save to localStorage
+      localStorage.setItem("studentPresentCount", presentStudentsCount.toString());
+      
+      // ✅ Optional: Also save the date to track when attendance was marked
+      localStorage.setItem("lastAttendanceDate", today);
+      
+      console.log("✅ Student Attendance Saved:", {
+        presentCount: presentStudentsCount,
+        totalStudents: filteredStudents.length,
+        date: today
+      });
+  
       await axios.post(`${BaseURL}/students/attendence`, payload);
       showSuccess("Attendance marked successfully");
     } catch (err) {
