@@ -19,7 +19,7 @@ const AttendanceCharts = ({ data, detailed = false }) => {
             value={dataFilter}
             onChange={(e) => setDataFilter(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
+>
             <option value="all">All Data</option>
             <option value="students">Students Only</option>
             <option value="teachers">Teachers Only</option>
