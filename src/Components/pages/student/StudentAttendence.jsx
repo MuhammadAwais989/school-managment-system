@@ -487,8 +487,7 @@ const StudentAttendence = () => {
                           value={s.status}
                           onChange={(e) =>
                             handleStatusChange(index, e.target.value)
-                          }
-                        >
+                          }>
                           <option value="present">Present</option>
                           <option value="absent">Absent</option>
                           <option value="leave">Leave</option>

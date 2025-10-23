@@ -21,7 +21,7 @@ const StatsOverview = ({ data }) => {
   useEffect(() => {
     const teacherPresentCount = parseInt(localStorage.getItem("teacherPresentCount")) || 0;
     const totalPresentStaffCount = parseInt(localStorage.getItem("totalPresentStaffCount")) || 0;
-    const studentPresentCount = parseInt(localStorage.getItem("studentPresentCount")) || 0; // ✅ ADDED
+    const studentPresentCount = parseInt(localStorage.getItem("studentPresentCount")) || 0; 
     
     console.log("📊 Dashboard - localStorage data loaded:", {
       teacherPresentCount,
