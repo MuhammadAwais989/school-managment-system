@@ -1,34 +1,35 @@
 import React from "react";
+import {Link} from "react-router-dom"
 
 const QuickActions = () => {
   const actions = [
     {
-      title: "Take Attendance",
+      title: "Take Students Attendance",
       description: "Record today's attendance",
       icon: "📝",
       color: "blue",
-      link: "/attendance"
+      link: "/students/attendence"
     },
     {
       title: "Collect Fees",
       description: "Process fee payments",
       icon: "💰",
       color: "green",
-      link: "/fees/collect"
+      link: "/fees/record"
     },
     {
       title: "Add Student",
       description: "Register new student",
       icon: "👨‍🎓",
       color: "purple",
-      link: "/students/add"
+      link: "/students/details"
     },
     {
-      title: "Generate Report",
+      title: "Generate Attendance Report",
       description: "Create custom reports",
       icon: "📊",
       color: "orange",
-      link: "/reports"
+      link: "/students/attendence"
     },
     {
       title: "Send Notice",
@@ -42,7 +43,7 @@ const QuickActions = () => {
       description: "Staff administration",
       icon: "👨‍🏫",
       color: "indigo",
-      link: "/staff"
+      link: "/teacher/details"
     }
   ];
 
@@ -63,15 +64,15 @@ const QuickActions = () => {
       <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
       <div className="grid grid-cols-2 gap-3">
         {actions.map((action, index) => (
-          <button
+          <Link
             key={index}
             className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center text-center ${getColorClasses(action.color)}`}
-            onClick={() => window.location.href = action.link}
+            to={action.link}
           >
             <span className="text-2xl mb-2">{action.icon}</span>
             <span className="font-medium text-sm">{action.title}</span>
             <span className="text-xs opacity-75 mt-1">{action.description}</span>
-          </button>
+          </Link>
         ))}
       </div>
     </div>

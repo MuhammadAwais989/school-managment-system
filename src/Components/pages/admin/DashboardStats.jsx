@@ -9,6 +9,7 @@ import {
   FaArrowUp,
   FaArrowDown
 } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const StatsOverview = ({ data }) => {
   const [localStorageData, setLocalStorageData] = useState({
@@ -70,7 +71,7 @@ const StatsOverview = ({ data }) => {
       secondary: `${localStorageData.studentPresentCount} present today`,
       icon: FaUsers,
       color: "purple",
-      link: "/students"
+      link: "/students/details"
     },
     {
       title: "Teaching Staff",
@@ -81,7 +82,7 @@ const StatsOverview = ({ data }) => {
       secondary: `${localStorageData.teacherPresentCount} present`,
       icon: FaChalkboardTeacher,
       color: "blue",
-      link: "/staff/teachers"
+      link: "/teacher/details"
     },
     {
       title: "Total Staff",
@@ -92,7 +93,7 @@ const StatsOverview = ({ data }) => {
       secondary: `${localStorageData.totalPresentStaffCount} present`,
       icon: FaUserTie,
       color: "green",
-      link: "/staff/support"
+      link: "/teacher/details"
     },
     {
       title: "Student Attendance",
@@ -105,7 +106,7 @@ const StatsOverview = ({ data }) => {
       secondary: `${localStorageData.studentPresentCount} present out of ${data.students.total}`,
       icon: FaChartLine,
       color: "emerald",
-      link: "/attendance/students"
+      link: "/students/attendence"
     },
     {
       title: "Staff Attendance",
@@ -117,7 +118,7 @@ const StatsOverview = ({ data }) => {
       secondary: `${localStorageData.totalPresentStaffCount} present out of ${data.staff.total}`,
       icon: FaCheckCircle,
       color: "orange",
-      link: "/attendance/staff"
+      link: "/teacher/attendenace"
     },
     {
       title: "Fee Collection",
@@ -127,7 +128,7 @@ const StatsOverview = ({ data }) => {
       secondary: `${data.currentMonthFees?.currentMonth || new Date().toLocaleString('default', { month: 'long' })}`,
       icon: FaMoneyBillWave,
       color: "indigo",
-      link: "/fees"
+      link: "/fees/record"
     }
   ];
 
@@ -199,10 +200,10 @@ const StatsOverview = ({ data }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
       {stats.map((stat, index) => (
-        <div
+        <Link
           key={index}
           className={`${getColorClasses(stat.color, "bg")} rounded-3xl p-6 transition-all duration-500 cursor-pointer group hover:shadow-2xl ${getColorClasses(stat.color, "glow")} hover:scale-105`}
-          onClick={() => window.location.href = stat.link}
+          to={stat.link}
         >
           {/* Animated Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
@@ -230,7 +231,7 @@ const StatsOverview = ({ data }) => {
               </p>
             </div>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   );
