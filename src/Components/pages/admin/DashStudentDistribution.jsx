@@ -4,132 +4,184 @@ import {
   FaCalendarTimes, 
   FaPhone, 
   FaSearch,
-  FaFilter,
   FaDownload
 } from "react-icons/fa";
+import jsPDF from 'jspdf';
 
-const StudentAttendanceTable = () => {
+const DashStudentDistribution = () => {
   const [absentStudents, setAbsentStudents] = useState([]);
   const [leaveStudents, setLeaveStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("all");
 
-  // Sample data - replace with actual API call
+  // ✅ Load today's absent and leave students from localStorage
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data
-      const mockAbsentStudents = [
-        {
-          id: 1,
-          rollNo: "101",
-          name: "Rahul Sharma",
-          class: "10-A",
-          section: "A",
-          contactNo: "9876543210",
-          reason: "Sick",
-          parentName: "Mr. Sharma"
-        },
-        {
-          id: 2,
-          rollNo: "102",
-          name: "Priya Singh",
-          class: "10-A",
-          section: "A",
-          contactNo: "9876543211",
-          reason: "Family function",
-          parentName: "Mrs. Singh"
-        },
-        {
-          id: 3,
-          rollNo: "205",
-          name: "Amit Kumar",
-          class: "9-B",
-          section: "B",
-          contactNo: "9876543212",
-          reason: "Doctor appointment",
-          parentName: "Mr. Kumar"
-        },
-        {
-          id: 4,
-          rollNo: "308",
-          name: "Sneha Patel",
-          class: "11-C",
-          section: "C",
-          contactNo: "9876543213",
-          reason: "Personal work",
-          parentName: "Mr. Patel"
+    const loadTodayStudents = () => {
+      try {
+        setLoading(true);
+        
+        const today = new Date().toISOString().split('T')[0];
+        const lastUpdate = localStorage.getItem('lastAttendanceUpdate');
+        
+        // Check if data is from today
+        if (lastUpdate && !lastUpdate.startsWith(today)) {
+          console.log("🔄 Today's data is old, showing empty");
+          setAbsentStudents([]);
+          setLeaveStudents([]);
+          setLoading(false);
+          return;
         }
-      ];
 
-      const mockLeaveStudents = [
-        {
-          id: 1,
-          rollNo: "105",
-          name: "Karan Mehta",
-          class: "10-A",
-          section: "A",
-          contactNo: "9876543214",
-          leaveType: "Medical",
-          leaveDays: 3,
-          fromDate: "2024-01-15",
-          toDate: "2024-01-17",
-          status: "Approved"
-        },
-        {
-          id: 2,
-          rollNo: "209",
-          name: "Neha Gupta",
-          class: "9-B",
-          section: "B",
-          contactNo: "9876543215",
-          leaveType: "Personal",
-          leaveDays: 2,
-          fromDate: "2024-01-16",
-          toDate: "2024-01-17",
-          status: "Pending"
-        },
-        {
-          id: 3,
-          rollNo: "312",
-          name: "Rohit Verma",
-          class: "11-C",
-          section: "C",
-          contactNo: "9876543216",
-          leaveType: "Emergency",
-          leaveDays: 1,
-          fromDate: "2024-01-15",
-          toDate: "2024-01-15",
-          status: "Approved"
-        }
-      ];
+        const absent = JSON.parse(localStorage.getItem('todayAbsentStudents') || '[]');
+        const leave = JSON.parse(localStorage.getItem('todayLeaveStudents') || '[]');
 
-      setAbsentStudents(mockAbsentStudents);
-      setLeaveStudents(mockLeaveStudents);
-      setLoading(false);
+        console.log("📊 Today's Students Loaded:", {
+          absent: absent.length,
+          leave: leave.length
+        });
+
+        setAbsentStudents(absent);
+        setLeaveStudents(leave);
+        setLoading(false);
+      } catch (error) {
+        console.error("❌ Error loading today's students:", error);
+        setAbsentStudents([]);
+        setLeaveStudents([]);
+        setLoading(false);
+      }
     };
 
-    fetchData();
+    loadTodayStudents();
   }, []);
 
   // Filter students based on search and class
   const filteredAbsentStudents = absentStudents.filter(student =>
     (selectedClass === "all" || student.class === selectedClass) &&
     (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     student.rollNo.includes(searchTerm))
+     student.rollNo.includes(searchTerm) ||
+     student.fathername.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const filteredLeaveStudents = leaveStudents.filter(student =>
     (selectedClass === "all" || student.class === selectedClass) &&
     (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     student.rollNo.includes(searchTerm))
+     student.rollNo.includes(searchTerm) ||
+     student.fathername.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const classes = ["all", "10-A", "10-B", "9-A", "9-B", "11-A", "11-B", "12-A", "12-B"];
+  // Get unique classes from data
+  const classes = ["all", ...new Set([
+    ...absentStudents.map(student => student.class),
+    ...leaveStudents.map(student => student.class)
+  ].filter(Boolean))];
+
+  const handleExport = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let startY = 20;
+
+    // Title
+    doc.setFontSize(16);
+    doc.text("Today's Student Attendance Report", pageWidth / 2, 15, { align: 'center' });
+    
+    // Date
+    doc.setFontSize(10);
+    const today = new Date().toLocaleDateString('en-IN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    doc.text(`Date: ${today}`, 14, 25);
+
+    // Absent Students Section
+    startY = 35;
+    doc.setFontSize(12);
+    doc.text("Absent Students", 14, startY);
+    startY += 10;
+
+    if (filteredAbsentStudents.length > 0) {
+      const absentHeaders = ['Roll No', 'Name', 'Father Name', 'Class', 'Section', 'Contact'];
+      doc.setFontSize(8);
+      absentHeaders.forEach((header, index) => {
+        doc.text(header, 14 + index * 30, startY);
+      });
+      startY += 6;
+
+      filteredAbsentStudents.forEach((student) => {
+        const row = [
+          student.rollNo,
+          student.name,
+          student.fathername,
+          student.class,
+          student.section,
+          student.contactNo
+        ];
+
+        row.forEach((item, idx) => {
+          doc.text(String(item), 14 + idx * 30, startY);
+        });
+
+        startY += 6;
+        if (startY > 270) {
+          doc.addPage();
+          startY = 20;
+        }
+      });
+    } else {
+      doc.text("No absent students today", 14, startY);
+      startY += 10;
+    }
+
+    // Leave Students Section
+    startY += 10;
+    doc.setFontSize(12);
+    doc.text("Leave Students", 14, startY);
+    startY += 10;
+
+    if (filteredLeaveStudents.length > 0) {
+      const leaveHeaders = ['Roll No', 'Name', 'Father Name', 'Class', 'Section', 'Contact', 'Leave Type'];
+      doc.setFontSize(8);
+      leaveHeaders.forEach((header, index) => {
+        doc.text(header, 14 + index * 25, startY);
+      });
+      startY += 6;
+
+      filteredLeaveStudents.forEach((student) => {
+        const row = [
+          student.rollNo,
+          student.name,
+          student.fathername,
+          student.class,
+          student.section,
+          student.contactNo,
+          student.leaveType
+        ];
+
+        row.forEach((item, idx) => {
+          doc.text(String(item), 14 + idx * 25, startY);
+        });
+
+        startY += 6;
+        if (startY > 270) {
+          doc.addPage();
+          startY = 20;
+        }
+      });
+    } else {
+      doc.text("No leave students today", 14, startY);
+    }
+
+    // Summary
+    startY += 15;
+    doc.setFontSize(10);
+    doc.text(`Total Absent: ${absentStudents.length}`, 14, startY);
+    doc.text(`Total Leave: ${leaveStudents.length}`, 80, startY);
+    doc.text(`Total Students: ${absentStudents.length + leaveStudents.length}`, 140, startY);
+
+    doc.save(`today_attendance_report_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
 
   if (loading) {
     return (
@@ -148,7 +200,14 @@ const StudentAttendanceTable = () => {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Today's Student Status</h2>
-            <p className="text-gray-600 mt-1">Absent students and leave applications for today</p>
+            <p className="text-gray-600 mt-1">
+              {new Date().toLocaleDateString('en-IN', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
@@ -157,8 +216,8 @@ const StudentAttendanceTable = () => {
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search students..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Search by name, roll no, father name..."
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -177,9 +236,17 @@ const StudentAttendanceTable = () => {
             </select>
 
             {/* Export Button */}
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              onClick={handleExport}
+              disabled={absentStudents.length === 0 && leaveStudents.length === 0}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                absentStudents.length === 0 && leaveStudents.length === 0
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
               <FaDownload className="w-4 h-4" />
-              Export
+              Export PDF
             </button>
           </div>
         </div>
@@ -206,7 +273,10 @@ const StudentAttendanceTable = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student
+                      Roll No
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Student Details
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Class
@@ -214,22 +284,22 @@ const StudentAttendanceTable = () => {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Contact
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Reason
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredAbsentStudents.length > 0 ? (
                     filteredAbsentStudents.map((student) => (
                       <tr key={student.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {student.rollNo}
+                        </td>
+                        <td className="px-4 py-3">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
                               {student.name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              Roll No: {student.rollNo}
+                              Father: {student.fathername}
                             </div>
                           </div>
                         </td>
@@ -242,12 +312,6 @@ const StudentAttendanceTable = () => {
                             <FaPhone className="w-3 h-3 text-gray-400" />
                             {student.contactNo}
                           </div>
-                          <div className="text-xs text-gray-500">{student.parentName}</div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="inline-flex px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                            {student.reason}
-                          </span>
                         </td>
                       </tr>
                     ))
@@ -255,7 +319,7 @@ const StudentAttendanceTable = () => {
                     <tr>
                       <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
                         <FaUserSlash className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                        No absent students found
+                        No absent students today
                       </td>
                     </tr>
                   )}
@@ -269,7 +333,7 @@ const StudentAttendanceTable = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <FaCalendarTimes className="text-orange-500 w-5 h-5" />
-                Today's Leave Applications
+                Today's Leave Students
                 <span className="bg-orange-100 text-orange-800 text-sm px-2 py-1 rounded-full">
                   {filteredLeaveStudents.length}
                 </span>
@@ -281,16 +345,16 @@ const StudentAttendanceTable = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student
+                      Roll No
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Student Details
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Class
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Leave Details
+                      Contact & Leave Type
                     </th>
                   </tr>
                 </thead>
@@ -298,13 +362,16 @@ const StudentAttendanceTable = () => {
                   {filteredLeaveStudents.length > 0 ? (
                     filteredLeaveStudents.map((student) => (
                       <tr key={student.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {student.rollNo}
+                        </td>
+                        <td className="px-4 py-3">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
                               {student.name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              Roll No: {student.rollNo}
+                              Father: {student.fathername}
                             </div>
                           </div>
                         </td>
@@ -312,36 +379,14 @@ const StudentAttendanceTable = () => {
                           <div className="text-sm text-gray-900">{student.class}</div>
                           <div className="text-sm text-gray-500">Sec: {student.section}</div>
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="flex items-center gap-1 text-sm text-gray-900">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1 text-sm text-gray-900 mb-1">
                             <FaPhone className="w-3 h-3 text-gray-400" />
                             {student.contactNo}
                           </div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                                student.leaveType === 'Medical' 
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : student.leaveType === 'Personal'
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : 'bg-orange-100 text-orange-800'
-                              }`}>
-                                {student.leaveType}
-                              </span>
-                              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                                student.status === 'Approved'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {student.status}
-                              </span>
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {student.fromDate} to {student.toDate} ({student.leaveDays} days)
-                            </div>
-                          </div>
+                          <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                            {student.leaveType}
+                          </span>
                         </td>
                       </tr>
                     ))
@@ -349,7 +394,7 @@ const StudentAttendanceTable = () => {
                     <tr>
                       <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
                         <FaCalendarTimes className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                        No leave applications found
+                        No leave students today
                       </td>
                     </tr>
                   )}
@@ -364,7 +409,7 @@ const StudentAttendanceTable = () => {
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-red-800">Total Absent</p>
+                <p className="text-sm font-medium text-red-800">Total Absent Today</p>
                 <p className="text-2xl font-bold text-red-900">{absentStudents.length}</p>
               </div>
               <FaUserSlash className="w-8 h-8 text-red-400" />
@@ -374,7 +419,7 @@ const StudentAttendanceTable = () => {
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-800">Total Leaves</p>
+                <p className="text-sm font-medium text-orange-800">Total Leave Today</p>
                 <p className="text-2xl font-bold text-orange-900">{leaveStudents.length}</p>
               </div>
               <FaCalendarTimes className="w-8 h-8 text-orange-400" />
@@ -384,11 +429,15 @@ const StudentAttendanceTable = () => {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-800">Attendance Rate</p>
-                <p className="text-2xl font-bold text-blue-900">94.2%</p>
+                <p className="text-sm font-medium text-blue-800">Total Today</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {absentStudents.length + leaveStudents.length}
+                </p>
               </div>
               <div className="text-right">
-                <div className="text-sm text-blue-600">+2.1% from yesterday</div>
+                <div className="text-sm text-blue-600">
+                  Absent + Leave
+                </div>
               </div>
             </div>
           </div>
@@ -398,4 +447,4 @@ const StudentAttendanceTable = () => {
   );
 };
 
-export default StudentAttendanceTable;
+export default DashStudentDistribution;

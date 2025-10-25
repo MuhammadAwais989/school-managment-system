@@ -30,10 +30,100 @@ const StudentAttendence = () => {
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
+  // ✅ NEW: Function to save today's absent and leave students to localStorage
+  const saveTodayAbsentAndLeaveStudents = (studentsData) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const absentStudents = studentsData.filter(student => 
+        student.status === "absent"
+      ).map(student => ({
+        id: student.studentId,
+        rollNo: student.rollNo,
+        name: student.name,
+        fathername: student.fathername,
+        class: student.class,
+        section: student.section,
+        contactNo: student.contactNo || 'N/A',
+        reason: student.reason || 'Not specified',
+        parentName: student.fathername,
+        date: today,
+        status: 'Absent'
+      }));
+
+      const leaveStudents = studentsData.filter(student => 
+        student.status === "leave"
+      ).map(student => ({
+        id: student.studentId,
+        rollNo: student.rollNo,
+        name: student.name,
+        fathername: student.fathername,
+        class: student.class,
+        section: student.section,
+        contactNo: student.contactNo || 'N/A',
+        leaveType: student.leaveType || 'Not specified',
+        leaveDays: 1,
+        fromDate: today,
+        toDate: today,
+        status: 'Approved',
+        date: today
+      }));
+
+      // Save to localStorage
+      localStorage.setItem('todayAbsentStudents', JSON.stringify(absentStudents));
+      localStorage.setItem('todayLeaveStudents', JSON.stringify(leaveStudents));
+      localStorage.setItem('lastAttendanceUpdate', new Date().toISOString());
+
+      console.log("✅ Today's Absent & Leave Students Saved:", {
+        absent: absentStudents.length,
+        leave: leaveStudents.length,
+        date: today
+      });
+
+      return { absentStudents, leaveStudents };
+    } catch (error) {
+      console.error("❌ Error saving today's absent/leave students:", error);
+      return { absentStudents: [], leaveStudents: [] };
+    }
+  };
+
+  // ✅ NEW: Function to get today's absent and leave students from localStorage
+  const getTodayAbsentAndLeaveStudents = () => {
+    try {
+      const lastUpdate = localStorage.getItem('lastAttendanceUpdate');
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check if data is from today
+      if (lastUpdate && !lastUpdate.startsWith(today)) {
+        console.log("🔄 Old data found, clearing...");
+        localStorage.removeItem('todayAbsentStudents');
+        localStorage.removeItem('todayLeaveStudents');
+        return { absentStudents: [], leaveStudents: [] };
+      }
+
+      const absentStudents = JSON.parse(localStorage.getItem('todayAbsentStudents') || '[]');
+      const leaveStudents = JSON.parse(localStorage.getItem('todayLeaveStudents') || '[]');
+
+      console.log("📊 Loaded Today's Students from localStorage:", {
+        absent: absentStudents.length,
+        leave: leaveStudents.length
+      });
+
+      return { absentStudents, leaveStudents };
+    } catch (error) {
+      console.error("❌ Error loading today's students:", error);
+      return { absentStudents: [], leaveStudents: [] };
+    }
+  };
+
   useEffect(() => {
     const role = localStorage.getItem("role");
     setUserRole(role);
     fetchStudents(role);
+
+    // ✅ Load today's data when component mounts
+    const todayData = getTodayAbsentAndLeaveStudents();
+    console.log("🔄 Today's data on component mount:", todayData);
   }, []);
 
   const fetchStudents = async (role) => {
@@ -81,6 +171,7 @@ const StudentAttendence = () => {
         fathername: s.fatherName,
         class: s.Class,
         section: s.section,
+        contactNo: s.contactNo || 'N/A', // ✅ Added contactNo
         status: "present",
       }));
 
@@ -151,7 +242,7 @@ const StudentAttendence = () => {
         ),
       };
   
-      // ✅ NEW CODE: Calculate today's present students count
+      // ✅ NEW: Calculate today's present students count
       const presentStudentsCount = filteredStudents.filter(
         student => student.status === "present"
       ).length;
@@ -165,6 +256,9 @@ const StudentAttendence = () => {
         totalStudents: filteredStudents.length,
         date: today
       });
+
+      // ✅ NEW: Save today's absent and leave students
+      saveTodayAbsentAndLeaveStudents(filteredStudents);
   
       // ✅ NEW: Fetch and save previous 6 months data including current month
       await fetchAndSaveSixMonthsData();
@@ -312,27 +406,6 @@ const StudentAttendence = () => {
     }
     
     return sixMonthsData;
-  };
-  
-  // ✅ NEW FUNCTION: Get 6 months data from localStorage (for charts)
-  const getSixMonthsDataFromStorage = () => {
-    try {
-      const storedData = localStorage.getItem("studentSixMonthsData");
-      const lastUpdate = localStorage.getItem("lastSixMonthsUpdate");
-      
-      if (storedData) {
-        const data = JSON.parse(storedData);
-        console.log("📊 Loaded 6 Months Data from localStorage:", {
-          data: data,
-          lastUpdate: lastUpdate
-        });
-        return data;
-      }
-    } catch (error) {
-      console.error("❌ Error loading 6 months data from localStorage:", error);
-    }
-    
-    return [];
   };
 
   const handleReportSelect = async (studentId, reportType) => {
@@ -501,7 +574,7 @@ const StudentAttendence = () => {
                   <select
                     value={classFilter}
                     onChange={(e) => setClassFilter(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-40"
                     disabled={userRole === "Teacher"}
                   >
                     <option value="">All Classes</option>
@@ -520,7 +593,7 @@ const StudentAttendence = () => {
                   <select
                     value={sectionFilter}
                     onChange={(e) => setSectionFilter(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-40"
                     disabled={userRole === "Teacher"}
                   >
                     <option value="">All Sections</option>
