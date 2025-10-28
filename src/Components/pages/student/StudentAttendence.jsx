@@ -127,72 +127,72 @@ const StudentAttendence = () => {
   }, []);
 
   const fetchStudents = async (role) => {
-    try {
-      let url = `${BaseURL}/students/details`;
-      let params = {};
+  try {
+    let url = `${BaseURL}/students/details`;
+    let params = {};
 
-      if (role === "Teacher") {
-        const assignedClass = localStorage.getItem("classAssigned");
-        const assignedSection = localStorage.getItem("classSection");
+    if (role === "Teacher") {
+      const assignedClass = localStorage.getItem("classAssigned");
+      const assignedSection = localStorage.getItem("classSection");
 
-        if (assignedClass) {
-          params.class = assignedClass;
-        }
-        if (assignedSection) {
-          params.section = assignedSection;
-        }
+      if (assignedClass) {
+        params.class = assignedClass;
       }
-
-      const queryString = Object.keys(params)
-        .map(
-          (key) =>
-            `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
-        )
-        .join("&");
-
-      if (queryString) {
-        url += `?${queryString}`;
+      if (assignedSection) {
+        params.section = assignedSection;
       }
-
-      const res = await axios.get(url);
-
-      if (!res.data || res.data.length === 0) {
-        setStudents([]);
-        setFilteredStudents([]);
-        setLoading(false);
-        return;
-      }
-
-      const formatted = res.data.map((s) => ({
-        studentId: s._id,
-        rollNo: s.rollNo || "N/A",
-        profilePic: s.studentPic || "",
-        name: s.name,
-        fathername: s.fatherName,
-        class: s.Class,
-        section: s.section,
-        contactNo: s.contactNo || 'N/A', // ✅ Added contactNo
-        status: "present",
-      }));
-
-      setStudents(formatted);
-      setFilteredStudents(formatted);
-
-      if (role === "Teacher") {
-        const assignedClass = localStorage.getItem("classAssigned");
-        const assignedSection = localStorage.getItem("classSection");
-
-        if (assignedClass) setClassFilter(assignedClass);
-        if (assignedSection) setSectionFilter(assignedSection);
-      }
-
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching students:", err);
-      showError("Failed to fetch students");
-      setLoading(false);
     }
-  };
+
+    const queryString = Object.keys(params)
+      .map(
+        (key) =>
+          `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
+      )
+      .join("&");
+
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+
+    const res = await axios.get(url);
+
+    if (!res.data || res.data.length === 0) {
+      setStudents([]);
+      setFilteredStudents([]);
+      setLoading(false);
+      return;
+    }
+
+    const formatted = res.data.map((s) => ({
+      studentId: s._id,
+      rollNo: s.rollNo || "N/A",
+      profilePic: s.studentPic || "",
+      name: s.name,
+      fathername: s.fatherName,
+      class: s.Class,
+      section: s.section,
+      phone: s.phone || s.contactNo || 'N/A', // ✅ FIXED: Use phone from database
+      status: "present",
+    }));
+
+    setStudents(formatted);
+    setFilteredStudents(formatted);
+
+    if (role === "Teacher") {
+      const assignedClass = localStorage.getItem("classAssigned");
+      const assignedSection = localStorage.getItem("classSection");
+
+      if (assignedClass) setClassFilter(assignedClass);
+      if (assignedSection) setSectionFilter(assignedSection);
+    }
+
+    setLoading(false);
+  } catch (err) {
+    console.error("Error fetching students:", err);
+    showError("Failed to fetch students");
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     let filtered = students;

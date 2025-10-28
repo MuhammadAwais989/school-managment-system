@@ -37,8 +37,8 @@ const DashStudentDistribution = () => {
         const leave = JSON.parse(localStorage.getItem('todayLeaveStudents') || '[]');
 
         console.log("📊 Today's Students Loaded:", {
-          absent: absent.length,
-          leave: leave.length
+          absent: absent,
+          leave: leave
         });
 
         setAbsentStudents(absent);
@@ -116,7 +116,7 @@ const DashStudentDistribution = () => {
           student.fathername,
           student.class,
           student.section,
-          student.contactNo
+          student.phone // ✅ FIXED: Use phone field
         ];
 
         row.forEach((item, idx) => {
@@ -155,9 +155,11 @@ const DashStudentDistribution = () => {
           student.fathername,
           student.class,
           student.section,
-          student.contactNo,
+          student.phone, // ✅ FIXED: Use phone field
           student.leaveType
         ];
+
+        console.log("Student data for PDF:", student); // Debug log
 
         row.forEach((item, idx) => {
           doc.text(String(item), 14 + idx * 25, startY);
@@ -310,7 +312,7 @@ const DashStudentDistribution = () => {
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-1 text-sm text-gray-900">
                             <FaPhone className="w-3 h-3 text-gray-400" />
-                            {student.contactNo}
+                            {student.phone} {/* ✅ FIXED: Use phone field */}
                           </div>
                         </td>
                       </tr>
@@ -381,8 +383,8 @@ const DashStudentDistribution = () => {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1 text-sm text-gray-900 mb-1">
-                            <FaPhone className="w-3 h-3 text-gray-400" />
-                            {student.contactNo}
+                            <FaPhone className="w-3 h-3 text-black" />
+                            {student.phone} {/* ✅ FIXED: Use phone field */}
                           </div>
                           <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                             {student.leaveType}
