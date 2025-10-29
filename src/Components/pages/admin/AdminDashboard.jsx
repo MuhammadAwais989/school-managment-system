@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import SideBar from "../sidebar/SideBar";
 import StatsOverview from "./DashboardStats";
 import AttendanceCharts from "./DashAttendanceCharts";
@@ -10,6 +10,7 @@ import StudentDistribution from "./DashStudentDistribution";
 import LoadingSpinner from "../LoadingSpinner";
 import axios from "axios";
 import { BaseURL } from "../../helper/helper";
+import { useActivities } from "../../../Context/Activities.Context";
 
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -18,18 +19,20 @@ const AdminDashboard = () => {
   const [activeView, setActiveView] = useState("overview");
   const [staffData, setStaffData] = useState([]);
 
-  // Fetch current month fees data from localStorage - NEW FUNCTION
+  // ✅ REAL ACTIVITIES FROM CONTEXT
+  const { activities: realActivities, addActivity } = useActivities();
+
+  // ✅ useRef to track if activity already added
+  const activityAddedRef = useRef(false);
+
+  console.log("📊 Real Activities in Dashboard:", realActivities);
+
+  // Fetch current month fees data from localStorage
   const getCurrentMonthFeesData = () => {
     try {
       const currentMonthCollection = parseInt(localStorage.getItem('currentMonthCollection') || '0');
       const currentMonthDues = parseInt(localStorage.getItem('currentMonthDues') || '0');
       const currentMonth = localStorage.getItem('currentMonth') || new Date().toLocaleString('default', { month: 'long' });
-
-      console.log("📊 Current Month Fees Data from localStorage:", {
-        collection: currentMonthCollection,
-        dues: currentMonthDues,
-        month: currentMonth
-      });
 
       return {
         currentMonthCollection,
@@ -45,6 +48,28 @@ const AdminDashboard = () => {
       };
     }
   };
+
+  // ✅ FIXED: Add dashboard access activity - ONLY ONCE
+  useEffect(() => {
+    // Check if we're in the dashboard and activity not already added
+    if (!loading && dashboardData && !activityAddedRef.current) {
+      const userRole = localStorage.getItem("role") || "Admin";
+      const userEmail = localStorage.getItem("userEmail") || "admin@school.com";
+      const userName = localStorage.getItem("userName") || userEmail.split('@')[0];
+      
+      console.log("✅ Adding dashboard access activity");
+      
+      addActivity({
+        type: "login",
+        title: "Dashboard Accessed",
+        description: `${userName} accessed ${userRole} dashboard`,
+        user: userName
+      });
+
+      // Mark as added to prevent duplicate activities
+      activityAddedRef.current = true;
+    }
+  }, [loading, dashboardData, addActivity]);
 
   // Fetch staff data from API
   const fetchStaffData = async () => {
@@ -73,56 +98,12 @@ const AdminDashboard = () => {
     }
   };
 
-  // DEBUG: Test all possible attendance API endpoints
-  const debugAttendanceAPIs = async () => {
-    const today = new Date().toISOString().split('T')[0];
-    console.log("🔍 DEBUG: Testing all attendance APIs for date:", today);
-    
-    const endpoints = [
-      `${BaseURL}/teachers/attendence?date=${today}`,
-      `${BaseURL}/teachers/attendence`,
-      `${BaseURL}/staff-attendance?date=${today}`,
-      `${BaseURL}/staff-attendance`,
-      `${BaseURL}/attendance?date=${today}&type=staff`,
-      `${BaseURL}/attendance/staff?date=${today}`,
-    ];
-
-    for (let endpoint of endpoints) {
-      try {
-        console.log(`🔍 Testing endpoint: ${endpoint}`);
-        const response = await axios.get(endpoint);
-        console.log(`✅ SUCCESS - ${endpoint}:`, response.data);
-        
-        if (response.data && (response.data.length > 0 || response.data.records || response.data.attendance)) {
-          console.log(`🎯 FOUND DATA at: ${endpoint}`);
-          return { data: response.data, endpoint };
-        }
-      } catch (error) {
-        console.log(`❌ FAILED - ${endpoint}:`, error.message);
-      }
-    }
-    
-    return { data: [], endpoint: null };
-  };
-
-  // Fetch today's staff attendance - DEBUG VERSION
+  // Fetch today's staff attendance
   const fetchTodayStaffAttendance = async () => {
     try {
-      console.log("🔄 DEBUG: Fetching today's staff attendance...");
       const today = new Date().toISOString().split('T')[0];
       console.log("📅 Today's date:", today);
 
-      // First, let's test all possible endpoints
-      const debugResult = await debugAttendanceAPIs();
-      
-      if (debugResult.endpoint) {
-        console.log("🎯 Using working endpoint:", debugResult.endpoint);
-        return debugResult.data;
-      }
-
-      // If no endpoint works, try to get all data and filter
-      console.log("🔄 No direct endpoint found, trying to fetch all attendance...");
-      
       // Try the main teacher attendance endpoint
       try {
         const allResponse = await axios.get(`${BaseURL}/teachers/attendence`);
@@ -164,7 +145,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // DEBUG: Manual test with mock data
+  // Create mock attendance data for testing
   const createMockAttendanceData = (staff) => {
     console.log("🔄 Creating mock attendance data for testing...");
     
@@ -188,7 +169,7 @@ const AdminDashboard = () => {
     return mockAttendance;
   };
 
-  // Calculate REAL staff statistics with actual attendance - DEBUG VERSION
+  // Calculate staff statistics with actual attendance
   const calculateStaffStats = (staff, attendanceData = []) => {
     try {
       const totalStaff = staff.length;
@@ -294,7 +275,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // COMPLETE FIXED: Using createdAt field with proper change calculation
+  // Calculate student statistics using createdAt field
   const calculateStudentStatsWithCreatedAt = (students) => {
     try {
       const total = students.length;
@@ -307,7 +288,7 @@ const AdminDashboard = () => {
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
       
-      // Last month calculation - FIXED
+      // Last month calculation
       const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
       const lastMonth = lastMonthDate.getMonth();
       const lastMonthYear = lastMonthDate.getFullYear();
@@ -359,7 +340,7 @@ const AdminDashboard = () => {
         lastMonthAdmissions
       });
       
-      // FIXED: Proper change calculation
+      // Proper change calculation
       let change = "0%";
       let trend = "up";
       
@@ -407,7 +388,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Calculate fees data from students - UPDATED WITH CURRENT MONTH DATA
+  // Calculate fees data from students
   const calculateFeesData = (students) => {
     try {
       // Get current month data from localStorage
@@ -548,7 +529,7 @@ const AdminDashboard = () => {
       // Get current month fees data
       const currentMonthFees = getCurrentMonthFeesData();
 
-      // Prepare dashboard data with statistics
+      // ✅ Use REAL activities from context instead of mock activities
       const realData = {
         overview: {
           students: studentStats,
@@ -594,54 +575,6 @@ const AdminDashboard = () => {
           ],
           studentDistribution: studentDistribution
         },
-        activities: [
-          {
-            id: 1,
-            type: 'admission',
-            title: 'New Student Admission',
-            description: `${studentStats.newToday} new students admitted today`,
-            time: '10:30 AM',
-            timestamp: new Date(),
-            user: 'Admin'
-          },
-          {
-            id: 2,
-            type: 'fee_payment',
-            title: 'Fee Payment Received',
-            description: `₹${feesData.collectedToday.toLocaleString()} collected today`,
-            time: '9:45 AM',
-            timestamp: new Date(),
-            amount: feesData.collectedToday
-          },
-          {
-            id: 3,
-            type: 'attendance',
-            title: todayAttendance.length > 0 ? 'Attendance Marked' : 'Attendance Not Marked',
-            description: todayAttendance.length > 0 
-              ? `${staffStats.presentToday} staff members present today`
-              : 'Staff attendance not marked for today',
-            time: '9:00 AM',
-            timestamp: new Date(),
-            class: 'All Classes'
-          },
-          {
-            id: 4,
-            type: 'notice',
-            title: 'New Notice Published',
-            description: 'Annual Sports Day announcement',
-            time: '8:30 AM',
-            timestamp: new Date()
-          },
-          {
-            id: 5,
-            type: 'login',
-            title: 'User Login',
-            description: 'Admin logged in',
-            time: '8:15 AM',
-            timestamp: new Date(),
-            user: 'Admin'
-          }
-        ],
         events: [
           {
             id: 1,
@@ -747,7 +680,51 @@ const AdminDashboard = () => {
           },
           currentMonthFees: currentMonthFees
         },
-        // ... rest of mock data
+        charts: {
+          monthlyAttendance: [
+            { month: 'Jan', students: 92, teachers: 94 },
+            { month: 'Feb', students: 95, teachers: 96 },
+            { month: 'Mar', students: 93, teachers: 92 },
+            { month: 'Apr', students: 91, teachers: 95 },
+            { month: 'May', students: 94, teachers: 93 },
+            { month: 'Jun', students: 92, teachers: 94 }
+          ],
+          feeCollection: [
+            { month: 'Jan', target: 500, actual: 420 },
+            { month: 'Feb', target: 500, actual: 380 },
+            { month: 'Mar', target: 500, actual: 450 },
+            { month: 'Apr', target: 500, actual: 410 },
+            { month: 'May', target: 500, actual: 480 },
+            { month: 'Jun', target: 500, actual: 460 }
+          ],
+          studentDistribution: {
+            byClass: [
+              { class: 'Class 1', students: 120 },
+              { class: 'Class 2', students: 115 },
+              { class: 'Class 3', students: 110 },
+              { class: 'Class 4', students: 105 },
+              { class: 'Class 5', students: 100 }
+            ],
+            byGender: [
+              { gender: 'Boys', count: 685 },
+              { gender: 'Girls', count: 562 }
+            ]
+          }
+        },
+        events: [
+          {
+            id: 1,
+            title: 'Annual Sports Day',
+            date: new Date(new Date().setDate(new Date().getDate() + 2)),
+            type: 'event'
+          },
+          {
+            id: 2,
+            title: 'PTM - Class 10',
+            date: new Date(new Date().setDate(new Date().getDate() + 5)),
+            type: 'meeting'
+          }
+        ]
       };
       
       setDashboardData(mockData);
@@ -843,7 +820,8 @@ const AdminDashboard = () => {
             <div className="space-y-6">
               <QuickActionsPanel />
               <CalendarWidget events={dashboardData.events} />
-              <RecentActivities activities={dashboardData.activities} />
+              {/* ✅ PASS REAL ACTIVITIES INSTEAD OF MOCK DATA */}
+              <RecentActivities activities={realActivities} />
             </div>
           </div>
         </div>
@@ -852,4 +830,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;  
+export default AdminDashboard;

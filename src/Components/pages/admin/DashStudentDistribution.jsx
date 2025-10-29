@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { 
-  FaUserSlash, 
-  FaCalendarTimes, 
-  FaPhone, 
+import {
+  FaUserSlash,
+  FaCalendarTimes,
+  FaPhone,
   FaSearch,
-  FaDownload
+  FaDownload,
 } from "react-icons/fa";
-import jsPDF from 'jspdf';
+import jsPDF from "jspdf";
 
 const DashStudentDistribution = () => {
   const [absentStudents, setAbsentStudents] = useState([]);
@@ -20,10 +20,10 @@ const DashStudentDistribution = () => {
     const loadTodayStudents = () => {
       try {
         setLoading(true);
-        
-        const today = new Date().toISOString().split('T')[0];
-        const lastUpdate = localStorage.getItem('lastAttendanceUpdate');
-        
+
+        const today = new Date().toISOString().split("T")[0];
+        const lastUpdate = localStorage.getItem("lastAttendanceUpdate");
+
         // Check if data is from today
         if (lastUpdate && !lastUpdate.startsWith(today)) {
           console.log("🔄 Today's data is old, showing empty");
@@ -33,12 +33,16 @@ const DashStudentDistribution = () => {
           return;
         }
 
-        const absent = JSON.parse(localStorage.getItem('todayAbsentStudents') || '[]');
-        const leave = JSON.parse(localStorage.getItem('todayLeaveStudents') || '[]');
+        const absent = JSON.parse(
+          localStorage.getItem("todayAbsentStudents") || "[]"
+        );
+        const leave = JSON.parse(
+          localStorage.getItem("todayLeaveStudents") || "[]"
+        );
 
         console.log("📊 Today's Students Loaded:", {
           absent: absent,
-          leave: leave
+          leave: leave,
         });
 
         setAbsentStudents(absent);
@@ -56,25 +60,32 @@ const DashStudentDistribution = () => {
   }, []);
 
   // Filter students based on search and class
-  const filteredAbsentStudents = absentStudents.filter(student =>
-    (selectedClass === "all" || student.class === selectedClass) &&
-    (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     student.rollNo.includes(searchTerm) ||
-     student.fathername.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredAbsentStudents = absentStudents.filter(
+    (student) =>
+      (selectedClass === "all" || student.class === selectedClass) &&
+      (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.rollNo.includes(searchTerm) ||
+        student.fathername.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const filteredLeaveStudents = leaveStudents.filter(student =>
-    (selectedClass === "all" || student.class === selectedClass) &&
-    (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     student.rollNo.includes(searchTerm) ||
-     student.fathername.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredLeaveStudents = leaveStudents.filter(
+    (student) =>
+      (selectedClass === "all" || student.class === selectedClass) &&
+      (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.rollNo.includes(searchTerm) ||
+        student.fathername.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Get unique classes from data
-  const classes = ["all", ...new Set([
-    ...absentStudents.map(student => student.class),
-    ...leaveStudents.map(student => student.class)
-  ].filter(Boolean))];
+  const classes = [
+    "all",
+    ...new Set(
+      [
+        ...absentStudents.map((student) => student.class),
+        ...leaveStudents.map((student) => student.class),
+      ].filter(Boolean)
+    ),
+  ];
 
   const handleExport = () => {
     const doc = new jsPDF();
@@ -83,15 +94,17 @@ const DashStudentDistribution = () => {
 
     // Title
     doc.setFontSize(16);
-    doc.text("Today's Student Attendance Report", pageWidth / 2, 15, { align: 'center' });
-    
+    doc.text("Today's Student Attendance Report", pageWidth / 2, 15, {
+      align: "center",
+    });
+
     // Date
     doc.setFontSize(10);
-    const today = new Date().toLocaleDateString('en-IN', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    const today = new Date().toLocaleDateString("en-IN", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
     doc.text(`Date: ${today}`, 14, 25);
 
@@ -102,7 +115,13 @@ const DashStudentDistribution = () => {
     startY += 10;
 
     if (filteredAbsentStudents.length > 0) {
-      const absentHeaders = ['Roll No', 'Name', 'Father Name', 'Class', 'Section', 'Contact'];
+      const absentHeaders = [
+        "Roll No",
+        "Name",
+        "Father Name",
+        "Class",
+        "Section",
+      ];
       doc.setFontSize(8);
       absentHeaders.forEach((header, index) => {
         doc.text(header, 14 + index * 30, startY);
@@ -116,7 +135,7 @@ const DashStudentDistribution = () => {
           student.fathername,
           student.class,
           student.section,
-          student.phone // ✅ FIXED: Use phone field
+          // student.phone // ✅ FIXED: Use phone field
         ];
 
         row.forEach((item, idx) => {
@@ -141,7 +160,13 @@ const DashStudentDistribution = () => {
     startY += 10;
 
     if (filteredLeaveStudents.length > 0) {
-      const leaveHeaders = ['Roll No', 'Name', 'Father Name', 'Class', 'Section', 'Contact', 'Leave Type'];
+      const leaveHeaders = [
+        "Roll No",
+        "Name",
+        "Father Name",
+        "Class",
+        "Section",
+      ];
       doc.setFontSize(8);
       leaveHeaders.forEach((header, index) => {
         doc.text(header, 14 + index * 25, startY);
@@ -155,8 +180,8 @@ const DashStudentDistribution = () => {
           student.fathername,
           student.class,
           student.section,
-          student.phone, // ✅ FIXED: Use phone field
-          student.leaveType
+          // student.phone, // ✅ FIXED: Use phone field
+          // student.leaveType
         ];
 
         console.log("Student data for PDF:", student); // Debug log
@@ -180,9 +205,15 @@ const DashStudentDistribution = () => {
     doc.setFontSize(10);
     doc.text(`Total Absent: ${absentStudents.length}`, 14, startY);
     doc.text(`Total Leave: ${leaveStudents.length}`, 80, startY);
-    doc.text(`Total Students: ${absentStudents.length + leaveStudents.length}`, 140, startY);
+    doc.text(
+      `Total Students: ${absentStudents.length + leaveStudents.length}`,
+      140,
+      startY
+    );
 
-    doc.save(`today_attendance_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(
+      `today_attendance_report_${new Date().toISOString().split("T")[0]}.pdf`
+    );
   };
 
   if (loading) {
@@ -201,17 +232,19 @@ const DashStudentDistribution = () => {
       <div className="p-6 border-b border-gray-200">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Today's Student Status</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Today's Student Status
+            </h2>
             <p className="text-gray-600 mt-1">
-              {new Date().toLocaleDateString('en-IN', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+              {new Date().toLocaleDateString("en-IN", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}
             </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
             <div className="relative">
@@ -232,19 +265,25 @@ const DashStudentDistribution = () => {
               className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Classes</option>
-              {classes.filter(cls => cls !== "all").map(cls => (
-                <option key={cls} value={cls}>{cls}</option>
-              ))}
+              {classes
+                .filter((cls) => cls !== "all")
+                .map((cls) => (
+                  <option key={cls} value={cls}>
+                    {cls}
+                  </option>
+                ))}
             </select>
 
             {/* Export Button */}
-            <button 
+            <button
               onClick={handleExport}
-              disabled={absentStudents.length === 0 && leaveStudents.length === 0}
+              disabled={
+                absentStudents.length === 0 && leaveStudents.length === 0
+              }
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 absentStudents.length === 0 && leaveStudents.length === 0
-                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
             >
               <FaDownload className="w-4 h-4" />
@@ -257,7 +296,6 @@ const DashStudentDistribution = () => {
       {/* Content */}
       <div className="p-6">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          
           {/* Absent Students Column */}
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -278,20 +316,26 @@ const DashStudentDistribution = () => {
                       Roll No
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student Details
+                      Student Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Father Name
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Class
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Contact
-                    </th>
+                    </th> */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredAbsentStudents.length > 0 ? (
                     filteredAbsentStudents.map((student) => (
-                      <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                      <tr
+                        key={student.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                           {student.rollNo}
                         </td>
@@ -300,26 +344,35 @@ const DashStudentDistribution = () => {
                             <div className="text-sm font-medium text-gray-900">
                               {student.name}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              Father: {student.fathername}
-                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="text-sm font-medium text-gray-900">
+                            Father: {student.fathername}
                           </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{student.class}</div>
-                          <div className="text-sm text-gray-500">Sec: {student.section}</div>
+                          <div className="text-sm text-gray-900">
+                            {student.class}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Sec: {student.section}
+                          </div>
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        {/* <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-1 text-sm text-gray-900">
                             <FaPhone className="w-3 h-3 text-gray-400" />
-                            {student.phone} {/* ✅ FIXED: Use phone field */}
+                            {student.phone} 
                           </div>
-                        </td>
+                        </td> */}
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                      <td
+                        colSpan="4"
+                        className="px-4 py-8 text-center text-gray-500"
+                      >
                         <FaUserSlash className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                         No absent students today
                       </td>
@@ -350,20 +403,26 @@ const DashStudentDistribution = () => {
                       Roll No
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student Details
+                      Student Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Father Name
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Class
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Contact & Leave Type
-                    </th>
+                    </th> */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredLeaveStudents.length > 0 ? (
                     filteredLeaveStudents.map((student) => (
-                      <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                      <tr
+                        key={student.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                           {student.rollNo}
                         </td>
@@ -372,29 +431,38 @@ const DashStudentDistribution = () => {
                             <div className="text-sm font-medium text-gray-900">
                               {student.name}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              Father: {student.fathername}
-                            </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{student.class}</div>
-                          <div className="text-sm text-gray-500">Sec: {student.section}</div>
+                          <td>
+                            <div className="text-sm font-medium text-gray-900">
+                              {student.fathername}
+                            </div>
+                          </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {student.class}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Sec: {student.section}
+                          </div>
                         </td>
-                        <td className="px-4 py-3">
+                        {/* <td className="px-4 py-3">
                           <div className="flex items-center gap-1 text-sm text-gray-900 mb-1">
                             <FaPhone className="w-3 h-3 text-black" />
-                            {student.phone} {/* ✅ FIXED: Use phone field */}
+                            {student.phone} 
                           </div>
                           <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                             {student.leaveType}
                           </span>
-                        </td>
+                        </td> */}
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                      <td
+                        colSpan="4"
+                        className="px-4 py-8 text-center text-gray-500"
+                      >
                         <FaCalendarTimes className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                         No leave students today
                       </td>
@@ -411,8 +479,12 @@ const DashStudentDistribution = () => {
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-red-800">Total Absent Today</p>
-                <p className="text-2xl font-bold text-red-900">{absentStudents.length}</p>
+                <p className="text-sm font-medium text-red-800">
+                  Total Absent Today
+                </p>
+                <p className="text-2xl font-bold text-red-900">
+                  {absentStudents.length}
+                </p>
               </div>
               <FaUserSlash className="w-8 h-8 text-red-400" />
             </div>
@@ -421,8 +493,12 @@ const DashStudentDistribution = () => {
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-800">Total Leave Today</p>
-                <p className="text-2xl font-bold text-orange-900">{leaveStudents.length}</p>
+                <p className="text-sm font-medium text-orange-800">
+                  Total Leave Today
+                </p>
+                <p className="text-2xl font-bold text-orange-900">
+                  {leaveStudents.length}
+                </p>
               </div>
               <FaCalendarTimes className="w-8 h-8 text-orange-400" />
             </div>
@@ -437,9 +513,7 @@ const DashStudentDistribution = () => {
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-sm text-blue-600">
-                  Absent + Leave
-                </div>
+                <div className="text-sm text-blue-600">Absent + Leave</div>
               </div>
             </div>
           </div>

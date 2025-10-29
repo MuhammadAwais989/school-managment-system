@@ -6,49 +6,82 @@ import axios from "axios";
 import { BaseURL } from "../helper/helper";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useActivities } from "../../Context/Activities.Context";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { addActivity } = useActivities(); 
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
       const res = await axios.post(`${BaseURL}/login`, { email, password });
-      const { token, role, Class, section } = res.data;
+      console.log("✅ Login Response:", res.data); // Debugging
+      
+      const { token, role, Class, section, name, user } = res.data;
 
+      // ✅ Store user info in localStorage for activities
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("classAssigned", Class);
       localStorage.setItem("classSection", section);
+      localStorage.setItem("userEmail", email);
+      
+      // ✅ Store user name if available
+      if (name) {
+        localStorage.setItem("userName", name);
+      } else if (user?.name) {
+        localStorage.setItem("userName", user.name);
+      } else {
+        localStorage.setItem("userName", email.split('@')[0]);
+      }
 
-      // ✅ Store class and section (only if teacher)
       if (role === "Teacher") {
         localStorage.setItem("classAssigned", Class);
         localStorage.setItem("teacherClass", Class); 
-
       }
 
+      // ✅ FIXED: Login Activity with proper user data
+      const userName = name || user?.name || email.split('@')[0];
+      
+      addActivity({
+        type: "login",
+        title: "User Login",
+        description: `${userName} successfully logged in as ${role}`,
+        user: userName
+      });
+
+      console.log("✅ Login activity added for:", userName);
 
       toast.success("Login successful");
 
-      // ✅ Force reload to trigger correct route rendering
+      // ✅ FIXED: Use navigate instead of window.location.href
       if (role === "Admin" || role === "Principle") {
-        window.location.href = "/admin-dashboard";
+        navigate("/admin-dashboard");
       } else if (role === "Teacher") {
-        window.location.href = "/teacher-dashboard";
+        navigate("/teacher-dashboard");
       } else {
         toast.error("Unauthorized role");
       }
 
     } catch (err) {
+      console.error("❌ Login Error:", err);
+      
+      // ✅ Failed login activity
+      addActivity({
+        type: "login", 
+        title: "Failed Login Attempt",
+        description: `Failed login attempt for ${email}`,
+        user: "Unknown"
+      });
+      
       toast.error(err.response?.data?.message || "Login failed");
     }
   };
-
 
   return (
     <div
