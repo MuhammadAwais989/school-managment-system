@@ -25,7 +25,6 @@ const AdminDashboard = () => {
   // ✅ useRef to track if activity already added
   const activityAddedRef = useRef(false);
 
-  console.log("📊 Real Activities in Dashboard:", realActivities);
 
   // Fetch current month fees data from localStorage
   const getCurrentMonthFeesData = () => {
