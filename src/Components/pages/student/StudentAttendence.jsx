@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import PageTitle from "../PageTitle";
 import Loading from "../Loading";
+import { useActivities } from "../../../Context/Activities.Context";
 
 const StudentAttendence = () => {
   const [students, setStudents] = useState([]);
@@ -30,7 +31,52 @@ const StudentAttendence = () => {
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  // ✅ NEW: Function to save today's absent and leave students to localStorage
+  // ✅ ADD ACTIVITIES CONTEXT
+  const { addActivity } = useActivities();
+
+  // ✅ FIXED: Function to get current class and section
+  const getCurrentClassAndSection = () => {
+    try {
+      let currentClass = "";
+      let currentSection = "";
+
+      if (userRole === "Teacher") {
+        // Teacher ke liye assigned class aur section
+        currentClass = localStorage.getItem("classAssigned") || "";
+        currentSection = localStorage.getItem("classSection") || "";
+        console.log("👨‍🏫 Teacher Class/Section:", { currentClass, currentSection });
+      } else {
+        // Admin/Principal ke liye selected filters
+        currentClass = classFilter || "";
+        currentSection = sectionFilter || "";
+        
+        console.log("👨‍💼 Admin Class/Section Filters:", { currentClass, currentSection });
+      }
+
+      // ✅ Agar abhi bhi class/section nahi mila to students se detect karo
+      if (!currentClass && filteredStudents.length > 0) {
+        const uniqueClasses = [...new Set(filteredStudents.map(s => s.class))];
+        currentClass = uniqueClasses.length === 1 ? uniqueClasses[0] : "Multiple Classes";
+        console.log("📊 Auto-detected Class:", currentClass);
+      }
+      
+      if (!currentSection && filteredStudents.length > 0) {
+        const uniqueSections = [...new Set(filteredStudents.map(s => s.section))];
+        currentSection = uniqueSections.length === 1 ? uniqueSections[0] : "Multiple Sections";
+        console.log("📊 Auto-detected Section:", currentSection);
+      }
+
+      return { 
+        currentClass: currentClass || "Unknown Class", 
+        currentSection: currentSection || "Unknown Section" 
+      };
+    } catch (error) {
+      console.error("❌ Error getting class/section:", error);
+      return { currentClass: "Unknown Class", currentSection: "Unknown Section" };
+    }
+  };
+
+  // ✅ Function to save today's absent and leave students to localStorage
   const saveTodayAbsentAndLeaveStudents = (studentsData) => {
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -74,44 +120,9 @@ const StudentAttendence = () => {
       localStorage.setItem('todayLeaveStudents', JSON.stringify(leaveStudents));
       localStorage.setItem('lastAttendanceUpdate', new Date().toISOString());
 
-      console.log("✅ Today's Absent & Leave Students Saved:", {
-        absent: absentStudents.length,
-        leave: leaveStudents.length,
-        date: today
-      });
-
       return { absentStudents, leaveStudents };
     } catch (error) {
       console.error("❌ Error saving today's absent/leave students:", error);
-      return { absentStudents: [], leaveStudents: [] };
-    }
-  };
-
-  // ✅ NEW: Function to get today's absent and leave students from localStorage
-  const getTodayAbsentAndLeaveStudents = () => {
-    try {
-      const lastUpdate = localStorage.getItem('lastAttendanceUpdate');
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Check if data is from today
-      if (lastUpdate && !lastUpdate.startsWith(today)) {
-        console.log("🔄 Old data found, clearing...");
-        localStorage.removeItem('todayAbsentStudents');
-        localStorage.removeItem('todayLeaveStudents');
-        return { absentStudents: [], leaveStudents: [] };
-      }
-
-      const absentStudents = JSON.parse(localStorage.getItem('todayAbsentStudents') || '[]');
-      const leaveStudents = JSON.parse(localStorage.getItem('todayLeaveStudents') || '[]');
-
-      console.log("📊 Loaded Today's Students from localStorage:", {
-        absent: absentStudents.length,
-        leave: leaveStudents.length
-      });
-
-      return { absentStudents, leaveStudents };
-    } catch (error) {
-      console.error("❌ Error loading today's students:", error);
       return { absentStudents: [], leaveStudents: [] };
     }
   };
@@ -120,79 +131,75 @@ const StudentAttendence = () => {
     const role = localStorage.getItem("role");
     setUserRole(role);
     fetchStudents(role);
-
-    // ✅ Load today's data when component mounts
-    const todayData = getTodayAbsentAndLeaveStudents();
-    console.log("🔄 Today's data on component mount:", todayData);
   }, []);
 
   const fetchStudents = async (role) => {
-  try {
-    let url = `${BaseURL}/students/details`;
-    let params = {};
+    try {
+      let url = `${BaseURL}/students/details`;
+      let params = {};
 
-    if (role === "Teacher") {
-      const assignedClass = localStorage.getItem("classAssigned");
-      const assignedSection = localStorage.getItem("classSection");
+      if (role === "Teacher") {
+        const assignedClass = localStorage.getItem("classAssigned");
+        const assignedSection = localStorage.getItem("classSection");
 
-      if (assignedClass) {
-        params.class = assignedClass;
+        if (assignedClass) {
+          params.class = assignedClass;
+        }
+        if (assignedSection) {
+          params.section = assignedSection;
+        }
       }
-      if (assignedSection) {
-        params.section = assignedSection;
+
+      const queryString = Object.keys(params)
+        .map(
+          (key) =>
+            `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
+        )
+        .join("&");
+
+      if (queryString) {
+        url += `?${queryString}`;
       }
-    }
 
-    const queryString = Object.keys(params)
-      .map(
-        (key) =>
-          `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
-      )
-      .join("&");
+      const res = await axios.get(url);
 
-    if (queryString) {
-      url += `?${queryString}`;
-    }
+      if (!res.data || res.data.length === 0) {
+        setStudents([]);
+        setFilteredStudents([]);
+        setLoading(false);
+        return;
+      }
 
-    const res = await axios.get(url);
+      const formatted = res.data.map((s) => ({
+        studentId: s._id,
+        rollNo: s.rollNo || "N/A",
+        profilePic: s.studentPic || "",
+        name: s.name,
+        fathername: s.fatherName,
+        class: s.Class,
+        section: s.section,
+        phone: s.phone || s.contactNo || 'N/A',
+        status: "present",
+      }));
 
-    if (!res.data || res.data.length === 0) {
-      setStudents([]);
-      setFilteredStudents([]);
+      setStudents(formatted);
+      setFilteredStudents(formatted);
+
+      if (role === "Teacher") {
+        const assignedClass = localStorage.getItem("classAssigned");
+        const assignedSection = localStorage.getItem("classSection");
+
+        if (assignedClass) setClassFilter(assignedClass);
+        if (assignedSection) setSectionFilter(assignedSection);
+      }
+
       setLoading(false);
-      return;
+    } catch (err) {
+      console.error("Error fetching students:", err);
+      showError("Failed to fetch students");
+      setLoading(false);
     }
-
-    const formatted = res.data.map((s) => ({
-      studentId: s._id,
-      rollNo: s.rollNo || "N/A",
-      profilePic: s.studentPic || "",
-      name: s.name,
-      fathername: s.fatherName,
-      class: s.Class,
-      section: s.section,
-      phone: s.phone || s.contactNo || 'N/A', // ✅ FIXED: Use phone from database
-      status: "present",
-    }));
-
-    setStudents(formatted);
-    setFilteredStudents(formatted);
-
-    if (role === "Teacher") {
-      const assignedClass = localStorage.getItem("classAssigned");
-      const assignedSection = localStorage.getItem("classSection");
-
-      if (assignedClass) setClassFilter(assignedClass);
-      if (assignedSection) setSectionFilter(assignedSection);
-    }
-
-    setLoading(false);
-  } catch (err) {
-    console.error("Error fetching students:", err);
-    showError("Failed to fetch students");
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     let filtered = students;
@@ -212,7 +219,7 @@ const StudentAttendence = () => {
       filtered = filtered.filter((s) => s.class === classFilter);
     }
 
-    // Apply section filter - FIXED: Added trim() to handle whitespace issues
+    // Apply section filter
     if (sectionFilter) {
       filtered = filtered.filter(
         (s) => s.section && s.section.trim() === sectionFilter.trim()
@@ -228,6 +235,7 @@ const StudentAttendence = () => {
     setFilteredStudents(updated);
   };
 
+  // ✅ FIXED: handleSubmit function with Proper Class & Section Tracking
   const handleSubmit = async () => {
     try {
       const payload = {
@@ -242,170 +250,111 @@ const StudentAttendence = () => {
         ),
       };
   
-      // ✅ NEW: Calculate today's present students count
-      const presentStudentsCount = filteredStudents.filter(
+      // ✅ Calculate today's present, absent, and leave counts
+      const presentCount = filteredStudents.filter(
         student => student.status === "present"
       ).length;
-  
-      // ✅ Save today's data to localStorage
-      localStorage.setItem("studentPresentCount", presentStudentsCount.toString());
-      localStorage.setItem("lastAttendanceDate", today);
       
-      console.log("✅ Today's Student Attendance Saved:", {
-        presentCount: presentStudentsCount,
-        totalStudents: filteredStudents.length,
-        date: today
+      const absentCount = filteredStudents.filter(
+        student => student.status === "absent"
+      ).length;
+      
+      const leaveCount = filteredStudents.filter(
+        student => student.status === "leave"
+      ).length;
+
+      // ✅ FIXED: Get proper class and section information
+      const { currentClass, currentSection } = getCurrentClassAndSection();
+      const userName = localStorage.getItem("userName") || "User";
+      const userRole = localStorage.getItem("role") || "Unknown";
+
+      // ✅ Format class and section for display
+      let classSectionDisplay = "";
+      if (currentClass && currentSection && currentClass !== "Unknown Class" && currentSection !== "Unknown Section") {
+        classSectionDisplay = `${currentClass}-${currentSection}`;
+      } else if (currentClass && currentClass !== "Unknown Class") {
+        classSectionDisplay = currentClass;
+      } else if (filteredStudents.length > 0) {
+        // Agar class nahi mila to students se detect karo
+        const uniqueClasses = [...new Set(filteredStudents.map(s => s.class))];
+        const uniqueSections = [...new Set(filteredStudents.map(s => s.section))];
+        
+        if (uniqueClasses.length === 1 && uniqueSections.length === 1) {
+          classSectionDisplay = `${uniqueClasses[0]}-${uniqueSections[0]}`;
+        } else if (uniqueClasses.length === 1) {
+          classSectionDisplay = `${uniqueClasses[0]}`;
+        } else {
+          classSectionDisplay = "Multiple Classes";
+        }
+      } else {
+        classSectionDisplay = "Unknown Class";
+      }
+
+      console.log("🎯 Final Class/Section for Activity:", {
+        classSectionDisplay,
+        currentClass,
+        currentSection,
+        userRole,
+        userName,
+        studentsCount: filteredStudents.length
       });
 
-      // ✅ NEW: Save today's absent and leave students
+      // ✅ Save today's data to localStorage
+      localStorage.setItem("studentPresentCount", presentCount.toString());
+      localStorage.setItem("lastAttendanceDate", today);
+      
+      // ✅ Save today's absent and leave students
       saveTodayAbsentAndLeaveStudents(filteredStudents);
   
-      // ✅ NEW: Fetch and save previous 6 months data including current month
-      await fetchAndSaveSixMonthsData();
-  
+      // ✅ Submit attendance to API
       await axios.post(`${BaseURL}/students/attendence`, payload);
+      
+      // ✅ ADD ACTIVITY FOR ATTENDANCE MARKING WITH PROPER CLASS/SECTION
+      addActivity({
+        type: "attendance",
+        title: "Student Attendance Marked",
+        description: `${userName} (${userRole}) marked attendance`,
+        user: `${userName} (${userRole})`,
+        metadata: {
+          class: currentClass,
+          section: currentSection, 
+          present: presentCount,
+          absent: absentCount,
+          leave: leaveCount,
+          total: filteredStudents.length,
+          // classSection: classSectionDisplay,
+          markedBy: userRole
+        }
+      });
+
+      console.log("✅ Attendance activity added with class/section:", classSectionDisplay);
+
       showSuccess("Attendance marked successfully");
     } catch (err) {
       console.error("Attendance submit error:", err);
+      
+      // ✅ ADD ACTIVITY FOR FAILED ATTENDANCE
+      const userName = localStorage.getItem("userName") || "User";
+      const userRole = localStorage.getItem("role") || "Unknown";
+      const { currentClass, currentSection } = getCurrentClassAndSection();
+      
+      addActivity({
+        type: "attendance",
+        title: "Attendance Submission Failed",
+        description: `${userName} (${userRole}) failed to mark attendance for ${filteredStudents.length} students`,
+        user: `${userName} (${userRole})`,
+        metadata: {
+          class: currentClass,
+          section: currentSection,
+          total: filteredStudents.length,
+          error: err.message
+        }
+      });
+      
       showError("Error marking attendance");
     } finally {
       setShowConfirmPopup(false);
     }
-  };
-  
-  // ✅ NEW FUNCTION: Fetch and save previous 6 months attendance data
-  const fetchAndSaveSixMonthsData = async () => {
-    try {
-      console.log("🔄 Fetching previous 6 months attendance data...");
-      
-      const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-      
-      const currentDate = new Date();
-      const currentYear = currentDate.getFullYear();
-      const currentMonth = currentDate.getMonth();
-      
-      const sixMonthsData = [];
-      
-      // Generate last 6 months including current (most recent first)
-      for (let i = 0; i < 6; i++) {
-        const date = new Date(currentYear, currentMonth - i, 1);
-        const monthIndex = date.getMonth();
-        const monthName = months[monthIndex];
-        const year = date.getFullYear();
-        const monthYear = `${monthName} ${year}`;
-        
-        try {
-          // Try to fetch monthly report for each month
-          const params = { 
-            type: 'monthly',
-            year: year,
-            month: monthIndex + 1 // months are 1-indexed in APIs
-          };
-          
-          const response = await axios.get(`${BaseURL}/students/class/report`, { params });
-          
-          if (response.data && Array.isArray(response.data)) {
-            // Calculate total present students for this month
-            const monthlyPresent = response.data.reduce((total, student) => {
-              return total + (student.present || 0);
-            }, 0);
-            
-            const monthlyTotal = response.data.length;
-            const monthlyPercentage = monthlyTotal > 0 ? Math.round((monthlyPresent / monthlyTotal) * 100) : 0;
-            
-            sixMonthsData.unshift({
-              month: monthYear,
-              shortMonth: monthName.substring(0, 3),
-              year: year,
-              monthNumber: monthIndex + 1,
-              present: monthlyPresent,
-              total: monthlyTotal,
-              percentage: monthlyPercentage
-            });
-            
-            console.log(`✅ ${monthYear}: ${monthlyPresent}/${monthlyTotal} (${monthlyPercentage}%)`);
-          }
-        } catch (error) {
-          console.log(`⚠️ No data found for ${monthYear}, using estimated data`);
-          
-          // If no data found, use estimated data based on today's pattern
-          const estimatedPresent = Math.floor(filteredStudents.length * (0.85 - (i * 0.02)));
-          const estimatedPercentage = Math.floor(85 - (i * 2));
-          
-          sixMonthsData.unshift({
-            month: monthYear,
-            shortMonth: monthName.substring(0, 3),
-            year: year,
-            monthNumber: monthIndex + 1,
-            present: estimatedPresent,
-            total: filteredStudents.length,
-            percentage: estimatedPercentage
-          });
-        }
-      }
-      
-      // ✅ Save 6 months data to localStorage
-      localStorage.setItem("studentSixMonthsData", JSON.stringify(sixMonthsData));
-      localStorage.setItem("lastSixMonthsUpdate", new Date().toISOString());
-      
-      console.log("📊 6 Months Student Attendance Data Saved:", sixMonthsData);
-      
-      return sixMonthsData;
-      
-    } catch (error) {
-      console.error("❌ Error fetching 6 months data:", error);
-      
-      // Fallback: Create sample 6 months data
-      const sampleData = generateSampleSixMonthsData();
-      localStorage.setItem("studentSixMonthsData", JSON.stringify(sampleData));
-      localStorage.setItem("lastSixMonthsUpdate", new Date().toISOString());
-      
-      console.log("📊 Sample 6 Months Data Created:", sampleData);
-      return sampleData;
-    }
-  };
-  
-  // ✅ NEW FUNCTION: Generate sample 6 months data if API fails
-  const generateSampleSixMonthsData = () => {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth();
-    
-    const sixMonthsData = [];
-    
-    for (let i = 0; i < 6; i++) {
-      const date = new Date(currentYear, currentMonth - i, 1);
-      const monthIndex = date.getMonth();
-      const monthName = months[monthIndex];
-      const year = date.getFullYear();
-      
-      // Generate realistic data with slight variations
-      const basePercentage = 85 - (i * 2); // Gradual decrease for older months
-      const variation = Math.floor(Math.random() * 6) - 3; // -3 to +3 variation
-      const percentage = Math.max(75, basePercentage + variation); // Minimum 75%
-      
-      const present = Math.floor(filteredStudents.length * (percentage / 100));
-      
-      sixMonthsData.unshift({
-        month: `${monthName} ${year}`,
-        shortMonth: monthName.substring(0, 3),
-        year: year,
-        monthNumber: monthIndex + 1,
-        present: present,
-        total: filteredStudents.length,
-        percentage: percentage
-      });
-    }
-    
-    return sixMonthsData;
   };
 
   const handleReportSelect = async (studentId, reportType) => {
@@ -487,7 +436,6 @@ const StudentAttendence = () => {
     setSectionFilter("");
   };
 
-  // Agar loading chal raha hai toh Loading component dikhao
   if (loading) {
     return (
       <>
@@ -785,6 +733,9 @@ const StudentAttendence = () => {
                 Are you sure you want to submit attendance for{" "}
                 {filteredStudents.length} students?
               </p>
+              <p className="text-xs text-gray-500 mt-1">
+                This will be recorded in recent activities
+              </p>
             </div>
 
             <div className="flex justify-center gap-4 mt-6">
@@ -792,7 +743,7 @@ const StudentAttendence = () => {
                 onClick={handleSubmit}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200"
               >
-                Submit
+                Submit Attendance
               </button>
               <button
                 onClick={() => setShowConfirmPopup(false)}
