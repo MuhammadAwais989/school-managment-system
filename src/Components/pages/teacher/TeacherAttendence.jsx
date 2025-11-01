@@ -17,7 +17,8 @@ import {
 } from "react-icons/fa";
 import TeacherReportModal from "./TeacherAttendenceReport";
 import PageTitle from "../PageTitle";
-import Loading from "../Loading"; // Import the centralized Loading component
+import Loading from "../Loading";
+import { useActivities } from "../../../Context/Activities.Context";
 
 const TeacherAttendence = () => {
   const [teachers, setTeachers] = useState([]);
@@ -52,6 +53,9 @@ const TeacherAttendence = () => {
   const [customYear, setCustomYear] = useState(new Date().getFullYear());
   const [customMonth, setCustomMonth] = useState(new Date().getMonth() + 1);
 
+  // ✅ ADD ACTIVITIES CONTEXT
+  const { addActivity } = useActivities();
+
   // Allowed designations
   const allowedDesignations = [
     "Principle",
@@ -62,6 +66,51 @@ const TeacherAttendence = () => {
     "Sweeper",
     "Gatekeeper",
   ];
+
+  // ✅ FIXED: Function to get current class and section for teachers
+  const getCurrentClassAndSection = () => {
+    try {
+      let currentClass = "";
+      let currentSection = "";
+
+      // For teachers, get the most common class and section
+      if (filteredTeachers.length > 0) {
+        const classCounts = {};
+        const sectionCounts = {};
+        
+        filteredTeachers.forEach(teacher => {
+          if (teacher.class && teacher.class !== "N/A") {
+            classCounts[teacher.class] = (classCounts[teacher.class] || 0) + 1;
+          }
+          if (teacher.section && teacher.section !== "N/A") {
+            sectionCounts[teacher.section] = (sectionCounts[teacher.section] || 0) + 1;
+          }
+        });
+        
+        // Get the most common class
+        const sortedClasses = Object.entries(classCounts).sort((a, b) => b[1] - a[1]);
+        if (sortedClasses.length > 0) {
+          currentClass = sortedClasses[0][0];
+        }
+        
+        // Get the most common section
+        const sortedSections = Object.entries(sectionCounts).sort((a, b) => b[1] - a[1]);
+        if (sortedSections.length > 0) {
+          currentSection = sortedSections[0][0];
+        }
+        
+        console.log("📊 Auto-detected Teacher Class/Section:", { currentClass, currentSection });
+      }
+
+      return { 
+        currentClass: currentClass || "Multiple Classes", 
+        currentSection: currentSection || "Multiple Sections" 
+      };
+    } catch (error) {
+      console.error("❌ Error getting teacher class/section:", error);
+      return { currentClass: "Multiple Classes", currentSection: "Multiple Sections" };
+    }
+  };
 
   useEffect(() => {
     const role = localStorage.getItem("role");
@@ -147,14 +196,17 @@ const TeacherAttendence = () => {
     setFilteredTeachers(updated);
   };
 
+  // ✅ FIXED: handleSubmit function with Proper Class & Section Tracking
   const handleSubmit = async () => {
     setSubmitting(true);
   
     const payload = {
       date: today,
-      records: filteredTeachers.map(({ teacherId, status }) => ({
+      records: filteredTeachers.map(({ teacherId, status, class: cls, section }) => ({
         teacherId,
         status,
+        class: cls,
+        section,
       })),
     };
   
@@ -165,33 +217,104 @@ const TeacherAttendence = () => {
         headers: { "Content-Type": "application/json" },
       });
   
-      // ✅ EXISTING CODE: Calculate and save today's counts to localStorage
-      const presentTeachers = filteredTeachers.filter(
+      // ✅ Calculate today's present, absent, and leave counts
+      const presentCount = filteredTeachers.filter(
         teacher => teacher.status === "present"
-      );
-      
-      // 1. Count teachers with designation "Teacher" who are present
-      const teacherDesignationPresentCount = presentTeachers.filter(
-        teacher => teacher.designation === "Teacher"
       ).length;
       
-      // 2. Count total present staff
-      const totalPresentStaffCount = presentTeachers.length;
+      const absentCount = filteredTeachers.filter(
+        teacher => teacher.status === "absent"
+      ).length;
       
-      // Save today's data to localStorage
-      localStorage.setItem("teacherPresentCount", teacherDesignationPresentCount.toString());
-      localStorage.setItem("totalPresentStaffCount", totalPresentStaffCount.toString());
+      const leaveCount = filteredTeachers.filter(
+        teacher => teacher.status === "leave"
+      ).length;
+
+      // ✅ Get user info for activity
+      const userName = localStorage.getItem("userName") || "User";
+      const userRole = localStorage.getItem("role") || "Unknown";
+
+      // ✅ Calculate teacher-specific counts
+      const teacherPresentCount = filteredTeachers.filter(
+        teacher => teacher.status === "present" && teacher.designation === "Teacher"
+      ).length;
+
+      const totalTeachers = filteredTeachers.filter(
+        teacher => teacher.designation === "Teacher"
+      ).length;
+
+      // ✅ FIXED: Get proper class and section information
+      const { currentClass, currentSection } = getCurrentClassAndSection();
+      
+      // ✅ Format class and section for display
+      let classSectionDisplay = "";
+      if (currentClass && currentSection && currentClass !== "Multiple Classes" && currentSection !== "Multiple Sections") {
+        classSectionDisplay = `${currentClass}-${currentSection}`;
+      } else if (currentClass && currentClass !== "Multiple Classes") {
+        classSectionDisplay = currentClass;
+      } else if (filteredTeachers.length > 0) {
+        // If class not found, detect from teachers
+        const uniqueClasses = [...new Set(filteredTeachers.map(t => t.class).filter(c => c !== "N/A"))];
+        const uniqueSections = [...new Set(filteredTeachers.map(t => t.section).filter(s => s !== "N/A"))];
+        
+        if (uniqueClasses.length === 1 && uniqueSections.length === 1) {
+          classSectionDisplay = `${uniqueClasses[0]}-${uniqueSections[0]}`;
+        } else if (uniqueClasses.length === 1) {
+          classSectionDisplay = `${uniqueClasses[0]}`;
+        } else {
+          classSectionDisplay = "Multiple Classes";
+        }
+      } else {
+        classSectionDisplay = "Multiple Classes";
+      }
+
+      console.log("🎯 Final Class/Section for Teacher Activity:", {
+        classSectionDisplay,
+        currentClass,
+        currentSection,
+        userRole,
+        userName,
+        teachersCount: filteredTeachers.length
+      });
+
+      // ✅ EXISTING CODE: Save today's counts to localStorage
+      localStorage.setItem("teacherPresentCount", teacherPresentCount.toString());
+      localStorage.setItem("totalPresentStaffCount", presentCount.toString());
       localStorage.setItem("lastTeacherAttendanceDate", today);
       
       console.log("✅ Today's Teacher Attendance Saved:", {
-        teacherPresentCount: teacherDesignationPresentCount,
-        totalPresentStaffCount: totalPresentStaffCount,
+        teacherPresentCount,
+        totalPresentStaffCount: presentCount,
         date: today
       });
+
+      // ✅ Save today's absent and leave teachers
+      saveTodayAbsentAndLeaveTeachers(filteredTeachers);
   
-      // ✅ NEW CODE: Fetch and save previous 6 months data including current month
+      // ✅ Fetch and save previous 6 months data including current month
       await fetchAndSaveTeacherSixMonthsData();
   
+      // ✅ ADD ACTIVITY FOR TEACHER ATTENDANCE MARKING WITH PROPER CLASS/SECTION
+      addActivity({
+        type: "attendance",
+        title: "Staff Attendance Marked",
+        description: `${userName} (${userRole}) marked attendance for ${filteredTeachers.length} staff members`,
+        user: `${userName} (${userRole})`,
+        metadata: {
+          class: currentClass,
+          section: currentSection,
+          totalStaff: filteredTeachers.length,
+          present: presentCount,
+          absent: absentCount,
+          leave: leaveCount,
+          teacherPresent: teacherPresentCount,
+          totalTeachers: totalTeachers,
+          markedBy: userRole
+        }
+      });
+
+      console.log("✅ Teacher attendance activity added with class/section:", classSectionDisplay);
+
       showSuccess(res.data.message || "Attendance submitted successfully!");
       setShowConfirmPopup(false);
     } catch (err) {
@@ -199,13 +322,81 @@ const TeacherAttendence = () => {
         "Attendance submit error:",
         err.response?.data || err.message
       );
+
+      // ✅ ADD ACTIVITY FOR FAILED ATTENDANCE
+      const userName = localStorage.getItem("userName") || "User";
+      const userRole = localStorage.getItem("role") || "Unknown";
+      const { currentClass, currentSection } = getCurrentClassAndSection();
+      
+      addActivity({
+        type: "attendance",
+        title: "Staff Attendance Submission Failed",
+        description: `${userName} (${userRole}) failed to mark attendance for ${filteredTeachers.length} staff members`,
+        user: `${userName} (${userRole})`,
+        metadata: {
+          class: currentClass,
+          section: currentSection,
+          totalStaff: filteredTeachers.length,
+          error: err.response?.data?.message || "Unknown error"
+        }
+      });
+      
       showError(err.response?.data?.message || "Failed to submit attendance");
     } finally {
       setSubmitting(false);
     }
   };
+
+  // ✅ Function to save today's absent and leave teachers to localStorage
+  const saveTodayAbsentAndLeaveTeachers = (teachersData) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const absentTeachers = teachersData.filter(teacher => 
+        teacher.status === "absent"
+      ).map(teacher => ({
+        id: teacher.teacherId,
+        name: teacher.name,
+        designation: teacher.designation,
+        class: teacher.class,
+        section: teacher.section,
+        email: teacher.email,
+        date: today,
+        status: 'Absent'
+      }));
+
+      const leaveTeachers = teachersData.filter(teacher => 
+        teacher.status === "leave"
+      ).map(teacher => ({
+        id: teacher.teacherId,
+        name: teacher.name,
+        designation: teacher.designation,
+        class: teacher.class,
+        section: teacher.section,
+        email: teacher.email,
+        date: today,
+        status: 'Leave'
+      }));
+
+      // Save to localStorage
+      localStorage.setItem('todayAbsentTeachers', JSON.stringify(absentTeachers));
+      localStorage.setItem('todayLeaveTeachers', JSON.stringify(leaveTeachers));
+      localStorage.setItem('lastTeacherAttendanceUpdate', new Date().toISOString());
+
+      console.log("✅ Today's Absent & Leave Teachers Saved:", {
+        absent: absentTeachers.length,
+        leave: leaveTeachers.length,
+        date: today
+      });
+
+      return { absentTeachers, leaveTeachers };
+    } catch (error) {
+      console.error("❌ Error saving today's absent/leave teachers:", error);
+      return { absentTeachers: [], leaveTeachers: [] };
+    }
+  };
   
-  // ✅ NEW FUNCTION: Fetch and save previous 6 months teacher attendance data
+  // ✅ FUNCTION: Fetch and save previous 6 months teacher attendance data
   const fetchAndSaveTeacherSixMonthsData = async () => {
     try {
       console.log("🔄 Fetching previous 6 months teacher attendance data...");
@@ -331,7 +522,7 @@ const TeacherAttendence = () => {
     }
   };
   
-  // ✅ NEW FUNCTION: Generate sample 6 months teacher data if API fails
+  // ✅ FUNCTION: Generate sample 6 months teacher data if API fails
   const generateSampleTeacherSixMonthsData = () => {
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
@@ -381,27 +572,6 @@ const TeacherAttendence = () => {
     }
     
     return sixMonthsData;
-  };
-  
-  // ✅ NEW FUNCTION: Get teacher 6 months data from localStorage (for charts)
-  const getTeacherSixMonthsDataFromStorage = () => {
-    try {
-      const storedData = localStorage.getItem("teacherSixMonthsData");
-      const lastUpdate = localStorage.getItem("lastTeacherSixMonthsUpdate");
-      
-      if (storedData) {
-        const data = JSON.parse(storedData);
-        console.log("📊 Loaded Teacher 6 Months Data from localStorage:", {
-          data: data,
-          lastUpdate: lastUpdate
-        });
-        return data;
-      }
-    } catch (error) {
-      console.error("❌ Error loading teacher 6 months data from localStorage:", error);
-    }
-    
-    return [];
   };
 
   const handleReportSelect = async (
@@ -1127,10 +1297,12 @@ const TeacherAttendence = () => {
               </h2>
 
               {!submitting && (
-                <p className="text-sm text-gray-600 mt-2">
+                <><p className="text-sm text-gray-600 mt-2">
                   Are you sure you want to submit attendance for{" "}
                   {filteredTeachers.length} staff members?
-                </p>
+                </p><p className="text-xs text-gray-500 mt-1">
+                    This will be recorded in recent activities
+                  </p></>
               )}
             </div>
 
@@ -1140,7 +1312,7 @@ const TeacherAttendence = () => {
                   onClick={handleSubmit}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200"
                 >
-                  Submit
+                  Submit Attendance
                 </button>
                 <button
                   onClick={() => setShowConfirmPopup(false)}
