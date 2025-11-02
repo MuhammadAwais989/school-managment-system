@@ -1,3 +1,4 @@
+// LoginPage.js
 import React, { useState } from "react";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { RxAvatar } from "react-icons/rx";
@@ -13,59 +14,59 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { addActivity } = useActivities(); 
+  const { addActivity } = useActivities();
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
       const res = await axios.post(`${BaseURL}/login`, { email, password });
-      console.log("✅ Login Response:", res.data); // Debugging
+      console.log("✅ Login Response:", res.data);
       
       const { token, role, Class, section, name, user } = res.data;
 
-      // ✅ Store user info in localStorage for activities
+      // ✅ Store user info in localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
-      localStorage.setItem("classAssigned", Class);
-      localStorage.setItem("classSection", section);
+      localStorage.setItem("classAssigned", Class || '');
+      localStorage.setItem("classSection", section || '');
       localStorage.setItem("userEmail", email);
       
-      // ✅ Store user name if available
-      if (name) {
-        localStorage.setItem("userName", name);
-      } else if (user?.name) {
-        localStorage.setItem("userName", user.name);
-      } else {
-        localStorage.setItem("userName", email.split('@')[0]);
-      }
+      // ✅ Store user name
+      const userName = name || user?.name || email.split('@')[0];
+      localStorage.setItem("userName", userName);
 
       if (role === "Teacher") {
-        localStorage.setItem("classAssigned", Class);
-        localStorage.setItem("teacherClass", Class); 
+        localStorage.setItem("classAssigned", Class || '');
+        localStorage.setItem("teacherClass", Class || '');
       }
 
-      // ✅ FIXED: Login Activity with proper user data
-      const userName = name || user?.name || email.split('@')[0];
-      
+      // ✅ ADD LOGIN ACTIVITY FOR ALL ROLES
       addActivity({
         type: "login",
-        title: "User Login",
+        title: `${role} Login`,
         description: `${userName} successfully logged in as ${role}`,
-        user: userName
+        user: userName,
+        metadata: {
+          role: role,
+          email: email,
+          class: Class || 'N/A',
+          section: section || 'N/A',
+          loginTime: new Date().toLocaleTimeString()
+        }
       });
 
-      console.log("✅ Login activity added for:", userName);
+      console.log(`✅ Login activity added for: ${userName} (${role})`);
 
       toast.success("Login successful");
 
-      // ✅ FIXED: Use navigate instead of window.location.href
+      // ✅ Navigate based on role
       if (role === "Admin" || role === "Principle") {
         navigate("/admin-dashboard");
       } else if (role === "Teacher") {
         navigate("/teacher-dashboard");
       } else {
-        toast.error("Unauthorized role");
+        navigate("/dashboard");
       }
 
     } catch (err) {
@@ -76,7 +77,12 @@ const LoginPage = () => {
         type: "login", 
         title: "Failed Login Attempt",
         description: `Failed login attempt for ${email}`,
-        user: "Unknown"
+        user: "Unknown",
+        metadata: {
+          attemptedEmail: email,
+          error: err.response?.data?.message || "Login failed",
+          attemptTime: new Date().toLocaleTimeString()
+        }
       });
       
       toast.error(err.response?.data?.message || "Login failed");
@@ -85,10 +91,10 @@ const LoginPage = () => {
 
   return (
     <div
-      className="flex items-center justify-center min-h-screen bg-cover bg-center "
+      className="flex items-center justify-center min-h-screen bg-cover bg-center"
       style={{ backgroundImage: `url(${bg})` }}
     >
-      <div className="relative pt-16 backdrop-blur-sm bg-white/30 p-8 rounded-2xl shadow-lg w-full max-w-sm max-[500px]:w-[95%] ">
+      <div className="relative pt-16 backdrop-blur-sm bg-white/30 p-8 rounded-2xl shadow-lg w-full max-w-sm max-[500px]:w-[95%]">
         {/* Avatar */}
         <div className="flex justify-center mb-4 absolute -top-10 left-1/2 -translate-x-1/2">
           <RxAvatar className="w-20 h-20 rounded-full shadow bg-[#00264D] p-4 text-white text-lg" />

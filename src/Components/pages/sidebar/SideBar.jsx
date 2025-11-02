@@ -8,12 +8,13 @@ import avatar from "../../../assets/images/avatar.jfif";
 import MobileHeader from "./MobileHeader";
 import { useNavigate } from "react-router-dom";
 import { showSuccess } from '../../utils/Toast.js';
-
+import { useActivities } from "../../../Context/Activities.Context.js"; // ✅ Import activities context
 
 const Sidebar = () => {
   const [sideBar, setSideBar] = useState(false);
   const [expandedItems, setExpandedItems] = useState({});
   const [activeItemId, setActiveItemId] = useState(1); 
+  const { addActivity } = useActivities(); // ✅ Activities hook
 
   const toggleSidebar = () => setSideBar(!sideBar);
 
@@ -24,13 +25,39 @@ const Sidebar = () => {
     }));
   };
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
   const handleLogout = () => {
+    // ✅ Logout activity add karein
+    const userName = localStorage.getItem("userName") || "Unknown User";
+    const role = localStorage.getItem("role") || "Unknown Role";
+    const userEmail = localStorage.getItem("userEmail") || "Unknown Email";
 
-    localStorage.removeItem("token")
-    localStorage.removeItem("role")
+    addActivity({
+      type: "logout",
+      title: "User Logout",
+      description: `${userName} (${role}) logged out from the system`,
+      user: userName,
+      metadata: {
+        role: role,
+        email: userEmail,
+        logoutTime: new Date().toLocaleTimeString(),
+        logoutDate: new Date().toLocaleDateString()
+      }
+    });
+
+    console.log(`✅ Logout activity added for: ${userName} (${role})`);
+
+    // Clear localStorage
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("classAssigned");
+    localStorage.removeItem("classSection");
+    localStorage.removeItem("teacherClass");
+
     showSuccess("Logged out successfully");
-
     navigate("/login");
   };
 
@@ -69,11 +96,9 @@ const Sidebar = () => {
         </div>
       )}
       <MobileHeader 
-      toggleSidebar={toggleSidebar}
-      avatar={avatar}
+        toggleSidebar={toggleSidebar}
+        avatar={avatar}
       />
-     
-      
     </>
   );
 };

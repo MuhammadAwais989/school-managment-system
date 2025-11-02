@@ -219,9 +219,7 @@ const AttendanceCharts = ({ data, detailed = false }) => {
           <h3 className="text-lg font-semibold text-gray-800">
             {detailed ? "6-Month Attendance Analysis" : "Attendance Trend (Last 6 Months)"}
           </h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Real data from localStorage - Updates automatically
-          </p>
+          
         </div>
         
         <div className="flex items-center gap-3 mt-2 sm:mt-0">
@@ -374,13 +372,7 @@ const AttendanceCharts = ({ data, detailed = false }) => {
         </div>
       </div>
 
-      {/* ✅ Data Source Info */}
-      <div className="mt-4 text-center">
-        <p className="text-xs text-gray-500">
-          📊 Data Source: localStorage | 
-          Last 6 Months: {sixMonthsData.map(m => m.month).join(' → ')}
-        </p>
-      </div>
+     
 
       {/* ✅ Detailed View - Monthly Breakdown */}
       {detailed && (

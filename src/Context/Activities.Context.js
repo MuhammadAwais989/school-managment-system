@@ -1,28 +1,21 @@
+// Activities.Context.js
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 
 const ActivitiesContext = createContext();
 
-// Local storage se activities load karne ka function
 const loadActivitiesFromStorage = () => {
   try {
     const stored = localStorage.getItem('school_activities');
-    if (stored) {
-      const activities = JSON.parse(stored);
-      console.log("📥 Loaded activities from storage:", activities.length);
-      return activities;
-    }
-    return [];
+    return stored ? JSON.parse(stored) : [];
   } catch (error) {
     console.error('Error loading activities from storage:', error);
     return [];
   }
 };
 
-// Local storage mein save karne ka function
 const saveActivitiesToStorage = (activities) => {
   try {
     localStorage.setItem('school_activities', JSON.stringify(activities));
-    console.log("💾 Saved activities to storage:", activities.length);
   } catch (error) {
     console.error('Error saving activities to storage:', error);
   }
@@ -33,15 +26,13 @@ const activitiesReducer = (state, action) => {
   
   switch (action.type) {
     case 'ADD_ACTIVITY':
-      newActivities = [action.payload, ...state.activities].slice(0, 50); // Last 50 activities
+      newActivities = [action.payload, ...state.activities].slice(0, 50);
       saveActivitiesToStorage(newActivities);
-      console.log("➕ Added new activity:", action.payload);
       return {
         ...state,
         activities: newActivities
       };
     case 'LOAD_ACTIVITIES':
-      console.log("🔄 Loading activities into state");
       return {
         ...state,
         activities: action.payload
@@ -66,7 +57,6 @@ export const ActivitiesProvider = ({ children }) => {
 
   // Component mount hone par activities load karein
   useEffect(() => {
-    console.log("🎯 ActivitiesProvider mounted");
     const storedActivities = loadActivitiesFromStorage();
     dispatch({
       type: 'LOAD_ACTIVITIES',
@@ -74,8 +64,51 @@ export const ActivitiesProvider = ({ children }) => {
     });
   }, []);
 
+  // ✅ AUTOMATIC LOGIN/LOGOUT TRACKING
+  useEffect(() => {
+    const handleLoginActivity = () => {
+      const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
+      const userName = localStorage.getItem('userName') || 'Unknown User';
+      const userEmail = localStorage.getItem('userEmail') || 'Unknown Email';
+
+      if (token && role && userName) {
+        // Check if login activity already exists for this session
+        const existingActivity = state.activities.find(
+          activity => 
+            activity.type === 'login' && 
+            activity.user === userName &&
+            new Date(activity.timestamp).toDateString() === new Date().toDateString()
+        );
+
+        if (!existingActivity) {
+          const loginActivity = {
+            id: Date.now() + Math.random(),
+            type: 'login',
+            title: 'User Login',
+            description: `${userName} (${role}) logged into the system`,
+            user: userName,
+            timestamp: new Date(),
+            metadata: {
+              role: role,
+              email: userEmail,
+              loginTime: new Date().toLocaleTimeString()
+            }
+          };
+
+          dispatch({
+            type: 'ADD_ACTIVITY',
+            payload: loginActivity
+          });
+        }
+      }
+    };
+
+    // Page load par check karein koi user logged in hai ya nahi
+    setTimeout(handleLoginActivity, 1000);
+  }, [state.activities]);
+
   const addActivity = (activity) => {
-    // Ensure activity has all required fields
     const completeActivity = {
       id: Date.now() + Math.random(),
       timestamp: new Date(),
