@@ -720,8 +720,7 @@ const StudentDetails = () => {
                           <img
                             src={student.studentPic}
                             alt="Student"
-                            className="h-10 w-10 object-cover rounded-full"
-                          />
+                            className="h-10 w-10 object-cover rounded-full"/>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {student.name}
