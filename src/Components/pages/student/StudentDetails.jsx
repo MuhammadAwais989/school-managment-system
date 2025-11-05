@@ -702,14 +702,12 @@ const StudentDetails = () => {
                       Actions
                     </th>
                   </tr>
-                </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {currentStudents.length > 0 ? (
                     currentStudents.map((student, index) => (
                       <tr
                         key={student._id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
+                        className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {(currentPage - 1) * itemsPerPage + index + 1}
                         </td>
