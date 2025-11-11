@@ -702,6 +702,7 @@ const StudentDetails = () => {
                       Actions
                     </th>
                   </tr>
+                </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {currentStudents.length > 0 ? (
                     currentStudents.map((student, index) => (
@@ -830,7 +831,7 @@ const StudentDetails = () => {
                   )}
                 </span>{" "}
                 of{" "}
-                <span className="font-medium">{filteredStudents.length}</span>{" "}
+                <span className="font-medium">{filteredStudents.length}</span>
                 students
               </div>
 
@@ -842,7 +843,7 @@ const StudentDetails = () => {
                     value={itemsPerPage}
                     onChange={(e) => {
                       setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1); // Reset to first page when changing items per page
+                      setCurrentPage(1); 
                     }}
                     className="border border-gray-300 rounded-md px-2 py-1 text-sm"
                   >
