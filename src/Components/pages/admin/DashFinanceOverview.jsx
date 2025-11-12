@@ -21,10 +21,15 @@ const FinanceOverview = ({ data }) => {
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip />
+              <Tooltip 
+                formatter={(value, name) => [
+                  `₹${(value / 1000).toFixed(0)}K`,
+                  name === 'target' ? 'Target Amount' : 'Collected Amount'
+                ]}
+              />
               <Legend />
-              <Bar dataKey="target" name="Target (in '000s)" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="actual" name="Actual (in '000s)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="target" name="Target Amount" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="collected" name="Collected Amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

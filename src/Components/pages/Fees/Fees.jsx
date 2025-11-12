@@ -280,20 +280,7 @@ const FeesManagement = () => {
     applyFiltersAndPagination();
   }, [currentPage, itemsPerPage]);
 
-  // Fetch student details
-  const fetchStudentDetails = async (studentId) => {
-    try {
-      const response = await axios.get(`${BaseURL}/students/${studentId}`);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching student details:", error);
-      if (error.response?.status === 404) {
-        console.log("Student details endpoint not found, using fallback data");
-        return null;
-      }
-      throw error;
-    }
-  };
+
 
   // Show student details
   const showStudentDetails = async (student) => {
@@ -831,36 +818,7 @@ const FeesManagement = () => {
     }
   };
 
-  // Custom mapping function for fees data
-  const mapFeesData = (student) => {
-    let lastPaymentDate = "N/A";
-    let paymentMonths = "N/A";
-    let lastPaymentAmount = 0;
 
-    if (student.paymentHistory && student.paymentHistory.length > 0) {
-      const lastPayment = student.paymentHistory[student.paymentHistory.length - 1];
-      lastPaymentDate = new Date(lastPayment.date).toLocaleDateString();
-      paymentMonths = lastPayment.months ? lastPayment.months.join(", ") : "N/A";
-      lastPaymentAmount = lastPayment.amount || 0;
-    }
-
-    return {
-      'Roll No': student.rollNo || 'N/A',
-      'Student Name': student.name || 'N/A',
-      'Father Name': student.fatherName || 'N/A',
-      'Class': student.class || student.Class || 'N/A',
-      'Section': student.section || 'N/A',
-      'Monthly Fee': student.monthlyFee ? `Rs. ${student.monthlyFee.toLocaleString()}` : 'N/A',
-      'Total Fees': student.Fees ? `Rs. ${student.Fees.toLocaleString()}` : 'N/A',
-      'Paid Fees': `Rs. ${(student.paidFees || 0).toLocaleString()}`,
-      'Dues': `Rs. ${(student.dues || 0).toLocaleString()}`,
-      'Status': student.status || 'Not Paid',
-      'Last Payment Date': lastPaymentDate,
-      'Last Payment Amount': `Rs. ${lastPaymentAmount.toLocaleString()}`,
-      'Payment Months': paymentMonths,
-      'Payment History Count': student.paymentHistory ? student.paymentHistory.length : 0
-    };
-  };
 
   // Export data to Excel
   const exportToExcel = async () => {

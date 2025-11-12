@@ -55,9 +55,9 @@ const AdminDashboard = () => {
       const userRole = localStorage.getItem("role") || "Admin";
       const userEmail = localStorage.getItem("userEmail") || "admin@school.com";
       const userName = localStorage.getItem("userName") || userEmail.split('@')[0];
-      
+
       console.log("✅ Adding dashboard access activity");
-      
+
       addActivity({
         type: "login",
         title: "Dashboard Accessed",
@@ -78,7 +78,7 @@ const AdminDashboard = () => {
       const staff = res.data;
       setStaffData(staff);
       console.log("👥 Total staff from API:", staff.length);
-      
+
       if (staff.length > 0) {
         console.log("📝 SAMPLE STAFF DATA:");
         staff.slice(0, 3).forEach((staffMember, index) => {
@@ -89,7 +89,7 @@ const AdminDashboard = () => {
           });
         });
       }
-      
+
       return staff;
     } catch (error) {
       console.error("❌ Error fetching staff data:", error);
@@ -107,9 +107,9 @@ const AdminDashboard = () => {
       try {
         const allResponse = await axios.get(`${BaseURL}/teachers/attendence`);
         console.log("📊 All attendance data:", allResponse.data);
-        
+
         let todayRecords = [];
-        
+
         // Handle different response structures
         if (Array.isArray(allResponse.data)) {
           // If it's an array of records
@@ -130,7 +130,7 @@ const AdminDashboard = () => {
             return recordDate && recordDate.startsWith(today);
           });
         }
-        
+
         console.log("📅 Today's filtered records:", todayRecords);
         return todayRecords;
       } catch (error) {
@@ -147,7 +147,7 @@ const AdminDashboard = () => {
   // Create mock attendance data for testing
   const createMockAttendanceData = (staff) => {
     console.log("🔄 Creating mock attendance data for testing...");
-    
+
     const today = new Date().toISOString().split('T')[0];
     const mockAttendance = staff.map((staffMember, index) => ({
       teacherId: staffMember._id,
@@ -160,11 +160,11 @@ const AdminDashboard = () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }));
-    
+
     console.log("🎯 MOCK ATTENDANCE DATA:", mockAttendance);
     console.log("📊 Mock - Total staff:", staff.length);
     console.log("📊 Mock - Present today:", mockAttendance.filter(a => a.status === 'present').length);
-    
+
     return mockAttendance;
   };
 
@@ -172,55 +172,55 @@ const AdminDashboard = () => {
   const calculateStaffStats = (staff, attendanceData = []) => {
     try {
       const totalStaff = staff.length;
-      
+
       // Filter teachers based on designation
-      const teachingStaff = staff.filter(staffMember => 
-        staffMember.designation && 
+      const teachingStaff = staff.filter(staffMember =>
+        staffMember.designation &&
         staffMember.designation.toLowerCase().includes("teacher")
       );
-      
+
       const totalTeachingStaff = teachingStaff.length;
       const nonTeachingStaff = totalStaff - totalTeachingStaff;
-      
+
       // Calculate REAL attendance from attendance data
       let presentToday = 0;
       let presentTeaching = 0;
       let presentNonTeaching = 0;
 
       if (attendanceData && attendanceData.length > 0) {
-        
+
         // If we have real attendance data, count actual present staff
         attendanceData.forEach((record, index) => {
           // Handle different field names in attendance records
           const status = record.status || record.attendanceStatus || record.attendance || 'absent';
           const staffId = record.teacherId || record.staffId || record.employeeId || record._id;
-          
+
           console.log(`📝 Record ${index + 1}:`, {
             staffId,
             status,
             name: record.name,
             date: record.date
           });
-          
+
           if (status.toLowerCase() === 'present') {
             presentToday++;
-            
+
             // Find the staff member to check if they are teacher
             const staffMember = staff.find(s => {
-              const match = s._id === staffId || 
-                           s.teacherId === staffId ||
-                           s.employeeId === staffId ||
-                           s.name === record.name;
-              
+              const match = s._id === staffId ||
+                s.teacherId === staffId ||
+                s.employeeId === staffId ||
+                s.name === record.name;
+
               if (match) {
                 console.log(`✅ Matched staff: ${s.name} (${s.designation})`);
               }
               return match;
             });
-            
+
             if (staffMember) {
-              if (staffMember.designation && 
-                  staffMember.designation.toLowerCase().includes("teacher")) {
+              if (staffMember.designation &&
+                staffMember.designation.toLowerCase().includes("teacher")) {
                 presentTeaching++;
               } else {
                 console.log(`👨‍💼 Non-teaching staff present: ${staffMember.name}`);
@@ -230,7 +230,7 @@ const AdminDashboard = () => {
             }
           }
         });
-        
+
         presentNonTeaching = presentToday - presentTeaching;
       } else {
         // If no attendance data found, show 0 present (attendance not marked)
@@ -238,7 +238,7 @@ const AdminDashboard = () => {
         presentTeaching = 0;
         presentNonTeaching = 0;
       }
-      
+
       console.log("📊 FINAL STAFF STATISTICS:", {
         totalStaff,
         totalTeachingStaff,
@@ -278,24 +278,24 @@ const AdminDashboard = () => {
   const calculateStudentStatsWithCreatedAt = (students) => {
     try {
       const total = students.length;
-      
+
       // Get current date
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
+
       // Current month and year
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
-      
+
       // Last month calculation
       const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
       const lastMonth = lastMonthDate.getMonth();
       const lastMonthYear = lastMonthDate.getFullYear();
-      
+
       let newToday = 0;
       let newThisMonth = 0;
       let lastMonthAdmissions = 0;
-      
+
       console.log("🔄 USING CREATED_AT FIELD");
       console.log("Today's date:", today.toDateString());
       console.log("Current Month:", currentMonth + 1, "Year:", currentYear);
@@ -306,8 +306,8 @@ const AdminDashboard = () => {
           // Use createdAt field which is always in ISO format and reliable
           const createdAt = new Date(student.createdAt);
           const createdDate = new Date(
-            createdAt.getFullYear(), 
-            createdAt.getMonth(), 
+            createdAt.getFullYear(),
+            createdAt.getMonth(),
             createdAt.getDate()
           );
 
@@ -317,14 +317,14 @@ const AdminDashboard = () => {
           }
 
           // Check if created in current month
-          if (createdAt.getMonth() === currentMonth && 
-              createdAt.getFullYear() === currentYear) {
+          if (createdAt.getMonth() === currentMonth &&
+            createdAt.getFullYear() === currentYear) {
             newThisMonth++;
           }
 
           // Check if created in last month
-          if (createdAt.getMonth() === lastMonth && 
-              createdAt.getFullYear() === lastMonthYear) {
+          if (createdAt.getMonth() === lastMonth &&
+            createdAt.getFullYear() === lastMonthYear) {
             lastMonthAdmissions++;
           }
 
@@ -332,22 +332,22 @@ const AdminDashboard = () => {
           console.error('❌ Error processing student:', student._id, error);
         }
       });
-      
+
       console.log("📊 CREATED_AT RESULTS:", {
         newToday,
         newThisMonth,
         lastMonthAdmissions
       });
-      
+
       // Proper change calculation
       let change = "0%";
       let trend = "up";
-      
+
       console.log("📈 CHANGE CALCULATION (createdAt):", {
         currentMonth: newThisMonth,
         lastMonth: lastMonthAdmissions
       });
-      
+
       if (lastMonthAdmissions > 0) {
         const percentageChange = ((newThisMonth - lastMonthAdmissions) / lastMonthAdmissions) * 100;
         change = `${percentageChange >= 0 ? '+' : ''}${percentageChange.toFixed(1)}%`;
@@ -366,7 +366,7 @@ const AdminDashboard = () => {
         trend = "up";
         console.log("📈 Both months have 0 admissions: 0%");
       }
-      
+
       return {
         total,
         newToday,
@@ -374,7 +374,7 @@ const AdminDashboard = () => {
         change,
         trend
       };
-      
+
     } catch (error) {
       console.error('❌ Error in calculateStudentStatsWithCreatedAt:', error);
       return {
@@ -392,15 +392,15 @@ const AdminDashboard = () => {
     try {
       // Get current month data from localStorage
       const { currentMonthCollection, currentMonthDues } = getCurrentMonthFeesData();
-      
+
       const totalFees = students.reduce((sum, student) => {
         const fee = parseInt(student.Fees || 0);
         return sum + (isNaN(fee) ? 0 : fee);
       }, 0);
-      
+
       const collectedFees = Math.floor(totalFees * 0.75);
       const pendingFees = totalFees - collectedFees;
-      
+
       return {
         totalPending: pendingFees,
         collectedToday: Math.floor(collectedFees * 0.05),
@@ -430,7 +430,7 @@ const AdminDashboard = () => {
   const calculateAttendanceData = (students, staffStats) => {
     const presentCount = Math.floor(students.length * 0.85);
     const absentCount = students.length - presentCount;
-    
+
     return {
       students: {
         present: presentCount,
@@ -489,246 +489,353 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, [timeRange]);
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      console.log("🔄 ========== DASHBOARD DATA FETCH STARTED ==========");
-      
-      // Fetch all data
-      const [studentsRes, staff] = await Promise.all([
-        axios.get(`${BaseURL}/students/details`),
-        fetchStaffData()
-      ]);
-      
-      const students = studentsRes.data;
-      
-      console.log("👥 Total students from API:", students.length);
-      console.log("👥 Total staff from API:", staff.length);
-      
-      // Try to get today's attendance
-      let todayAttendance = await fetchTodayStaffAttendance();
-      
-      console.log("📊 Today's attendance records from API:", todayAttendance);
-      
-      // If no real attendance data found, use mock data for testing
-      if (!todayAttendance || todayAttendance.length === 0) {
-        console.log("⚠️ No real attendance data found, using mock data for testing");
-        todayAttendance = createMockAttendanceData(staff);
-      } else {
-        console.log("✅ Using real attendance data");
-      }
-      
-      // Calculate statistics using attendance data
-      const studentStats = calculateStudentStatsWithCreatedAt(students);
-      const staffStats = calculateStaffStats(staff, todayAttendance);
-      const feesData = calculateFeesData(students);
-      const attendanceData = calculateAttendanceData(students, staffStats);
-      const studentDistribution = calculateStudentDistribution(students);
-
-      // Get current month fees data
-      const currentMonthFees = getCurrentMonthFeesData();
-
-      // ✅ Use REAL activities from context instead of mock activities
-      const realData = {
-        overview: {
-          students: studentStats,
-          teachers: {
-            total: staffStats.teaching,
-            presentToday: staffStats.presentTeaching,
-            change: staffStats.change,
-            trend: staffStats.trend
-          },
-          staff: {
-            total: staffStats.total,
-            presentToday: staffStats.presentToday, // THIS IS THE VALUE FOR THE CARD
-            change: staffStats.change,
-            trend: staffStats.trend
-          },
-          attendance: attendanceData,
-          fees: feesData,
-          admissions: {
-            today: studentStats.newToday,
-            thisMonth: studentStats.newThisMonth,
-            change: studentStats.change,
-            trend: studentStats.trend
-          },
-          // Add current month fees data explicitly
-          currentMonthFees: currentMonthFees
-        },
-        charts: {
-          monthlyAttendance: [
-            { month: 'Jan', students: 92, teachers: 94 },
-            { month: 'Feb', students: 95, teachers: 96 },
-            { month: 'Mar', students: 93, teachers: 92 },
-            { month: 'Apr', students: 91, teachers: 95 },
-            { month: 'May', students: 94, teachers: 93 },
-            { month: 'Jun', students: 92, teachers: 94 }
-          ],
-          feeCollection: [
-            { month: 'Jan', target: 500, actual: 420 },
-            { month: 'Feb', target: 500, actual: 380 },
-            { month: 'Mar', target: 500, actual: 450 },
-            { month: 'Apr', target: 500, actual: 410 },
-            { month: 'May', target: 500, actual: 480 },
-            { month: 'Jun', target: 500, actual: Math.round(feesData.achievement * 5) }
-          ],
-          studentDistribution: studentDistribution
-        },
-        events: [
-          {
-            id: 1,
-            title: 'Annual Sports Day',
-            date: new Date(new Date().setDate(new Date().getDate() + 2)),
-            type: 'event'
-          },
-          {
-            id: 2,
-            title: 'PTM - Class 10',
-            date: new Date(new Date().setDate(new Date().getDate() + 5)),
-            type: 'meeting'
-          },
-          {
-            id: 3,
-            title: 'Science Exhibition',
-            date: new Date(new Date().setDate(new Date().getDate() + 7)),
-            type: 'event'
-          },
-          {
-            id: 4,
-            title: 'Quarterly Exams Start',
-            date: new Date(new Date().setDate(new Date().getDate() + 10)),
-            type: 'exam'
-          }
-        ]
-      };
-
-      setDashboardData(realData);
-      console.log("✅ ========== DASHBOARD DATA LOADED ==========");
-      console.log("🎯 FINAL STAFF COUNT FOR CARD:", {
-        totalStaff: staffStats.total,
-        presentToday: staffStats.presentToday, // This will show in your staff card
-        teachingStaff: staffStats.teaching,
-        presentTeaching: staffStats.presentTeaching
+// ✅ UPDATED: Calculate fee collection data using FeesManagement system data
+const calculateFeeCollectionData = async (feesData) => {
+  try {
+    console.log("🔄 Fetching fee collection data from FeesManagement system...");
+    
+    // ✅ FeesManagement system se combined data fetch karein
+    const response = await axios.get(`${BaseURL}/fees/combined`);
+    const combinedData = response.data;
+    const students = combinedData.students || [];
+    
+    console.log("💰 FeesManagement se students data:", students.length);
+    
+    const months = [];
+    const currentDate = new Date();
+    
+    // Previous 6 months generate karein
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthName = date.toLocaleString('default', { month: 'short' });
+      months.push({
+        name: monthName,
+        year: date.getFullYear(),
+        monthIndex: date.getMonth()
       });
-      console.log("💰 CURRENT MONTH FEES DATA:", currentMonthFees);
-      console.log("📊 Using data:", todayAttendance.length > 0 ? "REAL ATTENDANCE DATA" : "MOCK DATA");
+    }
+
+    // ✅ TOTAL MONTHLY FEES CALCULATE KAREIN
+    const totalMonthlyFees = students.reduce((sum, student) => {
+      const monthlyFee = student.monthlyFee || Number(student.Fees) || 0;
+      return sum + monthlyFee;
+    }, 0);
+
+    console.log("💰 Total monthly fees (Target):", totalMonthlyFees);
+
+    const feeCollection = months.map(month => {
+      let collectedAmount = 0;
       
-    } catch (error) {
-      console.error("❌ Error fetching dashboard data:", error);
-      
-      // Fallback to mock data if API fails
-      const staffStats = calculateStaffStats([]);
-      const currentMonthFees = getCurrentMonthFeesData();
-      
-      const mockData = {
-        overview: {
+      // ✅ COLLECTED AMOUNT: FeesManagement system ke payment history se
+      students.forEach(student => {
+        if (student.paymentHistory && Array.isArray(student.paymentHistory)) {
+          student.paymentHistory.forEach(payment => {
+            if (payment.date) {
+              try {
+                const paymentDate = new Date(payment.date);
+                if (paymentDate.getMonth() === month.monthIndex && 
+                    paymentDate.getFullYear() === month.year) {
+                  collectedAmount += payment.amount || 0;
+                }
+              } catch (dateError) {
+                console.warn("Invalid payment date:", payment.date);
+              }
+            }
+          });
+        }
+      });
+
+      const achievement = totalMonthlyFees > 0 ? Math.round((collectedAmount / totalMonthlyFees) * 100) : 0;
+
+      console.log(`📊 ${month.name}: Target=${totalMonthlyFees}, Collected=${collectedAmount}, Achievement=${achievement}%`);
+
+      return {
+        month: month.name,
+        target: totalMonthlyFees,
+        collected: collectedAmount,
+        achievement: achievement
+      };
+    });
+
+    console.log("✅ Final fee collection data from FeesManagement:", feeCollection);
+    return feeCollection;
+    
+  } catch (error) {
+    console.error('❌ Error fetching fee data from FeesManagement:', error);
+    
+    // Fallback to localStorage data
+    return getFallbackFeeCollectionData();
+  }
+};
+
+// ✅ FALLBACK: LocalStorage se data lein
+const getFallbackFeeCollectionData = () => {
+  const currentMonthCollection = parseInt(localStorage.getItem('currentMonthCollection') || '0');
+  const totalMonthlyFees = 50000; // Default target
+  
+  const currentMonth = new Date().getMonth();
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  console.log("🔄 Using fallback fee data, current month collection:", currentMonthCollection);
+  
+  return [
+    { month: monthNames[(currentMonth - 5 + 12) % 12], target: totalMonthlyFees, collected: Math.round(totalMonthlyFees * 0.84), achievement: 84 },
+    { month: monthNames[(currentMonth - 4 + 12) % 12], target: totalMonthlyFees, collected: Math.round(totalMonthlyFees * 0.76), achievement: 76 },
+    { month: monthNames[(currentMonth - 3 + 12) % 12], target: totalMonthlyFees, collected: Math.round(totalMonthlyFees * 0.90), achievement: 90 },
+    { month: monthNames[(currentMonth - 2 + 12) % 12], target: totalMonthlyFees, collected: Math.round(totalMonthlyFees * 0.82), achievement: 82 },
+    { month: monthNames[(currentMonth - 1 + 12) % 12], target: totalMonthlyFees, collected: Math.round(totalMonthlyFees * 0.96), achievement: 96 },
+    { month: monthNames[currentMonth], target: totalMonthlyFees, collected: currentMonthCollection || Math.round(totalMonthlyFees * 0.92), achievement: currentMonthCollection > 0 ? Math.round((currentMonthCollection / totalMonthlyFees) * 100) : 92 }
+  ];
+};
+
+// ✅ COMPLETE UPDATED fetchDashboardData FUNCTION
+const fetchDashboardData = async () => {
+  try {
+    setLoading(true);
+    console.log("🔄 ========== DASHBOARD DATA FETCH STARTED ==========");
+    
+    // ✅ PEHLE FEE DATA FETCH KAREIN (FeesManagement system se)
+    let feeCollectionData;
+    try {
+      feeCollectionData = await calculateFeeCollectionData();
+      console.log("✅ Fee collection data fetched successfully");
+    } catch (feeError) {
+      console.error("❌ Fee data fetch failed, using fallback:", feeError);
+      feeCollectionData = getFallbackFeeCollectionData();
+    }
+    
+    // ✅ PHIR BAAKI DATA FETCH KAREIN
+    const [studentsRes, staff] = await Promise.all([
+      axios.get(`${BaseURL}/students/details`),
+      fetchStaffData()
+    ]);
+    
+    const students = studentsRes.data;
+    
+    console.log("👥 Total students from API:", students.length);
+    console.log("👥 Total staff from API:", staff.length);
+    
+    // Try to get today's attendance
+    let todayAttendance = await fetchTodayStaffAttendance();
+    
+    console.log("📊 Today's attendance records from API:", todayAttendance);
+    
+    // If no real attendance data found, use mock data for testing
+    if (!todayAttendance || todayAttendance.length === 0) {
+      console.log("⚠️ No real attendance data found, using mock data for testing");
+      todayAttendance = createMockAttendanceData(staff);
+    } else {
+      console.log("✅ Using real attendance data");
+    }
+    
+    // Calculate statistics using attendance data
+    const studentStats = calculateStudentStatsWithCreatedAt(students);
+    const staffStats = calculateStaffStats(staff, todayAttendance);
+    const feesData = calculateFeesData(students);
+    const attendanceData = calculateAttendanceData(students, staffStats);
+    const studentDistribution = calculateStudentDistribution(students);
+
+    // Get current month fees data
+    const currentMonthFees = getCurrentMonthFeesData();
+
+    // ✅ Use REAL activities from context instead of mock activities
+    const realData = {
+      overview: {
+        students: studentStats,
+        teachers: {
+          total: staffStats.teaching,
+          presentToday: staffStats.presentTeaching,
+          change: staffStats.change,
+          trend: staffStats.trend
+        },
+        staff: {
+          total: staffStats.total,
+          presentToday: staffStats.presentToday,
+          change: staffStats.change,
+          trend: staffStats.trend
+        },
+        attendance: attendanceData,
+        fees: {
+          ...feesData,
+          // ✅ Total monthly target bhi overview mein add karein
+          monthlyTarget: feeCollectionData[0]?.target || 50000
+        },
+        admissions: {
+          today: studentStats.newToday,
+          thisMonth: studentStats.newThisMonth,
+          change: studentStats.change,
+          trend: studentStats.trend
+        },
+        currentMonthFees: currentMonthFees
+      },
+      charts: {
+        // ✅ REAL FEE COLLECTION DATA FROM FEESMANAGEMENT SYSTEM
+        feeCollection: feeCollectionData,
+        studentDistribution: studentDistribution
+      },
+      events: [
+        {
+          id: 1,
+          title: 'Annual Sports Day',
+          date: new Date(new Date().setDate(new Date().getDate() + 2)),
+          type: 'event'
+        },
+        {
+          id: 2,
+          title: 'PTM - Class 10',
+          date: new Date(new Date().setDate(new Date().getDate() + 5)),
+          type: 'meeting'
+        },
+        {
+          id: 3,
+          title: 'Science Exhibition',
+          date: new Date(new Date().setDate(new Date().getDate() + 7)),
+          type: 'event'
+        },
+        {
+          id: 4,
+          title: 'Quarterly Exams Start',
+          date: new Date(new Date().setDate(new Date().getDate() + 10)),
+          type: 'exam'
+        }
+      ]
+    };
+
+    setDashboardData(realData);
+    console.log("✅ ========== DASHBOARD DATA LOADED ==========");
+    console.log("💰 FEE COLLECTION DATA:", feeCollectionData);
+    
+  } catch (error) {
+    console.error("❌ Error fetching dashboard data:", error);
+    
+    // Fallback to mock data if API fails
+    const staffStats = calculateStaffStats([]);
+    const currentMonthFees = getCurrentMonthFeesData();
+    
+    // ✅ FEE COLLECTION DATA FOR FALLBACK
+    const fallbackFeeCollection = getFallbackFeeCollectionData();
+    
+    const mockData = {
+      overview: {
+        students: {
+          total: 1247,
+          newToday: 12,
+          newThisMonth: 45,
+          change: "+8%",
+          trend: "up"
+        },
+        teachers: {
+          total: staffStats.teaching || 0,
+          presentToday: 0,
+          change: "0%",
+          trend: "up"
+        },
+        staff: {
+          total: staffStats.total || 0,
+          presentToday: 0,
+          change: "0%",
+          trend: "up"
+        },
+        attendance: {
           students: {
-            total: 1247,
-            newToday: 12,
-            newThisMonth: 45,
-            change: "+8%",
-            trend: "up"
-          },
-          teachers: {
-            total: staffStats.teaching || 0,
-            presentToday: 0,
-            change: "0%",
-            trend: "up"
+            present: 1156,
+            absent: 91,
+            rate: 92.7,
+            change: "+1.2%"
           },
           staff: {
-            total: staffStats.total || 0,
-            presentToday: 0,
-            change: "0%",
-            trend: "up"
+            present: 0,
+            absent: 0,
+            rate: 0,
+            change: "0%"
           },
-          attendance: {
-            students: {
-              present: 1156,
-              absent: 91,
-              rate: 92.7,
-              change: "+1.2%"
-            },
-            staff: {
-              present: 0,
-              absent: 0,
-              rate: 0,
-              change: "0%"
-            },
-            teachers: {
-              present: 0,
-              absent: 0,
-              rate: 0,
-              change: "0%"
-            }
-          },
-          fees: {
-            totalPending: 234500,
-            collectedToday: 12500,
-            collectedThisMonth: currentMonthFees.currentMonthCollection, // Use actual current month data
-            dueThisWeek: currentMonthFees.currentMonthDues, // Use current month dues
-            target: 500000,
-            achievement: 91.4,
-            currentMonthCollection: currentMonthFees.currentMonthCollection,
-            currentMonthDues: currentMonthFees.currentMonthDues
-          },
-          admissions: {
-            today: 12,
-            thisMonth: 45,
-            change: "+15%",
-            trend: "up"
-          },
-          currentMonthFees: currentMonthFees
-        },
-        charts: {
-          monthlyAttendance: [
-            { month: 'Jan', students: 92, teachers: 94 },
-            { month: 'Feb', students: 95, teachers: 96 },
-            { month: 'Mar', students: 93, teachers: 92 },
-            { month: 'Apr', students: 91, teachers: 95 },
-            { month: 'May', students: 94, teachers: 93 },
-            { month: 'Jun', students: 92, teachers: 94 }
-          ],
-          feeCollection: [
-            { month: 'Jan', target: 500, actual: 420 },
-            { month: 'Feb', target: 500, actual: 380 },
-            { month: 'Mar', target: 500, actual: 450 },
-            { month: 'Apr', target: 500, actual: 410 },
-            { month: 'May', target: 500, actual: 480 },
-            { month: 'Jun', target: 500, actual: 460 }
-          ],
-          studentDistribution: {
-            byClass: [
-              { class: 'Class 1', students: 120 },
-              { class: 'Class 2', students: 115 },
-              { class: 'Class 3', students: 110 },
-              { class: 'Class 4', students: 105 },
-              { class: 'Class 5', students: 100 }
-            ],
-            byGender: [
-              { gender: 'Boys', count: 685 },
-              { gender: 'Girls', count: 562 }
-            ]
+          teachers: {
+            present: 0,
+            absent: 0,
+            rate: 0,
+            change: "0%"
           }
         },
-        events: [
-          {
-            id: 1,
-            title: 'Annual Sports Day',
-            date: new Date(new Date().setDate(new Date().getDate() + 2)),
-            type: 'event'
-          },
-          {
-            id: 2,
-            title: 'PTM - Class 10',
-            date: new Date(new Date().setDate(new Date().getDate() + 5)),
-            type: 'meeting'
-          }
-        ]
-      };
-      
-      setDashboardData(mockData);
-    } finally {
-      setLoading(false);
+        fees: {
+          totalPending: 234500,
+          collectedToday: 12500,
+          collectedThisMonth: currentMonthFees.currentMonthCollection,
+          dueThisWeek: currentMonthFees.currentMonthDues,
+          target: 500000,
+          achievement: 91.4,
+          currentMonthCollection: currentMonthFees.currentMonthCollection,
+          currentMonthDues: currentMonthFees.currentMonthDues,
+          monthlyTarget: fallbackFeeCollection[0]?.target || 50000
+        },
+        admissions: {
+          today: 12,
+          thisMonth: 45,
+          change: "+15%",
+          trend: "up"
+        },
+        currentMonthFees: currentMonthFees
+      },
+      charts: {
+        monthlyAttendance: [
+          { month: 'Jan', students: 92, teachers: 94 },
+          { month: 'Feb', students: 95, teachers: 96 },
+          { month: 'Mar', students: 93, teachers: 92 },
+          { month: 'Apr', students: 91, teachers: 95 },
+          { month: 'May', students: 94, teachers: 93 },
+          { month: 'Jun', students: 92, teachers: 94 }
+        ],
+        // ✅ FALLBACK FEE COLLECTION DATA
+        feeCollection: fallbackFeeCollection,
+        studentDistribution: {
+          byClass: [
+            { class: 'Class 1', students: 120 },
+            { class: 'Class 2', students: 115 },
+            { class: 'Class 3', students: 110 },
+            { class: 'Class 4', students: 105 },
+            { class: 'Class 5', students: 100 }
+          ],
+          byGender: [
+            { gender: 'Boys', count: 685 },
+            { gender: 'Girls', count: 562 }
+          ]
+        }
+      },
+      events: [
+        {
+          id: 1,
+          title: 'Annual Sports Day',
+          date: new Date(new Date().setDate(new Date().getDate() + 2)),
+          type: 'event'
+        },
+        {
+          id: 2,
+          title: 'PTM - Class 10',
+          date: new Date(new Date().setDate(new Date().getDate() + 5)),
+          type: 'meeting'
+        }
+      ]
+    };
+    
+    setDashboardData(mockData);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  // ✅ Monthly target calculate karein
+  const calculateMonthlyTarget = (students) => {
+    try {
+      const totalMonthlyFees = students.reduce((sum, student) => {
+        const monthlyFee = student.monthlyFee || Number(student.Fees) || 0;
+        return sum + monthlyFee;
+      }, 0);
+
+      // 80% collection target set karein
+      return Math.round(totalMonthlyFees * 0.8);
+    } catch (error) {
+      console.error('Error calculating monthly target:', error);
+      return 500; // Default target
     }
   };
 
@@ -736,7 +843,7 @@ const AdminDashboard = () => {
     return (
       <>
         <SideBar />
-        <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+        <div className="lg:pl-[90px] max-sm:mt-[-79px]  sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
           <LoadingSpinner message="Loading Dashboard Data..." />
         </div>
       </>
@@ -746,9 +853,9 @@ const AdminDashboard = () => {
   return (
     <>
       <SideBar />
-      <div className="lg:pl-[90px] max-sm:mt-[-79px] max-sm:pt-[79px] sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
+      <div className="lg:pl-[90px] max-sm:mt-[-79px]  sm:pt-2 pr-2 pb-2 max-sm:pt-1 max-sm:pl-2 max-lg:pl-[90px] bg-gray-50 w-full min-h-screen">
         <div className="p-4 lg:p-6 space-y-6">
-          
+
           {/* Header Section */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
@@ -759,10 +866,10 @@ const AdminDashboard = () => {
                 Welcome back! Here's what's happening today.
               </p>
             </div>
-            
+
             {/* Time Range Filter */}
             <div className="flex items-center gap-2">
-              <select 
+              {/* <select 
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -771,18 +878,17 @@ const AdminDashboard = () => {
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
                 <option value="quarter">This Quarter</option>
-              </select>
-              
+              </select> */}
+
               <div className="flex bg-white border border-gray-300 rounded-lg p-1">
                 {['overview', 'attendance', 'finance'].map(view => (
                   <button
                     key={view}
                     onClick={() => setActiveView(view)}
-                    className={`px-3 py-1 text-sm rounded-md capitalize ${
-                      activeView === view 
-                        ? 'bg-blue-600 text-white' 
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
+                    className={`px-3 py-1 text-sm rounded-md capitalize ${activeView === view
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-600 hover:text-gray-900'
+                      }`}
                   >
                     {view}
                   </button>
@@ -796,7 +902,7 @@ const AdminDashboard = () => {
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            
+
             {/* Left Column - Charts */}
             <div className="xl:col-span-2 space-y-6">
               {activeView === 'overview' && (
@@ -805,11 +911,11 @@ const AdminDashboard = () => {
                   <StudentDistribution data={dashboardData.charts.studentDistribution} />
                 </>
               )}
-              
+
               {activeView === 'attendance' && (
                 <AttendanceCharts data={dashboardData.charts} detailed />
               )}
-              
+
               {activeView === 'finance' && (
                 <FinanceOverview data={dashboardData} />
               )}
@@ -818,7 +924,7 @@ const AdminDashboard = () => {
             {/* Right Column - Widgets */}
             <div className="space-y-6">
               <QuickActionsPanel />
-              <CalendarWidget events={dashboardData.events} />
+              {/* <CalendarWidget events={dashboardData.events} /> */}
               {/* ✅ PASS REAL ACTIVITIES INSTEAD OF MOCK DATA */}
               <RecentActivities activities={realActivities} />
             </div>
