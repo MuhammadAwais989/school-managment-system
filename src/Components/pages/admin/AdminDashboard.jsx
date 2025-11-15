@@ -592,7 +592,6 @@ const getFallbackFeeCollectionData = () => {
 const fetchDashboardData = async () => {
   try {
     setLoading(true);
-    console.log("🔄 ========== DASHBOARD DATA FETCH STARTED ==========");
     
     // ✅ PEHLE FEE DATA FETCH KAREIN (FeesManagement system se)
     let feeCollectionData;
