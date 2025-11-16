@@ -597,7 +597,6 @@ const fetchDashboardData = async () => {
     let feeCollectionData;
     try {
       feeCollectionData = await calculateFeeCollectionData();
-      console.log("✅ Fee collection data fetched successfully");
     } catch (feeError) {
       console.error("❌ Fee data fetch failed, using fallback:", feeError);
       feeCollectionData = getFallbackFeeCollectionData();
