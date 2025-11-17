@@ -610,13 +610,10 @@ const fetchDashboardData = async () => {
     
     const students = studentsRes.data;
     
-    console.log("👥 Total students from API:", students.length);
-    console.log("👥 Total staff from API:", staff.length);
     
     // Try to get today's attendance
     let todayAttendance = await fetchTodayStaffAttendance();
     
-    console.log("📊 Today's attendance records from API:", todayAttendance);
     
     // If no real attendance data found, use mock data for testing
     if (!todayAttendance || todayAttendance.length === 0) {
