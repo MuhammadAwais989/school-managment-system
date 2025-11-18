@@ -861,7 +861,6 @@ const FeesManagement = () => {
         );
       }
 
-      console.log(`✅ Exporting ${studentsData.length} students to Excel`);
 
       const totalFeesCollection = studentsData.reduce(
         (sum, student) => sum + (student.paidFees || 0),
