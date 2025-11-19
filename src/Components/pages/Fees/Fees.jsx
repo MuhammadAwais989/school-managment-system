@@ -100,7 +100,6 @@ const FeesManagement = () => {
       // Use COMBINED API that gets students from main API + fees from separate system
       const response = await axios.get(`${BaseURL}/fees/combined`);
       const data = response.data;
-      console.log("Combined students + fees data:", data.students[0]);
 
       // Role-based filtering
       const role = localStorage.getItem("role");
