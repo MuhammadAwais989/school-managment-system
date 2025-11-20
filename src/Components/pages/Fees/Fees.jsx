@@ -306,7 +306,6 @@ const FeesManagement = () => {
   // Handle fee payment
   const handlePayment = async (student) => {
     if (!paymentAmount || paymentAmount <= 0 || paymentAmount > student.dues) {
-      alert("Please enter a valid payment amount");
       return;
     }
 
