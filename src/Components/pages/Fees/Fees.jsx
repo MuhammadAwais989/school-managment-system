@@ -332,7 +332,6 @@ const FeesManagement = () => {
       );
 
       if (response.data.success) {
-        console.log("✅ Payment Recorded in SEPARATE System!");
 
         await fetchAllStudents();
 
