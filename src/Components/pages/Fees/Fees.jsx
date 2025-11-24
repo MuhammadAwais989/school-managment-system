@@ -324,7 +324,6 @@ const FeesManagement = () => {
         mode: paymentMode,
       };
 
-      console.log("Sending payment to SEPARATE fees system...");
 
       const response = await axios.post(
         `${BaseURL}/fees/${studentId}/payment`,
