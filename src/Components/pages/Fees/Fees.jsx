@@ -360,7 +360,6 @@ const FeesManagement = () => {
         errorMessage = error.message;
       }
 
-      alert(`❌ ${errorMessage}`);
     }
   };
 
