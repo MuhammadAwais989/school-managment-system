@@ -263,7 +263,7 @@ const FeesManagement = () => {
     setTotalStudents(resultStudents.length);
   };
 
-  // ✅ INITIAL DATA FETCH - Ek hi baar
+  // ✅ INITIAL DATA FETCH 
   useEffect(() => {
     fetchAllStudents();
   }, []);
