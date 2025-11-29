@@ -253,7 +253,7 @@ const FeesManagement = () => {
     setTotalDues(allStudentsTotalDues);
     setFullyPaidStudents(allStudentsFullyPaid);
 
-    // ✅ PAGINATION CALCULATION
+    // PAGINATION CALCULATION
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginatedStudents = resultStudents.slice(startIndex, endIndex);
@@ -263,12 +263,12 @@ const FeesManagement = () => {
     setTotalStudents(resultStudents.length);
   };
 
-  // ✅ INITIAL DATA FETCH 
+  // INITIAL DATA FETCH 
   useEffect(() => {
     fetchAllStudents();
   }, []);
 
-  // ✅ FILTERS CHANGE PAR - Client-side processing
+  // FILTERS CHANGE PAR - Client-side processing
   useEffect(() => {
     setCurrentPage(1);
     applyFiltersAndPagination();
