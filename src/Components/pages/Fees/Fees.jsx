@@ -207,7 +207,7 @@ const FeesManagement = () => {
     }
   };
 
-  // ✅ FILTER AND PAGINATION FUNCTION - Client-side processing
+  // FILTER AND PAGINATION FUNCTION - Client-side processing
   const applyFiltersAndPagination = (studentsData = allStudents) => {
     let resultStudents = [...studentsData];
 
@@ -235,7 +235,7 @@ const FeesManagement = () => {
       );
     }
 
-    // ✅ TOTAL CALCULATIONS - Sabhi filtered students ki total fees calculate karein
+    // TOTAL CALCULATIONS - Sabhi filtered students ki total fees calculate karein
     const allStudentsTotalFees = resultStudents.reduce(
       (sum, student) => sum + (student.paidFees || 0),
       0
