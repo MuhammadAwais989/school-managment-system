@@ -186,12 +186,6 @@ const FeesManagement = () => {
         }
       });
 
-      console.log("📊 Current Month Data:", {
-        month: currentMonth,
-        collection: monthCollection,
-        dues: monthDues
-      });
-
       setCurrentMonthCollection(monthCollection);
       setCurrentMonthDues(monthDues);
 
