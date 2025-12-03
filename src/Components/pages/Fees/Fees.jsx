@@ -152,7 +152,7 @@ const FeesManagement = () => {
     }
   };
 
-  // ✅ CALCULATE CURRENT MONTH COLLECTION AND DUES
+  // CALCULATE CURRENT MONTH COLLECTION AND DUES
   const calculateCurrentMonthData = (studentsData) => {
     try {
       const currentMonth = new Date().toLocaleString('default', { month: 'long' });
