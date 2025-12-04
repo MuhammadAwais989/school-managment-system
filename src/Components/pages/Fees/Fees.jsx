@@ -126,7 +126,7 @@ const FeesManagement = () => {
       // ✅ All students store karein
       setAllStudents(processedStudents);
 
-      // ✅ Calculate current month collection and dues
+      // Calculate current month collection and dues
       calculateCurrentMonthData(processedStudents);
 
       // ✅ Initial display ke liye students set karein
