@@ -92,7 +92,7 @@ const FeesManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalStudents, setTotalStudents] = useState(0);
 
-  // ✅ SINGLE API CALL 
+  // SINGLE API CALL 
   const fetchAllStudents = async () => {
     try {
       setLoading(true);
