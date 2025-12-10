@@ -27,7 +27,7 @@ import PageTitle from "../PageTitle";
 import ExcelExport from "../ExportExcel";
 
 const FeesManagement = () => {
-  // Define all months for the academic year
+  // Define all months 
   const allMonths = [
     "January",
     "February",
