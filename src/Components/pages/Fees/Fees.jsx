@@ -268,7 +268,7 @@ const FeesManagement = () => {
     applyFiltersAndPagination();
   }, [searchTerm, selectedClass, selectedStatus]);
 
-  // ✅ PAGINATION CHANGE PAR - Client-side processing
+  // PAGINATION CHANGE PAR - Client-side processing
   useEffect(() => {
     applyFiltersAndPagination();
   }, [currentPage, itemsPerPage]);
