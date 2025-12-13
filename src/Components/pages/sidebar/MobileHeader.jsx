@@ -14,7 +14,7 @@ const MobileHeader = ({ toggleSidebar }) => {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { addActivity } = useActivities(); // ✅ Activities hook
+  const { addActivity } = useActivities(); 
 
   useEffect(() => {
     const fetchUser = async () => {
