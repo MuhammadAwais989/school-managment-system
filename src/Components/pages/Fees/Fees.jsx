@@ -370,7 +370,6 @@ const FeesManagement = () => {
           ? student.paymentHistory[student.paymentHistory.length - 1]
           : null;
 
-      console.log("📋 Last payment:", lastPayment);
 
       if (!lastPayment) {
         alert(
