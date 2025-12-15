@@ -360,10 +360,6 @@ const FeesManagement = () => {
   // Generate challan with last payment data
   const generateChallan = async (student, months = []) => {
     try {
-      console.log(
-        "🔄 Generating challan with last payment data for:",
-        student.name
-      );
 
       const lastPayment =
         student.paymentHistory && student.paymentHistory.length > 0
