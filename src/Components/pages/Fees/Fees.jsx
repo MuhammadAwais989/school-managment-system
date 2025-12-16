@@ -336,7 +336,6 @@ const FeesManagement = () => {
     } catch (error) {
       console.error("Payment error:", error);
 
-      let errorMessage = "Payment failed. Please try again.";
 
       if (error.response) {
         errorMessage =
