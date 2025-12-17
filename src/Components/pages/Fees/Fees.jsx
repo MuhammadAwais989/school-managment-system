@@ -413,7 +413,6 @@ const FeesManagement = () => {
         lastPayment: lastPayment,
       };
 
-      console.log("✅ Challan generated with last payment data:", challanData);
 
       setChallanData(challanData);
       setChallanMonths(paymentMonths);
