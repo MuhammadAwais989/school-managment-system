@@ -468,7 +468,6 @@ const FeesManagement = () => {
         totalStudents: dueStudents.length,
       };
 
-      console.log("✅ Due list with months generated:", dueData);
       return dueData;
     } catch (error) {
       console.error("Error generating due list:", error);
