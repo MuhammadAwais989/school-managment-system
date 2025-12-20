@@ -48,7 +48,7 @@ const MobileHeader = ({ toggleSidebar }) => {
   }, []);
 
   const handleLogout = () => {
-    // ✅ Logout activity add karein
+    //  Logout activity add karein
     const userName = localStorage.getItem("userName") || user?.name || "Unknown User";
     const role = localStorage.getItem("role") || "Unknown Role";
     const userEmail = localStorage.getItem("userEmail") || "Unknown Email";
