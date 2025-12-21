@@ -66,7 +66,6 @@ const MobileHeader = ({ toggleSidebar }) => {
       }
     });
 
-    console.log(`✅ Logout activity added for: ${userName} (${role})`);
 
     // Clear localStorage
     localStorage.removeItem("token");
