@@ -1025,7 +1025,6 @@ const FeesManagement = () => {
       console.log("✅ Excel export completed successfully");
     } catch (error) {
       console.error("❌ Error exporting to Excel:", error);
-      alert("Failed to export data to Excel. Please try again.");
     }
   };
 
