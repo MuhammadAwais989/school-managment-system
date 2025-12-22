@@ -336,23 +336,6 @@ const FeesManagement = () => {
     } catch (error) {
       console.error("Payment error:", error);
 
-
-      // if (error.response) {
-      //   errorMessage =
-      //     error.response.data?.message ||
-      //     `Server error: ${error.response.status}`;
-      //   console.error("Server response:", error.response.data);
-
-      //   if (error.response.data?.message === "Student not found") {
-      //     errorMessage =
-      //       "Student not found in database. Please check if student exists.";
-      //   }
-      // } else if (error.request) {
-      //   errorMessage = "No response from server. Please check your connection.";
-      // } else {
-      //   errorMessage = error.message;
-      // }
-
     }
   };
 
@@ -419,14 +402,12 @@ const FeesManagement = () => {
       setShowChallan(true);
     } catch (error) {
       console.error("❌ Error generating challan:", error);
-      alert("Failed to generate challan. Please try again.");
     }
   };
 
   // Get due list - WITH MONTHS COLUMN
   const getDueList = async () => {
     try {
-      console.log("🔄 Generating due list with months data...");
 
       let dueStudents = allStudents.filter(
         (student) => (student.dues || 0) > 0 && student.status !== "Fully Paid"
