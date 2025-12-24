@@ -1022,7 +1022,6 @@ const FeesManagement = () => {
         URL.revokeObjectURL(url);
       }, 100);
 
-      console.log("✅ Excel export completed successfully");
     } catch (error) {
       console.error("❌ Error exporting to Excel:", error);
     }
