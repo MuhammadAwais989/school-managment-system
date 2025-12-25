@@ -1189,7 +1189,6 @@ const FeesManagement = () => {
     return pageNumbers;
   };
 
-  // Agar loading chal raha hai toh Loading component dikhao
   if (loading) {
     return (
       <>
