@@ -1023,7 +1023,7 @@ const FeesManagement = () => {
       }, 100);
 
     } catch (error) {
-      console.error("❌ Error exporting to Excel:", error);
+      console.error("❌ Error exporting Excel:", error);
     }
   };
 
