@@ -1118,7 +1118,7 @@ const FeesManagement = () => {
     }
   };
 
-  // Remove a fee from the challan
+  // Remove fee from the challan
   const removeFee = (index) => {
     const updatedFees = [...otherFees];
     updatedFees.splice(index, 1);
