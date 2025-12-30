@@ -1101,7 +1101,7 @@ const FeesManagement = () => {
     }
   };
 
-  // Add a new fee to the challan
+  // Add new fee to the challan
   const addNewFee = () => {
     if (newFeeDescription && newFeeAmount && parseInt(newFeeAmount) > 0) {
       setOtherFees([
