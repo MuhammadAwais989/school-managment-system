@@ -405,7 +405,7 @@ const FeesManagement = () => {
     }
   };
 
-  // Get due list - WITH MONTHS COLUMN
+  // Get due list - WITH MONTHS 
   const getDueList = async () => {
     try {
 
