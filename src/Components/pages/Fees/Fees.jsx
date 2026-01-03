@@ -460,7 +460,7 @@ const FeesManagement = () => {
     }
   };
 
-  // Generate PDF for due list 
+  // Generat PDF for due list 
   const generateDueListPDF = async () => {
     try {
       console.log("🔄 Generating due list PDF with months...");
