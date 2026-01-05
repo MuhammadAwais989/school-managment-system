@@ -1027,7 +1027,7 @@ const FeesManagement = () => {
     }
   };
 
-  // Calculate filtered fees collection based on month/date
+  // Calculate filter fees collection based on month/date
   const calculateFilteredFeesCollection = () => {
     if (!selectedMonth && !selectedDate) {
       return totalFeesCollection;
