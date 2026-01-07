@@ -106,7 +106,7 @@ const MobileHeader = ({ toggleSidebar }) => {
           duration-300 
         `}
       >
-        {/* Left Section - Menu Icon */}
+        {/* Left Section - Menu Icon*/}
         <button 
           onClick={toggleSidebar}
           className="p-2 hover:bg-gray-100/70 rounded-xl transition-colors"
