@@ -5,7 +5,7 @@ import axios from "axios";
 import { BaseURL } from "../../helper/helper";
 import { HiMenuAlt3 } from 'react-icons/hi';
 import { FiUser, FiLogOut } from 'react-icons/fi';
-import { useActivities } from "../../../Context/Activities.Context.js"; // ✅ Import activities context
+import { useActivities } from "../../../Context/Activities.Context.js"; 
 import { showSuccess } from '../../utils/Toast.js';
 
 const MobileHeader = ({ toggleSidebar }) => {
