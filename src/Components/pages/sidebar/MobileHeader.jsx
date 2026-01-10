@@ -29,7 +29,6 @@ const MobileHeader = ({ toggleSidebar }) => {
         });
         setUser(res.data);
       } catch (err) {
-        console.error("Failed to fetch user", err);
       }
     };
 
