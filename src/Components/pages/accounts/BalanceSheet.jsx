@@ -163,7 +163,6 @@ export default function BalanceSheet() {
         expenseDataRes.data.expenses || expenseDataRes.data || []
       );
     } catch (error) {
-      console.error("Error fetching filtered data:", error);
     } finally {
       setFilterLoading(false);
     }
@@ -176,7 +175,6 @@ export default function BalanceSheet() {
       );
       setIncomeData(res.data.incomes || []);
     } catch (error) {
-      console.error("Error fetching income:", error);
     }
   };
 
@@ -187,7 +185,6 @@ export default function BalanceSheet() {
       );
       setExpenseData(res.data.expenses || []);
     } catch (error) {
-      console.error("Error fetching expenses:", error);
     }
   };
 
@@ -196,7 +193,6 @@ export default function BalanceSheet() {
       const res = await axios.get(`${BaseURL}/accounts/income-summary`);
       setIncomeSummary(res.data);
     } catch (error) {
-      console.error("Error fetching income summary:", error);
     }
   };
 
@@ -205,7 +201,6 @@ export default function BalanceSheet() {
       const res = await axios.get(`${BaseURL}/accounts/expense-summary`);
       setExpenseSummary(res.data);
     } catch (error) {
-      console.error("Error fetching expense summary:", error);
     }
   };
 
@@ -217,7 +212,6 @@ export default function BalanceSheet() {
       );
       setYearlyIncomeData(res.data);
     } catch (error) {
-      console.error("Error fetching yearly income data:", error);
     }
   };
 
