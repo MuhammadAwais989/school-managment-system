@@ -223,7 +223,6 @@ export default function BalanceSheet() {
       );
       setYearlyExpenseData(res.data);
     } catch (error) {
-      console.error("Error fetching yearly expense data:", error);
     }
   };
 
@@ -256,7 +255,6 @@ export default function BalanceSheet() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading balance sheet:", error);
       alert("Failed to download balance sheet. Please try again.");
     }
   };
