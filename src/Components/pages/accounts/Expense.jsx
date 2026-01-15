@@ -81,7 +81,6 @@ const Expense = () => {
       );
       setExpenses(res.data.expenses);
     } catch (error) {
-      console.error("Error fetching expenses:", error);
     } finally {
       setLoading(false);
     }
