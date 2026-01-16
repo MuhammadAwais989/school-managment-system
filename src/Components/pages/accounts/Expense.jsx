@@ -91,7 +91,6 @@ const Expense = () => {
       const res = await axios.get(`${BaseURL}/accounts/expense-summary`);
       setSummary(res.data);
     } catch (error) {
-      console.error("Error fetching summary:", error);
     }
   };
 
@@ -123,7 +122,6 @@ const Expense = () => {
 
       setChartData(combinedData);
     } catch (error) {
-      console.error("Error fetching chart data:", error);
     }
   };
 
@@ -137,7 +135,6 @@ const Expense = () => {
       fetchSummary();
       fetchChartData();
     } catch (error) {
-      console.error("Error adding expense:", error);
     }
   };
 
