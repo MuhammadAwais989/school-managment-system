@@ -168,14 +168,9 @@ const Expense = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading file:", error);
       if (error.response) {
-        console.error("Response data:", error.response.data);
-        console.error("Response status:", error.response.status);
       } else if (error.request) {
-        console.error("Request made but no response received:", error.request);
       } else {
-        console.error("Error setting up the request:", error.message);
       }
     }
   };
