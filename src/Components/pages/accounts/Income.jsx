@@ -80,7 +80,6 @@ const Income = () => {
       );
       setIncomes(res.data.incomes);
     } catch (error) {
-      console.error("Error fetching incomes:", error);
     } finally {
       setLoading(false);
     }
@@ -91,7 +90,6 @@ const Income = () => {
       const res = await axios.get(`${BaseURL}/accounts/income-summary`);
       setSummary(res.data);
     } catch (error) {
-      console.error("Error fetching summary:", error);
     }
   };
 
@@ -120,7 +118,6 @@ const Income = () => {
 
       setChartData(combinedData);
     } catch (error) {
-      console.error("Error fetching chart data:", error);
     }
   };
 
@@ -134,7 +131,6 @@ const Income = () => {
       fetchSummary();
       fetchChartData();
     } catch (error) {
-      console.error("Error adding income:", error);
     }
   };
 
