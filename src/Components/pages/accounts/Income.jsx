@@ -164,7 +164,6 @@ const Income = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading file:", error);
     }
   };
 
