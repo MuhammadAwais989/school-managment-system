@@ -54,7 +54,6 @@ const ViewPopup = ({ data, onClose, title = "Details", imageKey = "profilePic", 
       // Clean up
       document.body.removeChild(pdfContainer);
     }).catch(error => {
-      console.error('Error generating PDF:', error);
       document.body.removeChild(pdfContainer);
     });
   };
