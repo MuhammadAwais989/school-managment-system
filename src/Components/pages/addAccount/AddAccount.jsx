@@ -44,7 +44,6 @@ const AddAccount = () => {
       const res = await axios.get(`${BaseURL}/addaccount`);
       setUserList(res.data);
     } catch (err) {
-      console.error("User Fetch Error:", err);
       showError("Failed to fetch users");
     } finally {
       setIsLoading(false);
