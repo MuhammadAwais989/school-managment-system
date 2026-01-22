@@ -39,7 +39,6 @@ const AdminDashboard = () => {
         currentMonth
       };
     } catch (error) {
-      console.error("Error getting current month fees data:", error);
       return {
         currentMonthCollection: 0,
         currentMonthDues: 0,
