@@ -55,7 +55,6 @@ const AdminDashboard = () => {
       const userEmail = localStorage.getItem("userEmail") || "admin@school.com";
       const userName = localStorage.getItem("userName") || userEmail.split('@')[0];
 
-      console.log("✅ Adding dashboard access activity");
 
       addActivity({
         type: "login",
@@ -76,7 +75,6 @@ const AdminDashboard = () => {
       const res = await axios.get(`${BaseURL}/addaccount`);
       const staff = res.data;
       setStaffData(staff);
-      console.log("👥 Total staff from API:", staff.length);
 
       if (staff.length > 0) {
         console.log("📝 SAMPLE STAFF DATA:");
