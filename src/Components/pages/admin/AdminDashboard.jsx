@@ -71,13 +71,11 @@ const AdminDashboard = () => {
   // Fetch staff data from API
   const fetchStaffData = async () => {
     try {
-      console.log("🔄 Fetching staff data...");
       const res = await axios.get(`${BaseURL}/addaccount`);
       const staff = res.data;
       setStaffData(staff);
 
       if (staff.length > 0) {
-        console.log("📝 SAMPLE STAFF DATA:");
         staff.slice(0, 3).forEach((staffMember, index) => {
           console.log(`Staff ${index + 1}:`, {
             name: staffMember.name,
