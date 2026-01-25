@@ -87,7 +87,6 @@ const AdminDashboard = () => {
 
       return staff;
     } catch (error) {
-      console.error("❌ Error fetching staff data:", error);
       return [];
     }
   };
@@ -96,7 +95,6 @@ const AdminDashboard = () => {
   const fetchTodayStaffAttendance = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      console.log("📅 Today's date:", today);
 
       // Try the main teacher attendance endpoint
       try {
