@@ -99,7 +99,6 @@ const AdminDashboard = () => {
       // Try the main teacher attendance endpoint
       try {
         const allResponse = await axios.get(`${BaseURL}/teachers/attendence`);
-        console.log("📊 All attendance data:", allResponse.data);
 
         let todayRecords = [];
 
