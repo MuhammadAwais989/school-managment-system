@@ -123,7 +123,6 @@ const AdminDashboard = () => {
           });
         }
 
-        console.log("📅 Today's filtered records:", todayRecords);
         return todayRecords;
       } catch (error) {
         console.error("❌ Error fetching all attendance:", error);
