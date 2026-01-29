@@ -129,7 +129,6 @@ const AdminDashboard = () => {
       }
 
     } catch (error) {
-      console.error("❌ Error in fetchTodayStaffAttendance:", error);
       return [];
     }
   };
