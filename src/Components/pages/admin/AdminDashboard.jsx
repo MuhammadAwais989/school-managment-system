@@ -135,7 +135,6 @@ const AdminDashboard = () => {
 
   // Create mock attendance data for testing
   const createMockAttendanceData = (staff) => {
-    console.log("🔄 Creating mock attendance data for testing...");
 
     const today = new Date().toISOString().split('T')[0];
     const mockAttendance = staff.map((staffMember, index) => ({
