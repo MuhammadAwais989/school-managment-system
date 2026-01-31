@@ -149,7 +149,6 @@ const AdminDashboard = () => {
       updatedAt: new Date().toISOString()
     }));
 
-    console.log("🎯 MOCK ATTENDANCE DATA:", mockAttendance);
     console.log("📊 Mock - Total staff:", staff.length);
     console.log("📊 Mock - Present today:", mockAttendance.filter(a => a.status === 'present').length);
 
