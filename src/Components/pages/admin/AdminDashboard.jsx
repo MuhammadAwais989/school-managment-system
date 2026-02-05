@@ -142,7 +142,7 @@ const AdminDashboard = () => {
       staffId: staffMember._id,
       _id: `mock_attendance_${index}`,
       date: today,
-      status: index < Math.floor(staff.length * 0.8) ? 'present' : 'absent', // 80% present for testing
+      status: index < Math.floor(staff.length * 0.8) ? 'present' : 'absent', 
       name: staffMember.name,
       designation: staffMember.designation,
       createdAt: new Date().toISOString(),
