@@ -180,12 +180,7 @@ const AdminDashboard = () => {
           const status = record.status || record.attendanceStatus || record.attendance || 'absent';
           const staffId = record.teacherId || record.staffId || record.employeeId || record._id;
 
-          console.log(`📝 Record ${index + 1}:`, {
-            staffId,
-            status,
-            name: record.name,
-            date: record.date
-          });
+          
 
           if (status.toLowerCase() === 'present') {
             presentToday++;
