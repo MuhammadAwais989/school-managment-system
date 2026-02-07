@@ -193,7 +193,7 @@ const AdminDashboard = () => {
                 s.name === record.name;
 
               if (match) {
-                console.log(`✅ Matched staff: ${s.name} (${s.designation})`);
+                console.log(` Matched staff: ${s.name} (${s.designation})`);
               }
               return match;
             });
